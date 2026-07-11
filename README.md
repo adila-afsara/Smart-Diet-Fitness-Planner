@@ -1,2 +1,2 @@
 # Smart-Diet-Fitness-Planner
-AI-Powered Diet and Fitness Planner for Bangladeshi User
+AI-Powered Diet and Fitness Planner for Bangladeshi Users
