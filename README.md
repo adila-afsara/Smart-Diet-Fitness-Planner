@@ -85,7 +85,7 @@ MySQL database with 11 tables:
 
 ---
 
-## 📸 UI Mockups
+##  UI Mockups
 
 The following pages have been designed as HTML/CSS mockups:
 
