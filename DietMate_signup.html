@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up — Smart Diet & Fitness Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --white:        #FFFFFF;
+      --offwhite:     #FFFDF5;
+      --yellow:       #F5C518;
+      --yellow-light: #FFF8CC;
+      --red:          #D62828;
+      --red-light:    #FDEAEA;
+      --orange:       #F77F00;
+      --orange-light: #FFF0DC;
+      --green:        #2E8B57;
+      --green-light:  #E8F5EE;
+      --text:         #1A1A1A;
+      --muted:        #666666;
+      --hover:        #8B1A1A;
+      --yellow-orange:        #faa804;
+    
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--offwhite); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+
+    .signup-wrap { width: 100%; max-width: 620px; }
+
+    /* ── LOGO ── */
+    .logo-wrap { text-align: center; margin-bottom: 28px; }
+    .logo-circle { width: 56px; height: 56px; background: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 10px; border: 3px solid var(--yellow); }
+    .logo-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--red); }
+    .logo-name span { color: var(--green); }
+
+    /* ── STEP INDICATOR ── */
+    .step-indicator { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 32px; }
+
+    .step-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+    .step-circle {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; border: 3px solid;
+      transition: all 0.3s;
+    }
+
+    .step-circle.done { background: var(--green); border-color: var(--green); color: white; }
+    .step-circle.active { background: var(--red); border-color: var(--red); color: white; }
+    .step-circle.pending { background: var(--white); border-color: var(--offwhite); color: var(--muted); }
+
+    .step-label { font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .step-label.done { color: var(--green); }
+    .step-label.active { color: var(--red); }
+    .step-label.pending { color: var(--muted); }
+
+    .step-line { width: 80px; height: 3px; margin-bottom: 18px; border-radius: 2px; }
+    .step-line.done { background: var(--green); }
+    .step-line.pending { background: var(--offwhite); }
+
+    /* ── FORM CARD ── */
+    .form-card {
+      background: var(--white); border-radius: 16px;
+      padding: 36px 40px; border: 2px solid var(--offwhite);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      position: relative; overflow: hidden;
+    }
+
+    .form-card::before {
+      content: ""; position: absolute;
+      top: 0; left: 0; right: 0; height: 5px;
+      background: linear-gradient(90deg, var(--red), var(--orange), var(--yellow));
+    }
+
+    .folk-pattern {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 6px;
+      background: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--yellow) 10px, var(--yellow) 20px, var(--orange) 20px, var(--orange) 30px, var(--green) 30px, var(--green) 40px);
+    }
+
+    .step-header { margin-bottom: 26px; }
+    .step-tag { display: inline-block; background: var(--red-light); color: var(--red); font-size: 12px; font-weight: 600; padding: 3px 12px; border-radius: 12px; margin-bottom: 10px; }
+    .step-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .step-sub { font-size: 13px; color: var(--muted); }
+
+    /* ── FORM ELEMENTS ── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: block; }
+    .form-input { width: 100%; padding: 11px 14px; border: 2px solid var(--offwhite); border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif; background: var(--offwhite); transition: all 0.2s; outline: none; }
+    .form-input:focus { border-color: var(--orange); background: var(--white); }
+    .form-select { width: 100%; padding: 11px 14px; border: 2px solid var(--offwhite); border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif; background: var(--offwhite); transition: all 0.2s; outline: none; cursor: pointer; }
+    .form-select:focus { border-color: var(--orange); background: var(--white); }
+
+    /* Gender options */
+    .gender-options { display: flex; gap: 10px; }
+    .gender-opt { flex: 1; padding: 10px; border: 2px solid var(--offwhite); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--offwhite); font-size: 13px; font-weight: 600; color: var(--muted); }
+    .gender-opt:hover { border-color: var(--orange); color: var(--orange); }
+    .gender-opt.selected { border-color: var(--red); background: var(--red-light); color: var(--red); }
+    .gender-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+    /* Goal options */
+    .goal-options { display: flex; gap: 10px; }
+    .goal-opt { flex: 1; padding: 12px 8px; border: 2px solid var(--offwhite); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--offwhite); }
+    .goal-opt:hover { border-color: var(--orange); }
+    .goal-opt.selected { border-color: var(--red); background: var(--red-light); }
+    .goal-icon { font-size: 24px; display: block; margin-bottom: 6px; }
+    .goal-label { font-size: 12px; font-weight: 600; color: var(--text); }
+    .goal-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    /* Condition options */
+    .condition-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .condition-opt { padding: 12px; border: 2px solid var(--offwhite); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: var(--offwhite); display: flex; align-items: center; gap: 10px; }
+    .condition-opt:hover { border-color: var(--orange); }
+    .condition-opt.selected { border-color: var(--green); background: var(--green-light); }
+    .condition-icon { font-size: 20px; flex-shrink: 0; }
+    .condition-label { font-size: 13px; font-weight: 600; color: var(--text); }
+
+    /* Food preference chips */
+    .food-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .food-chip { padding: 7px 14px; border: 2px solid var(--offwhite); border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; background: var(--offwhite); color: var(--muted); transition: all 0.2s; }
+    .food-chip:hover { border-color: var(--orange); color: var(--orange); }
+    .food-chip.selected { background: var(--orange-light); border-color: var(--orange); color: var(--orange); }
+
+    /* Password strength */
+    .password-strength { margin-top: 6px; }
+    .strength-bar { height: 4px; border-radius: 2px; background: var(--offwhite); overflow: hidden; margin-bottom: 4px; }
+    .strength-fill { height: 100%; border-radius: 2px; width: 60%; background: var(--orange); }
+    .strength-text { font-size: 11px; color: var(--orange); font-weight: 600; }
+
+    /* ── NAVIGATION BUTTONS ── */
+    .form-nav { display: flex; gap: 12px; margin-top: 28px; }
+    .btn-back { flex: 1; padding: 12px; background: transparent; color: var(--muted); border: 2px solid var(--offwhite); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+    .btn-back:hover { border-color: var(--orange); color: var(--orange); }
+    .btn-next { flex: 2; padding: 12px; background: var(--red); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s; font-family: 'Inter', sans-serif; }
+    .btn-next:hover { background: var(--hover); }
+    .btn-submit { flex: 2; padding: 12px; background: var(--green); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s; font-family: 'Inter', sans-serif; }
+    .btn-submit:hover { background: #1f6b40; }
+
+    /* ── LOGIN LINK ── */
+    .login-link { text-align: center; font-size: 13px; color: var(--muted); margin-top: 20px; }
+    .login-link a { color: var(--orange); font-weight: 600; text-decoration: none; }
+
+    /* ── STEP PANELS ── */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="signup-wrap">
+
+    <!-- Logo -->
+    <div class="logo-wrap">
+      <div class="logo-circle">🥗</div>
+      <div class="logo-name">Diet<span>Mate</span> BD</div>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <div class="step-item">
+        <div class="step-circle active">1</div>
+        <div class="step-label active">Account Info</div>
+      </div>
+      <div class="step-line pending"></div>
+      <div class="step-item">
+        <div class="step-circle pending">2</div>
+        <div class="step-label pending">Health Info</div>
+      </div>
+      <div class="step-line pending"></div>
+      <div class="step-item">
+        <div class="step-circle pending">3</div>
+        <div class="step-label pending">Preferences</div>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+
+      <!-- STEP 1 — Account Info -->
+      <div class="step-panel active" id="step1">
+        <div class="step-header">
+          <div class="step-tag">Step 1 of 3</div>
+          <div class="step-title">Create Your Account 👤</div>
+          <div class="step-sub">Enter your basic account information to get started</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">👤 First Name</label>
+            <input class="form-input" type="text" placeholder="e.g. Adila"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">👤 Last Name</label>
+            <input class="form-input" type="text" placeholder="e.g. Afsara"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📧 Email Address</label>
+          <input class="form-input" type="email" placeholder="e.g. adila@email.com"/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📞 Phone Number</label>
+          <input class="form-input" type="tel" placeholder="e.g. 01711-XXXXXX"/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🔒 Password</label>
+          <input class="form-input" type="password" placeholder="Create a strong password"/>
+          <div class="password-strength">
+            <div class="strength-bar"><div class="strength-fill"></div></div>
+            <div class="strength-text">Medium strength — add numbers or symbols</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🔒 Confirm Password</label>
+          <input class="form-input" type="password" placeholder="Re-enter your password"/>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-next">Next — Health Info →</button>
+        </div>
+      </div>
+
+      <!-- STEP 2 — Health Info -->
+      <div class="step-panel" id="step2">
+        <div class="step-header">
+          <div class="step-tag">Step 2 of 3</div>
+          <div class="step-title">Your Health Info 🩺</div>
+          <div class="step-sub">This helps us create your personalized plan</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">🎂 Age</label>
+            <input class="form-input" type="number" placeholder="e.g. 22"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">📏 Height (cm)</label>
+            <input class="form-input" type="number" placeholder="e.g. 160"/>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">⚖️ Weight (kg)</label>
+            <input class="form-input" type="number" placeholder="e.g. 63"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">📍 Location</label>
+            <select class="form-select">
+              <option>Select your city</option>
+              <option>Dhaka</option>
+              <option>Chittagong</option>
+              <option>Sylhet</option>
+              <option>Rajshahi</option>
+              <option>Khulna</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">⚧️ Gender</label>
+          <div class="gender-options">
+            <div class="gender-opt selected">
+              <span class="gender-icon">👩</span> Female
+            </div>
+            <div class="gender-opt">
+              <span class="gender-icon">👨</span> Male
+            </div>
+            <div class="gender-opt">
+              <span class="gender-icon">🧑</span> Other
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🎯 Health Goal</label>
+          <div class="goal-options">
+            <div class="goal-opt selected">
+              <span class="goal-icon">📉</span>
+              <div class="goal-label">Lose Weight</div>
+              <div class="goal-sub">Burn fat, get fit</div>
+            </div>
+            <div class="goal-opt">
+              <span class="goal-icon">📈</span>
+              <div class="goal-label">Gain Weight</div>
+              <div class="goal-sub">Build mass, strength</div>
+            </div>
+            <div class="goal-opt">
+              <span class="goal-icon">⚖️</span>
+              <div class="goal-label">Stay Healthy</div>
+              <div class="goal-sub">Maintain & balance</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🩺 Health Condition (if any)</label>
+          <div class="condition-options">
+            <div class="condition-opt selected">
+              <span class="condition-icon">✅</span>
+              <span class="condition-label">None</span>
+            </div>
+            <div class="condition-opt">
+              <span class="condition-icon">🩸</span>
+              <span class="condition-label">Diabetes</span>
+            </div>
+            <div class="condition-opt">
+              <span class="condition-icon">❤️</span>
+              <span class="condition-label">High Blood Pressure</span>
+            </div>
+            <div class="condition-opt">
+              <span class="condition-icon">🫀</span>
+              <span class="condition-label">High Cholesterol</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-back">← Back</button>
+          <button class="btn-next">Next — Preferences →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3 — Preferences -->
+      <div class="step-panel" id="step3">
+        <div class="step-header">
+          <div class="step-tag">Step 3 of 3</div>
+          <div class="step-title">Your Preferences 🍱</div>
+          <div class="step-sub">Help us tailor your diet and fitness plan</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">💰 Monthly Food Budget (BDT ৳)</label>
+          <input class="form-input" type="number" placeholder="e.g. 3000"/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">⚡ Fitness Level</label>
+          <select class="form-select">
+            <option>🌱 Beginner — Just starting out</option>
+            <option>💪 Intermediate — Some experience</option>
+            <option>🏋️ Advanced — Very active</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🏠 Workout Location</label>
+          <select class="form-select">
+            <option>🏠 Home — No equipment needed</option>
+            <option>🏋️ Gym — With equipment</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🍽️ Preferred Local Foods <span style="font-size:11px; color:var(--muted)">(Select all you like)</span></label>
+          <div class="food-chips">
+            <div class="food-chip selected">🍚 Rice</div>
+            <div class="food-chip selected">🫘 Dal / Lentils</div>
+            <div class="food-chip selected">🐟 Fish</div>
+            <div class="food-chip selected">🥚 Eggs</div>
+            <div class="food-chip">🍗 Chicken</div>
+            <div class="food-chip selected">🥬 Vegetables</div>
+            <div class="food-chip">🥦 Shak / Greens</div>
+            <div class="food-chip">🍌 Fruits</div>
+            <div class="food-chip">🥜 Peanuts</div>
+            <div class="food-chip">🫓 Roti / Bread</div>
+            <div class="food-chip">🍵 Tea / Chai</div>
+            <div class="food-chip">🧀 Dairy</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🚫 Any Food You Avoid?</label>
+          <input class="form-input" type="text" placeholder="e.g. beef, shrimp, milk (optional)"/>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-back">← Back</button>
+          <button class="btn-submit">🎉 Create My Account & Start!</button>
+        </div>
+      </div>
+
+      <div class="folk-pattern"></div>
+    </div>
+
+    <div class="login-link">
+      Already have an account? <a href="#">Login here →</a>
+    </div>
+
+  </div>
+
+</body>
+</html>
