@@ -6,7 +6,7 @@ AI-Powered Diet and Fitness Planner for Bangladeshi Users
 
 ---
 
-## 📌 About The Project
+##  About The Project
 
 DietMate BD is a web-based AI-powered diet and fitness planning system 
 designed specifically for Bangladeshi users. Most existing diet apps 
@@ -25,28 +25,28 @@ it analyzes the user's progress and generates a smarter updated plan.
 
 ---
 
-## ✨ Features
+##  Features
 
 | # | Feature | Description |
 |---|---|---|
-| 1 | 🍱 Personalized Diet Plan Generator | 15-day meal plan using affordable local foods |
-| 2 | 💰 Budget-Based Meal Optimizer | Adjusts meals to fit user's BDT budget |
-| 3 | 🩺 Disease-Aware Diet Adjustment | Special plans for Diabetes, High BP, High Cholesterol |
-| 4 | 🏃 Fitness Plan Generator | 15-day workout plan for Home or Gym |
-| 5 | 📊 Health Progress Tracker & BMI Monitor | Daily logs, BMI tracking, progress reports |
-| 6 | 💬 Motivational Chatbot | AI chatbot for daily motivation and affirmations |
-| 7 | 🏥 Dietitian & Doctor Suggester | Recommends local health professionals |
+| 1 |  Personalized Diet Plan Generator | 15-day meal plan using affordable local foods |
+| 2 |  Budget-Based Meal Optimizer | Adjusts meals to fit user's BDT budget |
+| 3 |  Disease-Aware Diet Adjustment | Special plans for Diabetes, High BP, High Cholesterol |
+| 4 |  Fitness Plan Generator | 15-day workout plan for Home or Gym |
+| 5 |  Health Progress Tracker & BMI Monitor | Daily logs, BMI tracking, progress reports |
+| 6 |  Motivational Chatbot | AI chatbot for daily motivation and affirmations |
+| 7 |  Dietitian & Doctor Suggester | Recommends local health professionals |
 
 ---
 
-## 🤖 AI Agents
+## AI Agents
 
 The system is powered by **4 specialized AI agents** using Claude API:
 
-- 🧠 **Nutrition & Diet Agent** — Meal planning, budget optimization, disease-aware adjustments
-- 🏋️ **Fitness Agent** — Workout plan generation and adaptive updates
-- 📈 **Health Tracking Agent** — BMI monitoring, progress reports, dietitian suggestions
-- 💬 **Motivational Chatbot Agent** — Daily motivation, affirmations, milestone celebrations
+-  **Nutrition & Diet Agent** — Meal planning, budget optimization, disease-aware adjustments
+-  **Fitness Agent** — Workout plan generation and adaptive updates
+-  **Health Tracking Agent** — BMI monitoring, progress reports, dietitian suggestions
+-  **Motivational Chatbot Agent** — Daily motivation, affirmations, milestone celebrations
 
 ---
 
