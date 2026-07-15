@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Diet Plan — Smart Diet & Fitness Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --white:        #FFFFFF;
+      --offwhite:     #FFFDF5;
+      --yellow:       #F5C518;
+      --yellow-light: #FFF8CC;
+      --red:          #D62828;
+      --red-light:    #FDEAEA;
+      --orange:       #F77F00;
+      --orange-light: #FFF0DC;
+      --green:        #2E8B57;
+      --green-light:  #E8F5EE;
+      --text:         #1A1A1A;
+      --muted:        #666666;
+      --hover:        #8B1A1A;
+      --sidebar-w:    240px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--offwhite); color: var(--text); display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR (same as dashboard) ── */
+    .sidebar {
+      width: var(--sidebar-w); background: var(--white);
+      border-right: 3px solid var(--green);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 22px 20px 16px; border-bottom: 2px solid var(--offwhite);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .logo-icon {
+      width: 38px; height: 38px; background: var(--red); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; border: 2px solid var(--yellow);
+    }
+    .logo-text { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--red); }
+    .logo-text span { color: var(--green); }
+    .folk-strip {
+      height: 8px;
+      background: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 8px, var(--yellow) 8px, var(--yellow) 16px, var(--orange) 16px, var(--orange) 24px, var(--green) 24px, var(--green) 32px);
+    }
+    .sidebar-nav { flex: 1; padding: 16px 0; display: flex; flex-direction: column; gap: 2px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 11px 20px;
+      font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer;
+      border-left: 3px solid transparent; transition: all 0.2s; text-decoration: none;
+    }
+    .nav-item:hover { color: var(--hover); background: var(--offwhite); border-left-color: var(--orange); }
+    .nav-item.active { color: var(--red); background: var(--red-light); border-left-color: var(--red); font-weight: 600; }
+    .nav-icon { font-size: 18px; flex-shrink: 0; }
+    .nav-section-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; padding: 14px 20px 4px; }
+    .sidebar-user { padding: 16px 20px; border-top: 2px solid var(--offwhite); display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 36px; height: 36px; background: var(--orange); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 2px solid var(--yellow); flex-shrink: 0; }
+    .user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .user-goal { font-size: 11px; color: var(--muted); }
+
+    /* ── MAIN ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--white); border-bottom: 3px solid var(--green);
+      padding: 14px 32px; display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 50;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .topbar-left h2 { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text); }
+    .topbar-left p { font-size: 13px; color: var(--muted); margin-top: 1px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    .cycle-badge {
+      background: var(--red-light); border: 1px solid var(--red);
+      color: var(--red); font-size: 12px; font-weight: 600;
+      padding: 5px 12px; border-radius: 20px;
+    }
+
+    .btn-primary {
+      background: var(--red); color: white; border: none;
+      border-radius: 6px; padding: 8px 18px; font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--hover); }
+
+    .btn-secondary {
+      background: transparent; color: var(--orange);
+      border: 2px solid var(--orange); border-radius: 6px;
+      padding: 8px 18px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: var(--orange); color: white; }
+
+    /* ── CONTENT ── */
+    .content { padding: 28px 32px; flex: 1; }
+
+    /* ── PLAN INFO BAR ── */
+    .plan-info-bar {
+      background: var(--white); border-radius: 12px;
+      padding: 18px 24px; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 32px;
+      border: 2px solid var(--offwhite);
+      flex-wrap: wrap;
+    }
+
+    .plan-info-item { display: flex; align-items: center; gap: 10px; }
+    .plan-info-icon { font-size: 22px; }
+    .plan-info-label { font-size: 11px; color: var(--muted); }
+    .plan-info-value { font-size: 14px; font-weight: 600; color: var(--text); }
+
+    .plan-divider { width: 1px; height: 36px; background: var(--offwhite); }
+
+    .budget-bar-wrap { flex: 1; min-width: 200px; }
+    .budget-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+    .budget-bar-label span:first-child { color: var(--muted); }
+    .budget-bar-label span:last-child { color: var(--green); font-weight: 600; }
+    .budget-bar { height: 8px; background: var(--offwhite); border-radius: 4px; overflow: hidden; }
+    .budget-fill { height: 100%; background: var(--green); border-radius: 4px; width: 62%; }
+
+    /* ── DAY TABS ── */
+    .day-tabs {
+      display: flex; gap: 8px; margin-bottom: 24px;
+      overflow-x: auto; padding-bottom: 4px;
+    }
+
+    .day-tab {
+      flex-shrink: 0; padding: 8px 16px;
+      border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 2px solid var(--offwhite);
+      background: var(--white); color: var(--muted);
+      transition: all 0.2s; text-align: center; min-width: 70px;
+    }
+    .day-tab:hover { border-color: var(--orange); color: var(--orange); }
+    .day-tab.active { background: var(--red); color: white; border-color: var(--red); }
+    .day-tab.has-report { border-color: var(--yellow); }
+    .day-tab .tab-day { font-size: 11px; opacity: 0.8; margin-bottom: 2px; }
+    .day-tab .tab-label { font-size: 13px; }
+
+    /* ── MEAL GRID ── */
+    .meal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px; margin-bottom: 24px;
+    }
+
+    .meal-card {
+      background: var(--white); border-radius: 12px;
+      padding: 22px; border: 2px solid var(--offwhite);
+      transition: transform 0.2s;
+    }
+    .meal-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.07); }
+
+    .meal-card-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+
+    .meal-type-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 22px;
+    }
+    .breakfast-icon { background: var(--yellow-light); }
+    .lunch-icon { background: var(--orange-light); }
+    .dinner-icon { background: var(--red-light); }
+    .snack-icon { background: var(--green-light); }
+
+    .meal-type-info { flex: 1; }
+    .meal-type-name { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; }
+    .meal-type-time { font-size: 12px; color: var(--muted); }
+
+    .meal-cal-badge {
+      font-size: 12px; font-weight: 600; padding: 4px 10px;
+      border-radius: 12px; background: var(--offwhite); color: var(--text);
+    }
+
+    .meal-items-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .meal-food-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px;
+      background: var(--offwhite); transition: background 0.2s;
+    }
+    .meal-food-item:hover { background: var(--yellow-light); }
+
+    .food-emoji { font-size: 20px; flex-shrink: 0; }
+
+    .food-details { flex: 1; }
+    .food-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .food-macros { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .food-cost {
+      font-size: 12px; font-weight: 600;
+      color: var(--green); flex-shrink: 0;
+    }
+
+    .meal-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 14px; padding-top: 12px;
+      border-top: 1px solid var(--offwhite);
+    }
+
+    .meal-total { font-size: 12px; color: var(--muted); }
+    .meal-total span { color: var(--text); font-weight: 600; }
+
+    .alt-btn {
+      font-size: 12px; font-weight: 600; color: var(--orange);
+      background: var(--orange-light); border: none;
+      border-radius: 6px; padding: 5px 12px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .alt-btn:hover { background: var(--orange); color: white; }
+
+    /* ── DAILY SUMMARY ── */
+    .daily-summary {
+      background: var(--white); border-radius: 12px;
+      padding: 22px; border: 2px solid var(--offwhite);
+      margin-bottom: 24px;
+    }
+
+    .summary-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px; font-weight: 700; margin-bottom: 18px;
+    }
+
+    .summary-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .summary-item { text-align: center; }
+
+    .summary-circle {
+      width: 64px; height: 64px; border-radius: 50%;
+      margin: 0 auto 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      border: 3px solid;
+    }
+    .circle-cal { border-color: var(--red); color: var(--red); background: var(--red-light); }
+    .circle-protein { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
+    .circle-carbs { border-color: var(--yellow); color: #9A7D00; background: var(--yellow-light); }
+    .circle-fat { border-color: var(--green); color: var(--green); background: var(--green-light); }
+
+    .summary-label { font-size: 12px; color: var(--muted); }
+    .summary-value { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 2px; }
+
+    /* ── DISEASE ALERT ── */
+    .disease-alert {
+      background: var(--green-light); border: 2px solid var(--green);
+      border-radius: 10px; padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+    }
+    .disease-alert-icon { font-size: 22px; flex-shrink: 0; }
+    .disease-alert-text { font-size: 13px; color: var(--green); font-weight: 500; line-height: 1.5; }
+    .disease-alert-text strong { color: var(--green); }
+
+    /* ── BUDGET ALERT ── */
+    .budget-alert {
+      background: var(--yellow-light); border: 2px solid var(--yellow);
+      border-radius: 10px; padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+    }
+    .budget-alert-icon { font-size: 22px; flex-shrink: 0; }
+    .budget-alert-text { font-size: 13px; color: #7A6000; font-weight: 500; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🥗</div>
+      <div class="logo-text">Diet<span>Mate</span> BD</div>
+    </div>
+    <div class="folk-strip"></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="#"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a class="nav-item active" href="#"><span class="nav-icon">🍱</span> My Diet Plan</a>
+      <a class="nav-item" href="#"><span class="nav-icon">🏃</span> Fitness Plan</a>
+      <a class="nav-item" href="#"><span class="nav-icon">📊</span> Progress & BMI</a>
+      <div class="nav-section-label">Tools</div>
+      <a class="nav-item" href="#"><span class="nav-icon">💬</span> Chatbot</a>
+      <a class="nav-item" href="#"><span class="nav-icon">🏥</span> Find Dietitian</a>
+      <a class="nav-item" href="#"><span class="nav-icon">📅</span> Daily Log</a>
+      <div class="nav-section-label">Account</div>
+      <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> Settings</a>
+      <a class="nav-item" href="#"><span class="nav-icon">🚪</span> Logout</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar">👩</div>
+      <div>
+        <div class="user-name">Adila Afsara</div>
+        <div class="user-goal">Goal: Lose Weight</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2>🍱 My 15-Day Diet Plan</h2>
+        <p>Cycle 1 — July 1 to July 15, 2025 · Budget: ৳300/day</p>
+      </div>
+      <div class="topbar-right">
+        <div class="cycle-badge">🔄 Day 8 of 15</div>
+        <button class="btn-secondary">📥 Download Plan</button>
+        <button class="btn-primary">🔄 Regenerate Plan</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Plan Info Bar -->
+      <div class="plan-info-bar">
+        <div class="plan-info-item">
+          <div class="plan-info-icon">🎯</div>
+          <div>
+            <div class="plan-info-label">Health Goal</div>
+            <div class="plan-info-value">Lose Weight</div>
+          </div>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">🩺</div>
+          <div>
+            <div class="plan-info-label">Health Condition</div>
+            <div class="plan-info-value">Diabetes</div>
+          </div>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">🔥</div>
+          <div>
+            <div class="plan-info-label">Daily Calorie Target</div>
+            <div class="plan-info-value">1,480 kcal</div>
+          </div>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">💰</div>
+          <div>
+            <div class="plan-info-label">Daily Budget</div>
+            <div class="plan-info-value">৳ 300 / day</div>
+          </div>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="budget-bar-wrap">
+          <div class="budget-bar-label">
+            <span>Today's Spend: ৳ 210</span>
+            <span>৳ 90 remaining</span>
+          </div>
+          <div class="budget-bar"><div class="budget-fill"></div></div>
+        </div>
+      </div>
+
+      <!-- Disease Alert -->
+      <div class="disease-alert">
+        <div class="disease-alert-icon">🩺</div>
+        <div class="disease-alert-text">
+          <strong>Diabetes-Aware Plan Active:</strong> Your meals are adjusted for diabetes management — low sugar, low refined carbs, high fiber foods prioritized. Sugary snacks and white rice portions are reduced automatically.
+        </div>
+      </div>
+
+      <!-- Budget Alert -->
+      <div class="budget-alert">
+        <div class="budget-alert-icon">💡</div>
+        <div class="budget-alert-text">
+          <strong>Budget Tip:</strong> Chicken was replaced with Eggs & Lentils in today's dinner to keep your meal within your ৳300 daily budget. You saved ৳ 65!
+        </div>
+      </div>
+
+      <!-- Day Tabs -->
+      <div class="day-tabs">
+        <div class="day-tab"><div class="tab-day">Day 1</div><div class="tab-label">Mon</div></div>
+        <div class="day-tab"><div class="tab-day">Day 2</div><div class="tab-label">Tue</div></div>
+        <div class="day-tab"><div class="tab-day">Day 3</div><div class="tab-label">Wed</div></div>
+        <div class="day-tab"><div class="tab-day">Day 4</div><div class="tab-label">Thu</div></div>
+        <div class="day-tab"><div class="tab-day">Day 5</div><div class="tab-label">Fri</div></div>
+        <div class="day-tab"><div class="tab-day">Day 6</div><div class="tab-label">Sat</div></div>
+        <div class="day-tab has-report"><div class="tab-day">Day 7</div><div class="tab-label">📊 Report</div></div>
+        <div class="day-tab active"><div class="tab-day">Day 8</div><div class="tab-label">Today</div></div>
+        <div class="day-tab"><div class="tab-day">Day 9</div><div class="tab-label">Mon</div></div>
+        <div class="day-tab"><div class="tab-day">Day 10</div><div class="tab-label">Tue</div></div>
+        <div class="day-tab"><div class="tab-day">Day 11</div><div class="tab-label">Wed</div></div>
+        <div class="day-tab"><div class="tab-day">Day 12</div><div class="tab-label">Thu</div></div>
+        <div class="day-tab"><div class="tab-day">Day 13</div><div class="tab-label">Fri</div></div>
+        <div class="day-tab"><div class="tab-day">Day 14</div><div class="tab-label">Sat</div></div>
+        <div class="day-tab has-report"><div class="tab-day">Day 15</div><div class="tab-label">📊 Final</div></div>
+      </div>
+
+      <!-- Daily Summary -->
+      <div class="daily-summary">
+        <div class="summary-title">📊 Day 8 — Nutrition Summary</div>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-circle circle-cal">1,480<br/>kcal</div>
+            <div class="summary-label">Total Calories</div>
+            <div class="summary-value">Target met ✅</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-circle circle-protein">68g</div>
+            <div class="summary-label">Protein</div>
+            <div class="summary-value">Good amount 💪</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-circle circle-carbs">180g</div>
+            <div class="summary-label">Carbohydrates</div>
+            <div class="summary-value">Low carb ✅</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-circle circle-fat">42g</div>
+            <div class="summary-label">Healthy Fats</div>
+            <div class="summary-value">Balanced ✅</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meal Cards Grid -->
+      <div class="meal-grid">
+
+        <!-- Breakfast -->
+        <div class="meal-card">
+          <div class="meal-card-header">
+            <div class="meal-type-icon breakfast-icon">🌅</div>
+            <div class="meal-type-info">
+              <div class="meal-type-name">Breakfast</div>
+              <div class="meal-type-time">⏰ 7:00 AM — 8:00 AM</div>
+            </div>
+            <div class="meal-cal-badge">320 kcal</div>
+          </div>
+          <div class="meal-items-list">
+            <div class="meal-food-item">
+              <div class="food-emoji">🍳</div>
+              <div class="food-details">
+                <div class="food-name">Boiled Eggs (2 pcs)</div>
+                <div class="food-macros">155 kcal · Protein: 12g · Fat: 10g</div>
+              </div>
+              <div class="food-cost">৳ 20</div>
+            </div>
+            <div class="meal-food-item">
+              <div class="food-emoji">🫓</div>
+              <div class="food-details">
+                <div class="food-name">Brown Bread Roti (2 pcs)</div>
+                <div class="food-macros">120 kcal · Carbs: 24g · Fiber: 3g</div>
+              </div>
+              <div class="food-cost">৳ 15</div>
+            </div>
+            <div class="meal-food-item">
+              <div class="food-emoji">🍵</div>
+              <div class="food-details">
+                <div class="food-name">Ginger Lemon Tea (no sugar)</div>
+                <div class="food-macros">45 kcal · Antioxidants rich</div>
+              </div>
+              <div class="food-cost">৳ 10</div>
+            </div>
+          </div>
+          <div class="meal-footer">
+            <div class="meal-total">Total: <span>320 kcal · ৳ 45</span></div>
+            <button class="alt-btn">🔄 Suggest Alternative</button>
+          </div>
+        </div>
+
+        <!-- Lunch -->
+        <div class="meal-card">
+          <div class="meal-card-header">
+            <div class="meal-type-icon lunch-icon">☀️</div>
+            <div class="meal-type-info">
+              <div class="meal-type-name">Lunch</div>
+              <div class="meal-type-time">⏰ 1:00 PM — 2:00 PM</div>
+            </div>
+            <div class="meal-cal-badge">480 kcal</div>
+          </div>
+          <div class="meal-items-list">
+            <div class="meal-food-item">
+              <div class="food-emoji">🍚</div>
+              <div class="food-details">
+                <div class="food-name">Brown Rice (1 cup)</div>
+                <div class="food-macros">215 kcal · Carbs: 45g · Fiber: 4g</div>
+              </div>
+              <div class="food-cost">৳ 20</div>
+            </div>
+            <div class="meal-food-item">
+              <div class="food-emoji">🫘</div>
+              <div class="food-details">
+                <div class="food-name">Masoor Dal (1 bowl)</div>
+                <div class="food-macros">180 kcal · Protein: 14g · Fiber: 8g</div>
+              </div>
+              <div class="food-cost">৳ 25</div>
+            </div>
+            <div class="meal-food-item">
+              <div class="food-emoji">🥬</div>
+              <div class="food-details">
+                <div class="food-name">Mixed Shak Bhaji</div>
+                <div class="food-macros">85 kcal · Vitamins A & C · Iron</div>
+              </div>
+              <div class="food-cost">৳ 25</div>
+            </div>
+          </div>
+          <div class="meal-footer">
+            <div class="meal-total">Total: <span>480 kcal · ৳ 70</span></div>
+            <button class="alt-btn">🔄 Suggest Alternative</button>
+          </div>
+        </div>
+
+        <!-- Snack -->
+        <div class="meal-card">
+          <div class="meal-card-header">
+            <div class="meal-type-icon snack-icon">🌿</div>
+            <div class="meal-type-info">
+              <div class="meal-type-name">Afternoon Snack</div>
+              <div class="meal-type-time">⏰ 4:30 PM — 5:00 PM</div>
+            </div>
+            <div class="meal-cal-badge">180 kcal</div>
+          </div>
+          <div class="meal-items-list">
+            <div class="meal-food-item">
+              <div class="food-emoji">🍌</div>
+              <div class="food-details">
+                <div class="food-name">Banana (1 medium)</div>
+                <div class="food-macros">105 kcal · Carbs: 27g · Potassium</div>
+              </div>
+              <div class="food-cost">৳ 10</div>
+            </div>
+            <div class="meal-food-item">
+              <div class="food-emoji">🥜</div>
+              <div class="food-details">
+                <div class="food-name">Roasted Peanuts (handful)</div>
+                <div class="food-macros">75 kcal · Protein: 4g · Good fat</div>
+              </div>
+              <div class="food-cost">৳ 15</div>
+            </div>
+          </div>
+          <div class="meal-footer">
+            <div class="meal-total">Total: <span>180 kcal · ৳ 25</span></div>
+            <button class="alt-btn">🔄 Suggest Alternative</button>
+          </div>
+        </div>
+
+        <!-- Dinner -->
+        <div class="meal-card">
+          <div class="meal-card-header">
+            <div class="meal-type-icon dinner-icon">🌙</div>
+            <div class="meal-type-info">
+              <div class="meal-type-name">Dinner</div>
+              <div class="meal-type-time">⏰ 8:00 PM — 9:00 PM</div>
+            </div>
+            <div class="meal-cal-badge">500 kcal</div>
+          </div>
+          <div class="meal-items-list">
+            <div class="meal-food-item">
+              <div class="food-emoji">🐟</div>
+              <div class="food-details">
+                <div class="food-name">Tilapia Fish Curry (1 piece)</div>
+                <div class="food-macros">200 kcal · Protein: 28g · Omega-3</div>
+              </div>
+              <div class="food-cost">৳ 40</div>
+            </div>
+            <div class="meal-food-item">
+              <div class="food-emoji">🍚</div>
+              <div class="food-details">
+                <div class="food-name">Brown Rice (small portion)</div>
+                <div class="food-macros">160 kcal · Carbs: 35g · Fiber</div>
+              </div>
+              <div class="food-cost">৳ 15</div>
+            </div>
+            <div class="meal-food-item">
+              <div class="food-emoji">🥗</div>
+              <div class="food-details">
+                <div class="food-name">Cucumber & Tomato Salad</div>
+                <div class="food-macros">40 kcal · Vitamins · Hydrating</div>
+              </div>
+              <div class="food-cost">৳ 15</div>
+            </div>
+          </div>
+          <div class="meal-footer">
+            <div class="meal-total">Total: <span>500 kcal · ৳ 70</span></div>
+            <button class="alt-btn">🔄 Suggest Alternative</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>
