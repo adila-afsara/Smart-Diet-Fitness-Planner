@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Diet & Fitness Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --white:        #FFFFFF;
+      --offwhite:     #FFFDF5;
+      --yellow:       #F5C518;
+      --yellow-light: #FFF8CC;
+      --red:          #D62828;
+      --red-light:    #FDEAEA;
+      --orange:       #F77F00;
+      --orange-light: #FFF0DC;
+      --green:        #2E8B57;
+      --green-light:  #E8F5EE;
+      --text:         #1A1A1A;
+      --muted:        #666666;
+      --hover:        #8B1A1A;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--text); }
+
+    /* ── FOLK DIVIDER ── */
+    .folk-divider {
+      width: 100%; height: 16px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--red) 0px, var(--red) 12px,
+        var(--yellow) 12px, var(--yellow) 24px,
+        var(--orange) 24px, var(--orange) 36px,
+        var(--white) 36px, var(--green) 48px
+      );
+    }
+
+    .folk-pattern-bar {
+      width: 100%; background: var(--offwhite);
+      padding: 6px 0; text-align: center;
+      font-size: 20px; letter-spacing: 8px;
+      color: var(--orange); user-select: none;
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      background: var(--white);
+      border-bottom: 3px solid var(--green);
+      padding: 14px 60px;
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .logo { display: flex; align-items: center; gap: 10px; }
+
+    .logo-icon {
+      width: 42px; height: 42px;
+      background: var(--red);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      border: 3px solid var(--yellow);
+    }
+
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 700; color: var(--red);
+    }
+    .logo-text span { color: var(--green); }
+
+    nav ul { list-style: none; display: flex; gap: 32px; }
+    nav ul li a {
+      text-decoration: none; color: var(--text);
+      font-weight: 500; font-size: 15px; transition: color 0.2s;
+    }
+    nav ul li a:hover { color: var(--hover); }
+
+    .nav-buttons { display: flex; gap: 12px; }
+
+    .btn-outline {
+      padding: 8px 20px; border: 2px solid var(--orange);
+      color: var(--orange); background: transparent;
+      border-radius: 6px; font-weight: 600; font-size: 14px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-outline:hover { background: var(--hover); color: white; border-color: var(--hover); }
+
+    .btn-solid {
+      padding: 8px 20px; background: var(--red);
+      color: white; border: 2px solid var(--red);
+      border-radius: 6px; font-weight: 600; font-size: 14px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-solid:hover { background: var(--hover); border-color: var(--hover); }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--offwhite);
+      padding: 80px 60px 60px;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 40px;
+      position: relative; overflow: hidden;
+    }
+
+    .hero::before {
+      content: "✿ ❀ ✿ ❀ ✿";
+      position: absolute; top: 16px; left: 60px;
+      font-size: 18px; color: var(--orange); letter-spacing: 6px;
+    }
+    .hero::after {
+      content: "✿ ❀ ✿ ❀ ✿";
+      position: absolute; bottom: 16px; right: 60px;
+      font-size: 18px; color: var(--red); letter-spacing: 6px;
+    }
+
+    .hero-left { max-width: 540px; }
+
+    .hero-tag {
+      display: inline-block; background: var(--yellow);
+      color: var(--text); font-size: 13px; font-weight: 600;
+      padding: 4px 14px; border-radius: 20px; margin-bottom: 20px;
+      border: 1px solid var(--orange);
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 52px; line-height: 1.15;
+      color: var(--text); margin-bottom: 12px;
+    }
+
+    .hero h1 .h-red { color: var(--red); }
+    .hero h1 .h-orange { color: var(--orange); }
+
+    .hero-sub {
+      font-size: 16px; color: var(--muted);
+      line-height: 1.7; margin-bottom: 32px; max-width: 460px;
+    }
+
+    .hero-buttons { display: flex; gap: 14px; flex-wrap: wrap; }
+
+    .btn-hero-main {
+      padding: 14px 32px; background: var(--red);
+      color: white; border: none; border-radius: 8px;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-hero-main:hover { background: var(--hover); }
+
+    .btn-hero-sec {
+      padding: 14px 32px; background: transparent;
+      color: var(--orange); border: 2px solid var(--orange);
+      border-radius: 8px; font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-hero-sec:hover { background: var(--hover); color: white; border-color: var(--hover); }
+
+    .hero-right {
+      flex-shrink: 0; width: 340px; height: 320px;
+      background: var(--white);
+      border-radius: 16px; border: 3px solid var(--orange);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+      box-shadow: 6px 6px 0px var(--yellow);
+    }
+
+    .hero-right::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        45deg, transparent, transparent 18px,
+        rgba(247,127,0,0.06) 18px, rgba(247,127,0,0.06) 20px
+      );
+    }
+
+    .folk-bowl { font-size: 72px; margin-bottom: 10px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.12)); }
+    .folk-foods { display: flex; gap: 14px; font-size: 34px; margin-bottom: 14px; }
+
+    .folk-label {
+      font-family: 'Playfair Display', serif; font-size: 15px;
+      color: var(--red); font-weight: 700;
+      background: var(--yellow-light); padding: 4px 16px;
+      border-radius: 20px; border: 1px solid var(--yellow);
+    }
+
+    .corner-motif { position: absolute; font-size: 20px; color: var(--orange); }
+    .corner-motif.tl { top: 8px; left: 10px; }
+    .corner-motif.tr { top: 8px; right: 10px; }
+    .corner-motif.bl { bottom: 8px; left: 10px; }
+    .corner-motif.br { bottom: 8px; right: 10px; }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      background: var(--red);
+      padding: 22px 60px;
+      display: flex; justify-content: space-around; align-items: center;
+    }
+    .stat-item { text-align: center; color: white; }
+    .stat-num { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 700; }
+    .stat-label { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+    .stat-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.3); }
+
+    /* ── FEATURES ── */
+    .features { padding: 72px 60px; background: var(--white); }
+
+    .section-header { text-align: center; margin-bottom: 48px; }
+
+    .section-eyebrow {
+      display: inline-block; font-size: 13px; font-weight: 600;
+      color: var(--orange); letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 36px; color: var(--text); margin-bottom: 12px;
+    }
+    .section-title .t-red { color: var(--red); }
+    .section-title .t-orange { color: var(--orange); }
+
+    .section-sub {
+      font-size: 15px; color: var(--muted);
+      max-width: 500px; margin: 0 auto; line-height: 1.7;
+    }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 24px; margin-top: 40px;
+    }
+
+    .feature-card {
+      background: var(--offwhite); border-radius: 12px;
+      padding: 28px 24px; border: 2px solid transparent;
+      transition: all 0.25s; position: relative; overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: ""; position: absolute;
+      top: 0; left: 0; right: 0; height: 4px;
+    }
+
+    .feature-card.c1::before { background: var(--red); }
+    .feature-card.c2::before { background: var(--orange); }
+    .feature-card.c3::before { background: var(--yellow); }
+    .feature-card.c4::before { background: var(--red); }
+    .feature-card.c5::before { background: var(--orange); }
+    .feature-card.c6::before { background: var(--yellow); }
+    .feature-card.c7::before { background: var(--red); }
+
+    .feature-card:hover {
+      border-color: var(--hover);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(139,26,26,0.13);
+    }
+
+    .feature-icon { font-size: 36px; margin-bottom: 14px; display: block; }
+
+    .feature-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px; color: var(--text);
+      margin-bottom: 8px; font-weight: 700;
+    }
+
+    .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+    .feature-tag {
+      display: inline-block; margin-top: 12px;
+      font-size: 11px; font-weight: 600;
+      padding: 3px 10px; border-radius: 12px;
+      background: var(--orange-light); color: var(--orange);
+    }
+
+    .features-grid .feature-card:last-child { grid-column: 2 / 3; }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      background: var(--offwhite); padding: 72px 60px;
+      position: relative;
+    }
+
+    .how::before {
+      content: "❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁ ❁";
+      display: block; text-align: center;
+      font-size: 16px; color: var(--orange);
+      letter-spacing: 4px; margin-bottom: 36px;
+    }
+
+    .steps {
+      display: flex; justify-content: center;
+      gap: 0; align-items: flex-start;
+      flex-wrap: wrap; margin-top: 40px;
+    }
+
+    .step { text-align: center; max-width: 160px; flex: 1; min-width: 130px; }
+
+    .step-circle {
+      width: 64px; height: 64px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; margin: 0 auto 14px;
+      border: 3px solid var(--yellow); position: relative;
+    }
+
+    .step-circle.s1 { background: var(--red); }
+    .step-circle.s2 { background: var(--orange); }
+    .step-circle.s3 { background: var(--yellow); }
+    .step-circle.s4 { background: var(--red); }
+    .step-circle.s5 { background: var(--orange); }
+
+    .step-arrow { font-size: 28px; color: var(--orange); padding-top: 20px; flex-shrink: 0; }
+    .step-title { font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+    .step-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    /* ── AI AGENTS ── */
+    .agents { padding: 72px 60px; background: var(--white); }
+
+    .agents-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 20px; margin-top: 40px;
+    }
+
+    .agent-card {
+      border-radius: 12px; padding: 28px 20px;
+      text-align: center; border: 2px solid;
+      transition: transform 0.2s;
+    }
+    .agent-card:hover { transform: translateY(-4px); }
+
+    .agent-card.a1 { border-color: var(--red); background: var(--red-light); }
+    .agent-card.a2 { border-color: var(--orange); background: var(--orange-light); }
+    .agent-card.a3 { border-color: var(--yellow); background: var(--yellow-light); }
+    .agent-card.a4 { border-color: var(--red); background: var(--red-light); }
+
+    .agent-icon { font-size: 42px; margin-bottom: 12px; display: block; }
+
+    .agent-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px; font-weight: 700;
+      color: var(--text); margin-bottom: 8px;
+    }
+
+    .agent-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── CTA ── */
+    .cta {
+      background: var(--orange); padding: 64px 60px;
+      text-align: center; position: relative; overflow: hidden;
+    }
+
+    .cta::before {
+      content: "✿ ❀ ✿ ❀ ✿ ❀ ✿ ❀ ✿ ❀ ✿ ❀ ✿ ❀ ✿";
+      display: block; font-size: 18px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 8px; margin-bottom: 24px;
+    }
+
+    .cta h2 { font-family: 'Playfair Display', serif; font-size: 38px; color: white; margin-bottom: 14px; }
+    .cta p { font-size: 16px; color: rgba(255,255,255,0.9); margin-bottom: 32px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.7; }
+
+    .btn-cta {
+      padding: 16px 40px; background: var(--white);
+      color: var(--red); border: none; border-radius: 8px;
+      font-size: 17px; font-weight: 700; cursor: pointer;
+      transition: background 0.2s; font-family: 'Inter', sans-serif;
+    }
+    .btn-cta:hover { background: var(--yellow); color: var(--hover); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--text); color: rgba(255,255,255,0.7);
+      text-align: center; padding: 24px 60px; font-size: 13px;
+    }
+    footer span { color: var(--yellow); }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav>
+    <div class="logo">
+      <div class="logo-icon">🥗</div>
+      <div class="logo-text">Diet<span>Mate</span> BD</div>
+    </div>
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Features</a></li>
+      <li><a href="#">How It Works</a></li>
+      <li><a href="#">Dietitians</a></li>
+      <li><a href="#">About</a></li>
+    </ul>
+    <div class="nav-buttons">
+      <button class="btn-outline">Log In</button>
+      <button class="btn-solid">Get Started</button>
+    </div>
+  </nav>
+
+  <div class="folk-pattern-bar">✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾</div>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="hero-tag">🇧🇩 Made for Bangladeshi Users</div>
+      <h1>
+        Eat <span class="h-red">Smart.</span><br/>
+        Stay <span class="h-orange">Healthy.</span><br/>
+        Save Money.
+      </h1>
+      <p class="hero-sub">
+        Affordable diet and fitness plans using local Bangladeshi foods — designed for your budget, your taste, and your health.
+      </p>
+      <div class="hero-buttons">
+        <button class="btn-hero-main">Start Your Free Plan →</button>
+        <button class="btn-hero-sec">See How It Works</button>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="corner-motif tl">✿</div>
+      <div class="corner-motif tr">❀</div>
+      <div class="corner-motif bl">❀</div>
+      <div class="corner-motif br">✿</div>
+      <div class="folk-bowl">🍱</div>
+      <div class="folk-foods">🐟 🥚 🌿 🍚</div>
+      <div class="folk-label">Convenient. Affordable. Healthy.</div>
+    </div>
+  </section>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num">15-Day</div>
+      <div class="stat-label">Adaptive Plan Cycle</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-num">4</div>
+      <div class="stat-label">AI Agents Powering the System</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-num">BDT ৳</div>
+      <div class="stat-label">Budget-Aware Planning</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-num">7</div>
+      <div class="stat-label">Unique Features</div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="section-header">
+      <div class="section-eyebrow">What We Offer</div>
+      <h2 class="section-title">7 Features Built <span class="t-red">For You</span></h2>
+      <p class="section-sub">Everything you need to eat well, stay fit, and save money — all in one place.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card c1">
+        <span class="feature-icon">🍱</span>
+        <div class="feature-title">Personalized Diet Plan</div>
+        <p class="feature-desc">Get a 15-day meal plan using affordable local foods tailored to your age, weight, goal, and taste.</p>
+        <span class="feature-tag">AI Powered</span>
+      </div>
+      <div class="feature-card c2">
+        <span class="feature-icon">💰</span>
+        <div class="feature-title">Budget Meal Optimizer</div>
+        <p class="feature-desc">Enter your budget in BDT and our AI adjusts your meals to fit — suggesting cheaper alternatives automatically.</p>
+        <span class="feature-tag">Unique Feature</span>
+      </div>
+      <div class="feature-card c3">
+        <span class="feature-icon">🩺</span>
+        <div class="feature-title">Disease-Aware Diet</div>
+        <p class="feature-desc">Diabetes, High BP, High Cholesterol? Your diet plan automatically adjusts to your health condition.</p>
+        <span class="feature-tag">Health Focused</span>
+      </div>
+      <div class="feature-card c4">
+        <span class="feature-icon">🏃</span>
+        <div class="feature-title">Fitness Plan Generator</div>
+        <p class="feature-desc">Home or gym? Beginner or advanced? Get a weekly exercise routine that matches your lifestyle.</p>
+        <span class="feature-tag">AI Powered</span>
+      </div>
+      <div class="feature-card c5">
+        <span class="feature-icon">📊</span>
+        <div class="feature-title">Progress Tracker & BMI</div>
+        <p class="feature-desc">Track your weight, BMI, and water intake daily. Get progress reports on Day 7 and Day 15.</p>
+        <span class="feature-tag">Smart Tracking</span>
+      </div>
+      <div class="feature-card c6">
+        <span class="feature-icon">💬</span>
+        <div class="feature-title">Motivational Chatbot</div>
+        <p class="feature-desc">Your AI companion cheers you on daily — with affirmations, milestones, and encouragement.</p>
+        <span class="feature-tag">AI Powered</span>
+      </div>
+      <div class="feature-card c7">
+        <span class="feature-icon">🏥</span>
+        <div class="feature-title">Dietitian Suggester</div>
+        <p class="feature-desc">Find the right dietitian or nutritionist near you based on your health condition and budget.</p>
+        <span class="feature-tag">Healthcare</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="folk-divider"></div>
+
+  <!-- How It Works -->
+  <section class="how">
+    <div class="section-header">
+      <div class="section-eyebrow">The Process</div>
+      <h2 class="section-title">How It <span class="t-orange">Works</span></h2>
+      <p class="section-sub">Simple steps to a healthier, more affordable lifestyle.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-circle s1">👤</div>
+        <div class="step-title">Enter Your Info</div>
+        <div class="step-sub">Age, weight, goal, budget & food preferences</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-circle s2">🤖</div>
+        <div class="step-title">AI Builds Your Plan</div>
+        <div class="step-sub">15-day diet & fitness plan generated instantly</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-circle s3">📅</div>
+        <div class="step-title">Follow & Log Daily</div>
+        <div class="step-sub">Track meals, water, exercise every day</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-circle s4">📊</div>
+        <div class="step-title">Get Progress Reports</div>
+        <div class="step-sub">Reports on Day 7 & Day 15 with AI feedback</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-circle s5">🔄</div>
+        <div class="step-title">New Smarter Plan</div>
+        <div class="step-sub">AI generates an updated plan based on your progress</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Agents -->
+  <section class="agents">
+    <div class="section-header">
+      <div class="section-eyebrow">Powered By</div>
+      <h2 class="section-title">4 Specialized <span class="t-red">AI Agents</span></h2>
+      <p class="section-sub">Four intelligent agents working together to keep you healthy and on budget.</p>
+    </div>
+    <div class="agents-grid">
+      <div class="agent-card a1">
+        <span class="agent-icon">🧠</span>
+        <div class="agent-name">Nutrition & Diet Agent</div>
+        <p class="agent-desc">Plans meals, optimizes budget, and adjusts for health conditions.</p>
+      </div>
+      <div class="agent-card a2">
+        <span class="agent-icon">🏋️</span>
+        <div class="agent-name">Fitness Agent</div>
+        <p class="agent-desc">Creates and adapts your weekly workout routine based on progress.</p>
+      </div>
+      <div class="agent-card a3">
+        <span class="agent-icon">📈</span>
+        <div class="agent-name">Health Tracking Agent</div>
+        <p class="agent-desc">Monitors BMI, progress, and suggests the right health professionals.</p>
+      </div>
+      <div class="agent-card a4">
+        <span class="agent-icon">💬</span>
+        <div class="agent-name">Motivational Chatbot</div>
+        <p class="agent-desc">Keeps you motivated with daily affirmations and milestone celebrations.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="folk-divider"></div>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2>Start Your Health Journey Today 🌿</h2>
+    <p>Join thousands of Bangladeshi users eating healthier, staying fit, and saving money — all with one smart app.</p>
+    <button class="btn-cta">Create Your Free Plan →</button>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 <span>DietMate BD</span> — Smart Diet & Fitness Planner | Built for Bangladeshi Users 🇧🇩</p>
+  </footer>
+
+  <div class="folk-pattern-bar">✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾</div>
+
+</body>
+</html>

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fitness Plan — Smart Diet & Fitness Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --white:        #FFFFFF;
+      --offwhite:     #FFFDF5;
+      --yellow:       #F5C518;
+      --yellow-light: #FFF8CC;
+      --red:          #D62828;
+      --red-light:    #FDEAEA;
+      --orange:       #F77F00;
+      --orange-light: #FFF0DC;
+      --green:        #2E8B57;
+      --green-light:  #E8F5EE;
+      --text:         #1A1A1A;
+      --muted:        #666666;
+      --hover:        #8B1A1A;
+      --sidebar-w:    240px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--offwhite); color: var(--text); display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w); background: var(--white);
+      border-right: 3px solid var(--green);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    }
+    .sidebar-logo { padding: 22px 20px 16px; border-bottom: 2px solid var(--offwhite); display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 38px; height: 38px; background: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 2px solid var(--yellow); }
+    .logo-text { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--red); }
+    .logo-text span { color: var(--green); }
+    .folk-strip { height: 8px; background: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 8px, var(--yellow) 8px, var(--yellow) 16px, var(--orange) 16px, var(--orange) 24px, var(--green) 24px, var(--green) 32px); }
+    .sidebar-nav { flex: 1; padding: 16px 0; display: flex; flex-direction: column; gap: 2px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
+    .nav-item:hover { color: var(--hover); background: var(--offwhite); border-left-color: var(--orange); }
+    .nav-item.active { color: var(--red); background: var(--red-light); border-left-color: var(--red); font-weight: 600; }
+    .nav-icon { font-size: 18px; flex-shrink: 0; }
+    .nav-section-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; padding: 14px 20px 4px; }
+    .sidebar-user { padding: 16px 20px; border-top: 2px solid var(--offwhite); display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 36px; height: 36px; background: var(--orange); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 2px solid var(--yellow); flex-shrink: 0; }
+    .user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .user-goal { font-size: 11px; color: var(--muted); }
+
+    /* ── MAIN ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── TOPBAR ── */
+    .topbar { background: var(--white); border-bottom: 3px solid var(--green); padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .topbar-left h2 { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text); }
+    .topbar-left p { font-size: 13px; color: var(--muted); margin-top: 1px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .cycle-badge { background: var(--red-light); border: 1px solid var(--red); color: var(--red); font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
+    .btn-primary { background: var(--red); color: white; border: none; border-radius: 6px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-primary:hover { background: var(--hover); }
+    .btn-secondary { background: transparent; color: var(--orange); border: 2px solid var(--orange); border-radius: 6px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-secondary:hover { background: var(--orange); color: white; }
+
+    /* ── CONTENT ── */
+    .content { padding: 28px 32px; flex: 1; }
+
+    /* ── PLAN INFO BAR ── */
+    .plan-info-bar { background: var(--white); border-radius: 12px; padding: 18px 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 32px; border: 2px solid var(--offwhite); flex-wrap: wrap; }
+    .plan-info-item { display: flex; align-items: center; gap: 10px; }
+    .plan-info-icon { font-size: 22px; }
+    .plan-info-label { font-size: 11px; color: var(--muted); }
+    .plan-info-value { font-size: 14px; font-weight: 600; color: var(--text); }
+    .plan-divider { width: 1px; height: 36px; background: var(--offwhite); }
+
+    /* ── WEEK TABS ── */
+    .week-tabs { display: flex; gap: 10px; margin-bottom: 24px; }
+    .week-tab { padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: 2px solid var(--offwhite); background: var(--white); color: var(--muted); transition: all 0.2s; }
+    .week-tab:hover { border-color: var(--orange); color: var(--orange); }
+    .week-tab.active { background: var(--red); color: white; border-color: var(--red); }
+
+    /* ── STATS ROW ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--white); border-radius: 12px; padding: 18px; border: 2px solid var(--offwhite); position: relative; overflow: hidden; }
+    .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+    .stat-card.s1::before { background: var(--red); }
+    .stat-card.s2::before { background: var(--orange); }
+    .stat-card.s3::before { background: var(--yellow); }
+    .stat-card.s4::before { background: var(--green); }
+    .stat-icon { font-size: 24px; margin-bottom: 8px; }
+    .stat-value { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: var(--text); }
+    .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .stat-sub { font-size: 11px; font-weight: 600; margin-top: 5px; }
+    .stat-card.s1 .stat-sub { color: var(--red); }
+    .stat-card.s2 .stat-sub { color: var(--orange); }
+    .stat-card.s3 .stat-sub { color: #9A7D00; }
+    .stat-card.s4 .stat-sub { color: var(--green); }
+
+    /* ── MAIN GRID ── */
+    .main-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+
+    /* ── EXERCISE LIST ── */
+    .exercise-list-card { background: var(--white); border-radius: 12px; padding: 22px; border: 2px solid var(--offwhite); }
+
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .card-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; }
+    .card-badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; }
+    .badge-red { background: var(--red-light); color: var(--red); }
+    .badge-orange { background: var(--orange-light); color: var(--orange); }
+    .badge-green { background: var(--green-light); color: var(--green); }
+    .badge-yellow { background: var(--yellow-light); color: #9A7D00; }
+
+    /* Day row inside exercise list */
+    .day-section { margin-bottom: 20px; }
+    .day-label-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .day-pill { background: var(--red); color: white; font-size: 12px; font-weight: 600; padding: 3px 12px; border-radius: 12px; }
+    .day-pill.rest { background: var(--green-light); color: var(--green); }
+    .day-date { font-size: 12px; color: var(--muted); }
+    .day-line { flex: 1; height: 1px; background: var(--offwhite); }
+
+    .exercise-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 10px; background: var(--offwhite); margin-bottom: 8px; transition: all 0.2s; cursor: pointer; }
+    .exercise-item:hover { background: var(--yellow-light); }
+    .exercise-item.done { opacity: 0.75; }
+
+    .ex-number { width: 28px; height: 28px; border-radius: 50%; background: var(--red); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .ex-number.done-num { background: var(--green); }
+
+    .ex-icon { font-size: 22px; flex-shrink: 0; }
+
+    .ex-details { flex: 1; }
+    .ex-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .ex-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .ex-badges { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+    .ex-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 8px; }
+    .ex-badge.duration { background: var(--orange-light); color: var(--orange); }
+    .ex-badge.calories { background: var(--red-light); color: var(--red); }
+    .ex-badge.done-badge { background: var(--green-light); color: var(--green); }
+
+    .rest-day-card { background: var(--green-light); border: 2px dashed var(--green); border-radius: 10px; padding: 16px; text-align: center; margin-bottom: 8px; }
+    .rest-day-card p { font-size: 13px; color: var(--green); font-weight: 500; }
+
+    /* ── SIDE PANEL ── */
+    .side-panel { display: flex; flex-direction: column; gap: 18px; }
+
+    .side-card { background: var(--white); border-radius: 12px; padding: 20px; border: 2px solid var(--offwhite); }
+
+    /* Weekly Completion */
+    .completion-ring-wrap { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .ring-svg { flex-shrink: 0; }
+    .ring-info { }
+    .ring-percent { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--orange); }
+    .ring-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .completion-bar-item { margin-bottom: 10px; }
+    .comp-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+    .comp-bar { height: 7px; background: var(--offwhite); border-radius: 4px; overflow: hidden; }
+    .comp-fill { height: 100%; border-radius: 4px; }
+    .fill-red { background: var(--red); }
+    .fill-orange { background: var(--orange); }
+    .fill-green { background: var(--green); }
+
+    /* Level Badge */
+    .level-display { text-align: center; padding: 10px 0; }
+    .level-icon { font-size: 48px; margin-bottom: 8px; }
+    .level-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--orange); margin-bottom: 4px; }
+    .level-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .level-progress { margin-top: 14px; }
+    .level-progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+    .level-bar { height: 8px; background: var(--offwhite); border-radius: 4px; overflow: hidden; }
+    .level-fill { height: 100%; background: linear-gradient(90deg, var(--orange), var(--red)); border-radius: 4px; width: 55%; }
+
+    /* Tip Card */
+    .tip-card { background: var(--yellow-light); border: 2px solid var(--yellow); border-radius: 12px; padding: 16px; }
+    .tip-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .tip-icon { font-size: 20px; }
+    .tip-title { font-size: 14px; font-weight: 700; color: var(--hover); }
+    .tip-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🥗</div>
+      <div class="logo-text">Diet<span>Mate</span> BD</div>
+    </div>
+    <div class="folk-strip"></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="#"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="#"><span class="nav-icon">🍱</span> My Diet Plan</a>
+      <a class="nav-item active" href="#"><span class="nav-icon">🏃</span> Fitness Plan</a>
+      <a class="nav-item" href="#"><span class="nav-icon">📊</span> Progress & BMI</a>
+      <div class="nav-section-label">Tools</div>
+      <a class="nav-item" href="#"><span class="nav-icon">💬</span> Chatbot</a>
+      <a class="nav-item" href="#"><span class="nav-icon">🏥</span> Find Dietitian</a>
+      <a class="nav-item" href="#"><span class="nav-icon">📅</span> Daily Log</a>
+      <div class="nav-section-label">Account</div>
+      <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> Settings</a>
+      <a class="nav-item" href="#"><span class="nav-icon">🚪</span> Logout</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar">👩</div>
+      <div>
+        <div class="user-name">Adila Afsara</div>
+        <div class="user-goal">Goal: Lose Weight</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2>🏃 My Fitness Plan</h2>
+        <p>Cycle 1 — July 1 to July 15, 2025 · Beginner Level · Home Workout</p>
+      </div>
+      <div class="topbar-right">
+        <div class="cycle-badge">🔄 Day 8 of 15</div>
+        <button class="btn-secondary">📥 Download Plan</button>
+        <button class="btn-primary">🔄 Regenerate Plan</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Plan Info Bar -->
+      <div class="plan-info-bar">
+        <div class="plan-info-item">
+          <div class="plan-info-icon">🎯</div>
+          <div>
+            <div class="plan-info-label">Fitness Goal</div>
+            <div class="plan-info-value">Lose Weight</div>
+          </div>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">⚡</div>
+          <div>
+            <div class="plan-info-label">Fitness Level</div>
+            <div class="plan-info-value">Beginner</div>
+          </div>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">🏠</div>
+          <div>
+            <div class="plan-info-label">Workout Location</div>
+            <div class="plan-info-value">Home</div>
+          </div>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">⏱️</div>
+          <div>
+            <div class="plan-info-label">Daily Duration</div>
+            <div class="plan-info-value">35 — 40 mins</div>
+          </div>
+        </div>
+        <div class="plan-divider"></div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">🔥</div>
+          <div>
+            <div class="plan-info-label">Calories Burned/Day</div>
+            <div class="plan-info-value">~200 kcal</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card s1">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value">5 / 8</div>
+          <div class="stat-label">Workouts Completed</div>
+          <div class="stat-sub">3 remaining this cycle</div>
+        </div>
+        <div class="stat-card s2">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-value">1,020</div>
+          <div class="stat-label">Total Calories Burned</div>
+          <div class="stat-sub">~200 kcal / session</div>
+        </div>
+        <div class="stat-card s3">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value">280 min</div>
+          <div class="stat-label">Total Active Time</div>
+          <div class="stat-sub">Avg 35 min / session</div>
+        </div>
+        <div class="stat-card s4">
+          <div class="stat-icon">🏆</div>
+          <div class="stat-value">3 Day</div>
+          <div class="stat-label">Current Streak</div>
+          <div class="stat-sub">Keep it going! 💪</div>
+        </div>
+      </div>
+
+      <!-- Week Tabs -->
+      <div class="week-tabs">
+        <div class="week-tab active">📅 Week 1 (Days 1–7)</div>
+        <div class="week-tab">📅 Week 2 (Days 8–15)</div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="main-grid">
+
+        <!-- Exercise List -->
+        <div class="exercise-list-card">
+          <div class="card-header">
+            <div class="card-title">📋 Week 1 Exercise Schedule</div>
+            <span class="card-badge badge-orange">Days 1 – 7</span>
+          </div>
+
+          <!-- Day 1 -->
+          <div class="day-section">
+            <div class="day-label-row">
+              <div class="day-pill">Day 1 — Mon</div>
+              <div class="day-date">July 1</div>
+              <div class="day-line"></div>
+              <span class="card-badge badge-green">Done ✓</span>
+            </div>
+            <div class="exercise-item done">
+              <div class="ex-number done-num">1</div>
+              <div class="ex-icon">🚶</div>
+              <div class="ex-details">
+                <div class="ex-name">Morning Walk</div>
+                <div class="ex-meta">Light pace · Outdoors or indoors</div>
+              </div>
+              <div class="ex-badges">
+                <span class="ex-badge duration">15 min</span>
+                <span class="ex-badge calories">60 kcal</span>
+                <span class="ex-badge done-badge">✓ Done</span>
+              </div>
+            </div>
+            <div class="exercise-item done">
+              <div class="ex-number done-num">2</div>
+              <div class="ex-icon">🧘</div>
+              <div class="ex-details">
+                <div class="ex-name">Bodyweight Squats</div>
+                <div class="ex-meta">3 sets × 10 reps · Rest 30 sec</div>
+              </div>
+              <div class="ex-badges">
+                <span class="ex-badge duration">10 min</span>
+                <span class="ex-badge calories">50 kcal</span>
+                <span class="ex-badge done-badge">✓ Done</span>
+              </div>
+            </div>
+            <div class="exercise-item done">
+              <div class="ex-number done-num">3</div>
+              <div class="ex-icon">🤸</div>
+              <div class="ex-details">
+                <div class="ex-name">Full Body Stretching</div>
+                <div class="ex-meta">Cool down · Hold each stretch 20 sec</div>
+              </div>
+              <div class="ex-badges">
+                <span class="ex-badge duration">10 min</span>
+                <span class="ex-badge calories">25 kcal</span>
+                <span class="ex-badge done-badge">✓ Done</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Day 2 -->
+          <div class="day-section">
+            <div class="day-label-row">
+              <div class="day-pill">Day 2 — Tue</div>
+              <div class="day-date">July 2</div>
+              <div class="day-line"></div>
+              <span class="card-badge badge-green">Done ✓</span>
+            </div>
+            <div class="exercise-item done">
+              <div class="ex-number done-num">1</div>
+              <div class="ex-icon">💪</div>
+              <div class="ex-details">
+                <div class="ex-name">Wall Push-Ups</div>
+                <div class="ex-meta">3 sets × 12 reps · Beginner friendly</div>
+              </div>
+              <div class="ex-badges">
+                <span class="ex-badge duration">10 min</span>
+                <span class="ex-badge calories">45 kcal</span>
+                <span class="ex-badge done-badge">✓ Done</span>
+              </div>
+            </div>
+            <div class="exercise-item done">
+              <div class="ex-number done-num">2</div>
+              <div class="ex-icon">🦵</div>
+              <div class="ex-details">
+                <div class="ex-name">Standing Lunges</div>
+                <div class="ex-meta">3 sets × 8 reps each leg</div>
+              </div>
+              <div class="ex-badges">
+                <span class="ex-badge duration">10 min</span>
+                <span class="ex-badge calories">55 kcal</span>
+                <span class="ex-badge done-badge">✓ Done</span>
+              </div>
+            </div>
+            <div class="exercise-item done">
+              <div class="ex-number done-num">3</div>
+              <div class="ex-icon">🤸</div>
+              <div class="ex-details">
+                <div class="ex-name">Full Body Stretching</div>
+                <div class="ex-meta">Cool down</div>
+              </div>
+              <div class="ex-badges">
+                <span class="ex-badge duration">10 min</span>
+                <span class="ex-badge calories">20 kcal</span>
+                <span class="ex-badge done-badge">✓ Done</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Day 3 — Rest -->
+          <div class="day-section">
+            <div class="day-label-row">
+              <div class="day-pill rest">Day 3 — Wed</div>
+              <div class="day-date">July 3</div>
+              <div class="day-line"></div>
+              <span class="card-badge badge-green">Rest Day</span>
+            </div>
+            <div class="rest-day-card">
+              <p>🌿 Rest Day — Let your muscles recover. Light walking or yoga is optional.</p>
+            </div>
+          </div>
+
+          <!-- Day 7 Today -->
+          <div class="day-section">
+            <div class="day-label-row">
+              <div class="day-pill">Day 8 — Thu</div>
+              <div class="day-date">Today · July 8</div>
+              <div class="day-line"></div>
+              <span class="card-badge badge-orange">In Progress</span>
+            </div>
+            <div class="exercise-item done">
+              <div class="ex-number done-num">1</div>
+              <div class="ex-icon">🚶</div>
+              <div class="ex-details">
+                <div class="ex-name">Brisk Morning Walk</div>
+                <div class="ex-meta">Slightly faster than Day 1</div>
+              </div>
+              <div class="ex-badges">
+                <span class="ex-badge duration">20 min</span>
+                <span class="ex-badge calories">80 kcal</span>
+                <span class="ex-badge done-badge">✓ Done</span>
+              </div>
+            </div>
+            <div class="exercise-item done">
+              <div class="ex-number done-num">2</div>
+              <div class="ex-icon">🧘</div>
+              <div class="ex-details">
+                <div class="ex-name">Bodyweight Squats</div>
+                <div class="ex-meta">3 sets × 12 reps · Progressing!</div>
+              </div>
+              <div class="ex-badges">
+                <span class="ex-badge duration">10 min</span>
+                <span class="ex-badge calories">55 kcal</span>
+                <span class="ex-badge done-badge">✓ Done</span>
+              </div>
+            </div>
+            <div class="exercise-item">
+              <div class="ex-number">3</div>
+              <div class="ex-icon">🤸</div>
+              <div class="ex-details">
+                <div class="ex-name">Full Body Stretching</div>
+                <div class="ex-meta">Cool down routine</div>
+              </div>
+              <div class="ex-badges">
+                <span class="ex-badge duration">10 min</span>
+                <span class="ex-badge calories">25 kcal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="side-panel">
+
+          <!-- Weekly Completion -->
+          <div class="side-card">
+            <div class="card-header" style="margin-bottom:14px">
+              <div class="card-title" style="font-size:15px">📊 Week 1 Completion</div>
+              <span class="card-badge badge-orange">71%</span>
+            </div>
+            <div class="completion-ring-wrap">
+              <svg class="ring-svg" width="70" height="70" viewBox="0 0 70 70">
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#FFF0DC" stroke-width="8"/>
+                <circle cx="35" cy="35" r="28" fill="none" stroke="#F77F00" stroke-width="8"
+                  stroke-dasharray="124 176" stroke-dashoffset="44" stroke-linecap="round"/>
+                <text x="35" y="40" text-anchor="middle" font-size="14" font-weight="700" fill="#F77F00">71%</text>
+              </svg>
+              <div class="ring-info">
+                <div class="ring-percent">5/7</div>
+                <div class="ring-label">Days completed<br/>this week</div>
+              </div>
+            </div>
+            <div class="completion-bar-item">
+              <div class="comp-label"><span>Cardio</span><span>80%</span></div>
+              <div class="comp-bar"><div class="comp-fill fill-red" style="width:80%"></div></div>
+            </div>
+            <div class="completion-bar-item">
+              <div class="comp-label"><span>Strength</span><span>70%</span></div>
+              <div class="comp-bar"><div class="comp-fill fill-orange" style="width:70%"></div></div>
+            </div>
+            <div class="completion-bar-item">
+              <div class="comp-label"><span>Stretching</span><span>60%</span></div>
+              <div class="comp-bar"><div class="comp-fill fill-green" style="width:60%"></div></div>
+            </div>
+          </div>
+
+          <!-- Level Card -->
+          <div class="side-card">
+            <div class="card-header" style="margin-bottom:10px">
+              <div class="card-title" style="font-size:15px">⚡ Your Level</div>
+              <span class="card-badge badge-yellow">Beginner</span>
+            </div>
+            <div class="level-display">
+              <div class="level-icon">🌱</div>
+              <div class="level-name">Beginner</div>
+              <div class="level-desc">You're building great habits! Keep completing workouts to level up to Intermediate.</div>
+              <div class="level-progress">
+                <div class="level-progress-label">
+                  <span>Progress to Intermediate</span>
+                  <span>55%</span>
+                </div>
+                <div class="level-bar"><div class="level-fill"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tip Card -->
+          <div class="tip-card">
+            <div class="tip-header">
+              <div class="tip-icon">💡</div>
+              <div class="tip-title">Today's Fitness Tip</div>
+            </div>
+            <div class="tip-text">
+              Drink a glass of water before your workout and another after. Staying hydrated helps you perform better and recover faster! 💧
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>
