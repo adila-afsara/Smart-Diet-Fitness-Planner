@@ -25,8 +25,14 @@ def login_view(request):
             #Looking  for this email in users table
             user = User.objects.get(email=email, password=hashed_password)
 
+<<<<<<< HEAD
             # session as it remembers the user is logged in
             
+=======
+            
+    
+        #session for after signup, it automatically log the user in
+>>>>>>> 42f5bfac3a1ecd1d4efb119dd0872d73befba999
             request.session['user_id'] = user.id
             request.session['user_name'] = user.full_name
 
