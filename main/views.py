@@ -31,8 +31,9 @@ def login_view(request):
             # 🤔 Why? Look for this email in our users table
             user = User.objects.get(email=email, password=hashed_password)
 
-            # 🤔 Why session? It remembers the user is logged in
-            # Like a wristband at a theme park — proves you paid!
+            
+    
+        #session for after signup, it automatically log the user in
             request.session['user_id'] = user.id
             request.session['user_name'] = user.full_name
 
@@ -91,6 +92,7 @@ def signup(request):
         workout_location = request.POST.get('workout_location')
         weekly_budget = request.POST.get('weekly_budget')
         food_preferences = request.POST.get('food_preferences')
+        avoid_foods = request.POST.get('avoid_foods')
 
         # 🤔 Why UserProfile.objects.create()?
         # This saves health info into user_profiles table
