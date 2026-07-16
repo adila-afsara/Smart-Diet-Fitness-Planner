@@ -180,213 +180,148 @@
     <div class="form-card">
 
       <!-- STEP 1 — Account Info -->
-      <div class="step-panel active" id="step1">
-        <div class="step-header">
-          <div class="step-tag">Step 1 of 3</div>
-          <div class="step-title">Create Your Account 👤</div>
-          <div class="step-sub">Enter your basic account information to get started</div>
-        </div>
+      <form action="{% url 'signup' %}" method="post">
+  {% csrf_token %}
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">👤 First Name</label>
-            <input class="form-input" type="text" placeholder="e.g. Adila"/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">👤 Last Name</label>
-            <input class="form-input" type="text" placeholder="e.g. Afsara"/>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">📧 Email Address</label>
-          <input class="form-input" type="email" placeholder="e.g. adila@email.com"/>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">📞 Phone Number</label>
-          <input class="form-input" type="tel" placeholder="e.g. 01711-XXXXXX"/>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">🔒 Password</label>
-          <input class="form-input" type="password" placeholder="Create a strong password"/>
-          <div class="password-strength">
-            <div class="strength-bar"><div class="strength-fill"></div></div>
-            <div class="strength-text">Medium strength — add numbers or symbols</div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">🔒 Confirm Password</label>
-          <input class="form-input" type="password" placeholder="Re-enter your password"/>
-        </div>
-
-        <div class="form-nav">
-          <button class="btn-next">Next — Health Info →</button>
-        </div>
+  {% if messages %}
+    {% for message in messages %}
+      <div style="background:#FDEAEA; color:#D62828; padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:13px; border:1px solid #D62828;">
+        ⚠️ {{ message }}
       </div>
+    {% endfor %}
+  {% endif %}
 
-      <!-- STEP 2 — Health Info -->
-      <div class="step-panel" id="step2">
-        <div class="step-header">
-          <div class="step-tag">Step 2 of 3</div>
-          <div class="step-title">Your Health Info 🩺</div>
-          <div class="step-sub">This helps us create your personalized plan</div>
-        </div>
+  <!-- STEP 1 -->
+  <div class="step-panel active" id="step1">
+    <div class="step-header">
+      <div class="step-tag">Step 1 of 3</div>
+      <div class="step-title">Create Your Account 👤</div>
+      <div class="step-sub">Enter your basic account information</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">👤 Full Name</label>
+      <input class="form-input" type="text" name="full_name" placeholder="e.g. Adila Afsara" required/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📧 Email Address</label>
+      <input class="form-input" type="email" name="email" placeholder="e.g. adila@email.com" required/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📞 Phone Number</label>
+      <input class="form-input" type="tel" name="phone" placeholder="e.g. 01711-XXXXXX"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🔒 Password</label>
+      <input class="form-input" type="password" name="password" placeholder="Create a strong password" required/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🔒 Confirm Password</label>
+      <input class="form-input" type="password" name="confirm_password" placeholder="Re-enter your password" required/>
+    </div>
+    <div class="form-nav">
+      <button class="btn-next" type="button" onclick="nextStep(1)">Next — Health Info →</button>
+    </div>
+  </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">🎂 Age</label>
-            <input class="form-input" type="number" placeholder="e.g. 22"/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">📏 Height (cm)</label>
-            <input class="form-input" type="number" placeholder="e.g. 160"/>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">⚖️ Weight (kg)</label>
-            <input class="form-input" type="number" placeholder="e.g. 63"/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">📍 Location</label>
-            <select class="form-select">
-              <option>Select your city</option>
-              <option>Dhaka</option>
-              <option>Chittagong</option>
-              <option>Sylhet</option>
-              <option>Rajshahi</option>
-              <option>Khulna</option>
-              <option>Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">⚧️ Gender</label>
-          <div class="gender-options">
-            <div class="gender-opt selected">
-              <span class="gender-icon">👩</span> Female
-            </div>
-            <div class="gender-opt">
-              <span class="gender-icon">👨</span> Male
-            </div>
-            <div class="gender-opt">
-              <span class="gender-icon">🧑</span> Other
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">🎯 Health Goal</label>
-          <div class="goal-options">
-            <div class="goal-opt selected">
-              <span class="goal-icon">📉</span>
-              <div class="goal-label">Lose Weight</div>
-              <div class="goal-sub">Burn fat, get fit</div>
-            </div>
-            <div class="goal-opt">
-              <span class="goal-icon">📈</span>
-              <div class="goal-label">Gain Weight</div>
-              <div class="goal-sub">Build mass, strength</div>
-            </div>
-            <div class="goal-opt">
-              <span class="goal-icon">⚖️</span>
-              <div class="goal-label">Stay Healthy</div>
-              <div class="goal-sub">Maintain & balance</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">🩺 Health Condition (if any)</label>
-          <div class="condition-options">
-            <div class="condition-opt selected">
-              <span class="condition-icon">✅</span>
-              <span class="condition-label">None</span>
-            </div>
-            <div class="condition-opt">
-              <span class="condition-icon">🩸</span>
-              <span class="condition-label">Diabetes</span>
-            </div>
-            <div class="condition-opt">
-              <span class="condition-icon">❤️</span>
-              <span class="condition-label">High Blood Pressure</span>
-            </div>
-            <div class="condition-opt">
-              <span class="condition-icon">🫀</span>
-              <span class="condition-label">High Cholesterol</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-nav">
-          <button class="btn-back">← Back</button>
-          <button class="btn-next">Next — Preferences →</button>
-        </div>
+  <!-- STEP 2 -->
+  <div class="step-panel" id="step2">
+    <div class="step-header">
+      <div class="step-tag">Step 2 of 3</div>
+      <div class="step-title">Your Health Info 🩺</div>
+      <div class="step-sub">This helps us create your personalized plan</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">🎂 Age</label>
+        <input class="form-input" type="number" name="age" placeholder="e.g. 22" required/>
       </div>
-
-      <!-- STEP 3 — Preferences -->
-      <div class="step-panel" id="step3">
-        <div class="step-header">
-          <div class="step-tag">Step 3 of 3</div>
-          <div class="step-title">Your Preferences 🍱</div>
-          <div class="step-sub">Help us tailor your diet and fitness plan</div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">💰 Monthly Food Budget (BDT ৳)</label>
-          <input class="form-input" type="number" placeholder="e.g. 3000"/>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">⚡ Fitness Level</label>
-          <select class="form-select">
-            <option>🌱 Beginner — Just starting out</option>
-            <option>💪 Intermediate — Some experience</option>
-            <option>🏋️ Advanced — Very active</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">🏠 Workout Location</label>
-          <select class="form-select">
-            <option>🏠 Home — No equipment needed</option>
-            <option>🏋️ Gym — With equipment</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">🍽️ Preferred Local Foods <span style="font-size:11px; color:var(--muted)">(Select all you like)</span></label>
-          <div class="food-chips">
-            <div class="food-chip selected">🍚 Rice</div>
-            <div class="food-chip selected">🫘 Dal / Lentils</div>
-            <div class="food-chip selected">🐟 Fish</div>
-            <div class="food-chip selected">🥚 Eggs</div>
-            <div class="food-chip">🍗 Chicken</div>
-            <div class="food-chip selected">🥬 Vegetables</div>
-            <div class="food-chip">🥦 Shak / Greens</div>
-            <div class="food-chip">🍌 Fruits</div>
-            <div class="food-chip">🥜 Peanuts</div>
-            <div class="food-chip">🫓 Roti / Bread</div>
-            <div class="food-chip">🍵 Tea / Chai</div>
-            <div class="food-chip">🧀 Dairy</div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">🚫 Any Food You Avoid?</label>
-          <input class="form-input" type="text" placeholder="e.g. beef, shrimp, milk (optional)"/>
-        </div>
-
-        <div class="form-nav">
-          <button class="btn-back">← Back</button>
-          <button class="btn-submit">🎉 Create My Account & Start!</button>
-        </div>
+      <div class="form-group">
+        <label class="form-label">📏 Height (cm)</label>
+        <input class="form-input" type="number" name="height" placeholder="e.g. 160" required/>
       </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">⚖️ Weight (kg)</label>
+        <input class="form-input" type="number" name="weight" placeholder="e.g. 63" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">⚧️ Gender</label>
+        <select class="form-select" name="gender" required>
+          <option value="">Select gender</option>
+          <option value="Female">👩 Female</option>
+          <option value="Male">👨 Male</option>
+          <option value="Other">🧑 Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🎯 Health Goal</label>
+      <select class="form-select" name="health_goal" required>
+        <option value="">Select goal</option>
+        <option value="Lose Weight">📉 Lose Weight</option>
+        <option value="Gain Weight">📈 Gain Weight</option>
+        <option value="Stay Healthy">⚖️ Stay Healthy</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🩺 Health Condition</label>
+      <select class="form-select" name="health_condition">
+        <option value="None">✅ None</option>
+        <option value="Diabetes">🩸 Diabetes</option>
+        <option value="High Blood Pressure">❤️ High Blood Pressure</option>
+        <option value="High Cholesterol">🫀 High Cholesterol</option>
+      </select>
+    </div>
+    <div class="form-nav">
+      <button class="btn-back" type="button" onclick="prevStep(2)">← Back</button>
+      <button class="btn-next" type="button" onclick="nextStep(2)">Next — Preferences →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step-panel" id="step3">
+    <div class="step-header">
+      <div class="step-tag">Step 3 of 3</div>
+      <div class="step-title">Your Preferences 🍱</div>
+      <div class="step-sub">Help us tailor your plan</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">💰 Weekly Budget (BDT ৳)</label>
+      <input class="form-input" type="number" name="weekly_budget" placeholder="e.g. 700" required/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">⚡ Fitness Level</label>
+      <select class="form-select" name="activity_level" required>
+        <option value="">Select level</option>
+        <option value="Beginner">🌱 Beginner</option>
+        <option value="Intermediate">💪 Intermediate</option>
+        <option value="Advanced">🏋️ Advanced</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🏠 Workout Location</label>
+      <select class="form-select" name="workout_location" required>
+        <option value="">Select location</option>
+        <option value="Home">🏠 Home</option>
+        <option value="Gym">🏋️ Gym</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🍽️ Food Preferences</label>
+      <input class="form-input" type="text" name="food_preferences" placeholder="e.g. Rice, Fish, Eggs, Vegetables"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🚫 Any Food You Avoid?</label>
+      <input class="form-input" type="text" name="avoid_foods" placeholder="e.g. beef, shrimp (optional)"/>
+    </div>
+    <div class="form-nav">
+      <button class="btn-back" type="button" onclick="prevStep(3)">← Back</button>
+      <button class="btn-submit" type="submit">🎉 Create My Account & Start!</button>
+    </div>
+  </div>
+
+</form>
 
       <div class="folk-pattern"></div>
     </div>
@@ -396,6 +331,40 @@
     </div>
 
   </div>
+<script>
+function nextStep(current) {
+  document.getElementById('step' + current).classList.remove('active');
+  document.getElementById('step' + (current + 1)).classList.add('active');
+  updateStepIndicator(current + 1);
+}
 
+function prevStep(current) {
+  document.getElementById('step' + current).classList.remove('active');
+  document.getElementById('step' + (current - 1)).classList.add('active');
+  updateStepIndicator(current - 1);
+}
+
+function updateStepIndicator(step) {
+  for(let i = 1; i <= 3; i++) {
+    const circle = document.querySelectorAll('.step-circle')[i-1];
+    const label = document.querySelectorAll('.step-label')[i-1];
+    if(i < step) {
+      circle.className = 'step-circle done';
+      label.className = 'step-label done';
+    } else if(i === step) {
+      circle.className = 'step-circle active';
+      label.className = 'step-label active';
+    } else {
+      circle.className = 'step-circle pending';
+      label.className = 'step-label pending';
+    }
+  }
+}
+</script>
 </body>
+
 </html>
+
+        
+             
+     
