@@ -131,7 +131,7 @@
     <div class="form-box">
       <div class="form-title">Welcome Back! 👋</div>
       <div class="form-subtitle">Login to continue your health journey</div>
-   //shows errors if login fails
+   <!--shows errors if login fails-->
       {% if messages %}
         {% for message in messages %}
           <div style="background:#FDEAEA; color:#D62828; padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:13px; border:1px solid #D62828;">
@@ -139,13 +139,13 @@
           </div>
         {% endfor %}
       {% endif %}
-  //action and method for telling the form where to send data
+  <!--action and method for telling the form where to send data-->
       <form action="{% url 'login' %}" method="post">
         {% csrf_token %}
 
         <div class="form-group">
           <label class="form-label">📧 Email Address</label>
-          //name="email" : Django can read it as request.POST.get('email')
+          <!--name="email" : Django can read it as request.POST.get('email')-->
           <input class="form-input" type="email" name="email" placeholder="e.g. adila@email.com" required/>
         </div>
 
