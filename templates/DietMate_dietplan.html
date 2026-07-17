@@ -360,6 +360,20 @@
           <div class="budget-bar"><div class="budget-fill"></div></div>
         </div>
       </div>
+      <!-- AI Generated Diet Plan -->
+{% if ai_diet_plan %}
+<div style="background: var(--white); border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 2px solid var(--green);">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+        <span style="font-size:24px;">🤖</span>
+        <h2 style="font-family:'Playfair Display',serif; font-size:20px; color:var(--green);">
+            Your AI Generated 15-Day Diet Plan
+        </h2>
+    </div>
+    <div style="background:var(--offwhite); border-radius:8px; padding:20px; font-size:14px; line-height:1.8; color:var(--text); white-space:pre-wrap;">
+        {{ ai_diet_plan }}
+    </div>
+</div>
+{% endif %} 
 
       <!-- Disease Alert -->
       <div class="disease-alert">
