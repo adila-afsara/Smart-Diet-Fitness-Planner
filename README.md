@@ -57,7 +57,7 @@ The system is powered by **4 specialized AI agents** using Claude API:
 | Frontend | HTML, CSS, JavaScript |
 | Backend | Python (Django) |
 | Database | MySQL |
-| AI | Claude API (Anthropic) |
+| AI | Gemini API |
 | Hosting | PythonAnywhere |
 
 ---
