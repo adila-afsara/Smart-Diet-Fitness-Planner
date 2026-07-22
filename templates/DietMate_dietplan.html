@@ -402,12 +402,15 @@
 {% endif %} 
 
       <!-- Disease Alert -->
-      <div class="disease-alert">
-        <div class="disease-alert-icon">🩺</div>
-        <div class="disease-alert-text">
-          <strong>Diabetes-Aware Plan Active:</strong> Your meals are adjusted for diabetes management — low sugar, low refined carbs, high fiber foods prioritized. Sugary snacks and white rice portions are reduced automatically.
-        </div>
-      </div>
+      {% if profile.health_condition != 'None' %}
+<div class="disease-alert">
+    <div class="disease-alert-icon">🩺</div>
+    <div class="disease-alert-text">
+        <strong>{{ profile.health_condition }}-Aware Plan Active:</strong>
+        Your meals have been automatically adjusted based on your health condition.
+    </div>
+</div>
+{% endif %}
 
       <!-- Budget Alert -->
       <div class="budget-alert">
