@@ -228,8 +228,7 @@
     <div class="content">
 
       <!-- Plan Info Bar -->
-      
-         <div class="plan-info-bar">
+      <div class="plan-info-bar">
   <div class="plan-info-item">
     <div class="plan-info-icon">🎯</div>
     <div>
@@ -259,9 +258,20 @@
     <div>
       <div class="plan-info-label">Today's Duration</div>
       <div class="plan-info-value">{% if is_rest_day %}Rest Day{% else %}{{ total_duration }} mins{% endif %}</div>
+  <div class="plan-divider"></div>
+  <div class="plan-info-item">
+    <div class="plan-info-icon">🔥</div>
+    <div>
+      <div class="plan-info-label">Today's Calories Burned</div>
+      <div class="plan-info-value">{% if is_rest_day %}—{% else %}~{{ total_calories }} kcal{% endif %}</div>
+    </div>
+  </div>
     </div>
   </div>
 </div>
+       
+            
+       
 
       <!-- Stats Row -->
       <div class="stats-row">
