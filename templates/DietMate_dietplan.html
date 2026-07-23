@@ -352,7 +352,6 @@
         </div>
     </div>
 </div>
-        
         <div class="plan-divider"></div>
         <div class="plan-info-item">
           <div class="plan-info-icon">🩺</div>
@@ -399,7 +398,7 @@
         {{ ai_diet_plan }}
     </div>
 </div>
-{% endif %} 
+{% endif %}
 
       <!-- Disease Alert -->
       {% if profile.health_condition != 'None' %}
@@ -450,183 +449,83 @@
           </div>
           <div class="summary-item">
             <div class="summary-circle circle-protein">{{ total_protein }}g</div>
-            <div class="summary-label">Protein</div>
-            <div class="summary-value">Today's intake</div>
+           <div class="summary-label">Protein</div>
+           <div class="summary-value">Today's intake</div>
           </div>
           <div class="summary-item">
-           <div class="summary-circle circle-carbs">{{ total_carbs }}g</div>
+            <div class="summary-circle circle-carbs">{{ total_carbs }}g</div>
            <div class="summary-label">Carbohydrates</div>
            <div class="summary-value">Today's intake</div>
+          </div>
           <div class="summary-item">
             <div class="summary-circle circle-fat">{{ total_fats }}g</div>
-           <div class="summary-label">Healthy Fats</div>
-           <div class="summary-value">Today's intake</div>
+            <div class="summary-label">Healthy Fats</div>
+         <div class="summary-value">Today's intake</div>
           </div>
         </div>
       </div>
 
-      <!-- Meal Cards Grid -->
-      <div class="meal-grid">
-
-        <!-- Breakfast -->
+      
+     
+         <!-- Meal Cards Grid -->
+    <div class="meal-grid">
+          {% for meal in todays_meals %}
         <div class="meal-card">
-          <div class="meal-card-header">
-            <div class="meal-type-icon breakfast-icon">🌅</div>
-            <div class="meal-type-info">
-              <div class="meal-type-name">Breakfast</div>
-              <div class="meal-type-time">⏰ 7:00 AM — 8:00 AM</div>
-            </div>
-            <div class="meal-cal-badge">320 kcal</div>
+        <div class="meal-card-header">
+         <div class="meal-type-icon
+        {% if meal.meal_type == 'Breakfast' %}breakfast-icon
+        {% elif meal.meal_type == 'Lunch' %}lunch-icon
+        {% elif meal.meal_type == 'Dinner' %}dinner-icon
+        {% else %}snack-icon{% endif %}">
+        {% if meal.meal_type == 'Breakfast' %}🌅
+        {% elif meal.meal_type == 'Lunch' %}☀️
+        {% elif meal.meal_type == 'Dinner' %}🌙
+        {% else %}🌿{% endif %}
+      </div>
+      <div class="meal-type-info">
+        <div class="meal-type-name">{{ meal.meal_type }}</div>
+        <div class="meal-type-time">
+          {% if meal.meal_type == 'Breakfast' %}⏰ 7:00 AM — 8:00 AM
+          {% elif meal.meal_type == 'Lunch' %}⏰ 1:00 PM — 2:00 PM
+          {% elif meal.meal_type == 'Snack' %}⏰ 4:30 PM — 5:00 PM
+          {% else %}⏰ 8:00 PM — 9:00 PM{% endif %}
+        </div>
+      </div>
+      <div class="meal-cal-badge">{{ meal.calories }} kcal</div>
+    </div>
+
+    <div class="meal-items-list">
+      <div class="meal-food-item">
+        <div class="food-emoji">🍽️</div>
+        <div class="food-details">
+          <div class="food-name">{{ meal.meal_name }}</div>
+          <div class="food-macros">
+            {{ meal.calories }} kcal · Protein: {{ meal.protein }}g · Carbs: {{ meal.carbs }}g · Fat: {{ meal.fats }}g
           </div>
-          <div class="meal-items-list">
-            <div class="meal-food-item">
-              <div class="food-emoji">🍳</div>
-              <div class="food-details">
-                <div class="food-name">Boiled Eggs (2 pcs)</div>
-                <div class="food-macros">155 kcal · Protein: 12g · Fat: 10g</div>
-              </div>
-              <div class="food-cost">৳ 20</div>
-            </div>
-            <div class="meal-food-item">
-              <div class="food-emoji">🫓</div>
-              <div class="food-details">
-                <div class="food-name">Brown Bread Roti (2 pcs)</div>
-                <div class="food-macros">120 kcal · Carbs: 24g · Fiber: 3g</div>
-              </div>
-              <div class="food-cost">৳ 15</div>
-            </div>
-            <div class="meal-food-item">
-              <div class="food-emoji">🍵</div>
-              <div class="food-details">
-                <div class="food-name">Ginger Lemon Tea (no sugar)</div>
-                <div class="food-macros">45 kcal · Antioxidants rich</div>
-              </div>
-              <div class="food-cost">৳ 10</div>
-            </div>
-          </div>
-          <div class="meal-footer">
-            <div class="meal-total">Total: <span>320 kcal · ৳ 45</span></div>
-            <button class="alt-btn">🔄 Suggest Alternative</button>
+          <div class="food-macros" style="margin-top:4px; color:var(--green);">
+            {{ meal.ingredients }}
           </div>
         </div>
+        <div class="food-cost">৳ {{ meal.estimated_cost_bdt }}</div>
+      </div>
+    </div>
 
-        <!-- Lunch -->
-        <div class="meal-card">
-          <div class="meal-card-header">
-            <div class="meal-type-icon lunch-icon">☀️</div>
-            <div class="meal-type-info">
-              <div class="meal-type-name">Lunch</div>
-              <div class="meal-type-time">⏰ 1:00 PM — 2:00 PM</div>
-            </div>
-            <div class="meal-cal-badge">480 kcal</div>
-          </div>
-          <div class="meal-items-list">
-            <div class="meal-food-item">
-              <div class="food-emoji">🍚</div>
-              <div class="food-details">
-                <div class="food-name">Brown Rice (1 cup)</div>
-                <div class="food-macros">215 kcal · Carbs: 45g · Fiber: 4g</div>
-              </div>
-              <div class="food-cost">৳ 20</div>
-            </div>
-            <div class="meal-food-item">
-              <div class="food-emoji">🫘</div>
-              <div class="food-details">
-                <div class="food-name">Masoor Dal (1 bowl)</div>
-                <div class="food-macros">180 kcal · Protein: 14g · Fiber: 8g</div>
-              </div>
-              <div class="food-cost">৳ 25</div>
-            </div>
-            <div class="meal-food-item">
-              <div class="food-emoji">🥬</div>
-              <div class="food-details">
-                <div class="food-name">Mixed Shak Bhaji</div>
-                <div class="food-macros">85 kcal · Vitamins A & C · Iron</div>
-              </div>
-              <div class="food-cost">৳ 25</div>
-            </div>
-          </div>
-          <div class="meal-footer">
-            <div class="meal-total">Total: <span>480 kcal · ৳ 70</span></div>
-            <button class="alt-btn">🔄 Suggest Alternative</button>
-          </div>
-        </div>
+    <div class="meal-footer">
+      <div class="meal-total">
+        Total: <span>{{ meal.calories }} kcal · ৳ {{ meal.estimated_cost_bdt }}</span>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--muted);">
+    <p>No meals found for today. Please regenerate your plan.</p>
+  </div>
+  {% endfor %}
+</div>
 
-        <!-- Snack -->
-        <div class="meal-card">
-          <div class="meal-card-header">
-            <div class="meal-type-icon snack-icon">🌿</div>
-            <div class="meal-type-info">
-              <div class="meal-type-name">Afternoon Snack</div>
-              <div class="meal-type-time">⏰ 4:30 PM — 5:00 PM</div>
-            </div>
-            <div class="meal-cal-badge">180 kcal</div>
-          </div>
-          <div class="meal-items-list">
-            <div class="meal-food-item">
-              <div class="food-emoji">🍌</div>
-              <div class="food-details">
-                <div class="food-name">Banana (1 medium)</div>
-                <div class="food-macros">105 kcal · Carbs: 27g · Potassium</div>
-              </div>
-              <div class="food-cost">৳ 10</div>
-            </div>
-            <div class="meal-food-item">
-              <div class="food-emoji">🥜</div>
-              <div class="food-details">
-                <div class="food-name">Roasted Peanuts (handful)</div>
-                <div class="food-macros">75 kcal · Protein: 4g · Good fat</div>
-              </div>
-              <div class="food-cost">৳ 15</div>
-            </div>
-          </div>
-          <div class="meal-footer">
-            <div class="meal-total">Total: <span>180 kcal · ৳ 25</span></div>
-            <button class="alt-btn">🔄 Suggest Alternative</button>
-          </div>
-        </div>
+   
 
-        <!-- Dinner -->
-        <div class="meal-card">
-          <div class="meal-card-header">
-            <div class="meal-type-icon dinner-icon">🌙</div>
-            <div class="meal-type-info">
-              <div class="meal-type-name">Dinner</div>
-              <div class="meal-type-time">⏰ 8:00 PM — 9:00 PM</div>
-            </div>
-            <div class="meal-cal-badge">500 kcal</div>
-          </div>
-          <div class="meal-items-list">
-            <div class="meal-food-item">
-              <div class="food-emoji">🐟</div>
-              <div class="food-details">
-                <div class="food-name">Tilapia Fish Curry (1 piece)</div>
-                <div class="food-macros">200 kcal · Protein: 28g · Omega-3</div>
-              </div>
-              <div class="food-cost">৳ 40</div>
-            </div>
-            <div class="meal-food-item">
-              <div class="food-emoji">🍚</div>
-              <div class="food-details">
-                <div class="food-name">Brown Rice (small portion)</div>
-                <div class="food-macros">160 kcal · Carbs: 35g · Fiber</div>
-              </div>
-              <div class="food-cost">৳ 15</div>
-            </div>
-            <div class="meal-food-item">
-              <div class="food-emoji">🥗</div>
-              <div class="food-details">
-                <div class="food-name">Cucumber & Tomato Salad</div>
-                <div class="food-macros">40 kcal · Vitamins · Hydrating</div>
-              </div>
-              <div class="food-cost">৳ 15</div>
-            </div>
-          </div>
-          <div class="meal-footer">
-            <div class="meal-total">Total: <span>500 kcal · ৳ 70</span></div>
-            <button class="alt-btn">🔄 Suggest Alternative</button>
-          </div>
-        </div>
+ 
 
       </div>
     </div>
