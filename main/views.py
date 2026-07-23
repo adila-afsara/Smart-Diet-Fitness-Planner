@@ -212,12 +212,15 @@ def diet_plan(request):
             'todays_meals': todays_meals,
             'all_meals': all_meals,
             'day_number': day_number,
+            'day_range': range(1, 16),
+            'total_calories': total_calories,
             'total_calories': total_calories,
             'total_cost': total_cost,
             'total_protein': round(total_protein, 1),
             'total_carbs': round(total_carbs, 1),
             'total_fats': round(total_fats, 1),
             'daily_budget': round(float(profile.weekly_budget or 0) / 7, 2),
+
         })
 
     return render(request, 'DietMate_dietplan.html', {
