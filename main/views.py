@@ -341,6 +341,7 @@ def fitness_plan(request):
             'day_number': day_number,
             'day_range': range(1, 16),
             'total_duration': total_duration,
+            'total_calories': total_calories,
         })
 
     return render(request, 'DietMate_fitnessplan.html', {
