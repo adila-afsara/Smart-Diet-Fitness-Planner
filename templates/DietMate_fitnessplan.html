@@ -228,47 +228,40 @@
     <div class="content">
 
       <!-- Plan Info Bar -->
-      <div class="plan-info-bar">
-        <div class="plan-info-item">
-          <div class="plan-info-icon">🎯</div>
-          <div>
-            <div class="plan-info-label">Fitness Goal</div>
-            <div class="plan-info-value">Lose Weight</div>
-          </div>
-        </div>
-        <div class="plan-divider"></div>
-        <div class="plan-info-item">
-          <div class="plan-info-icon">⚡</div>
-          <div>
-            <div class="plan-info-label">Fitness Level</div>
-            <div class="plan-info-value">Beginner</div>
-          </div>
-        </div>
-        <div class="plan-divider"></div>
-        <div class="plan-info-item">
-          <div class="plan-info-icon">🏠</div>
-          <div>
-            <div class="plan-info-label">Workout Location</div>
-            <div class="plan-info-value">Home</div>
-          </div>
-        </div>
-        <div class="plan-divider"></div>
-        <div class="plan-info-item">
-          <div class="plan-info-icon">⏱️</div>
-          <div>
-            <div class="plan-info-label">Daily Duration</div>
-            <div class="plan-info-value">35 — 40 mins</div>
-          </div>
-        </div>
-        <div class="plan-divider"></div>
-        <div class="plan-info-item">
-          <div class="plan-info-icon">🔥</div>
-          <div>
-            <div class="plan-info-label">Calories Burned/Day</div>
-            <div class="plan-info-value">~200 kcal</div>
-          </div>
-        </div>
-      </div>
+      
+         <div class="plan-info-bar">
+  <div class="plan-info-item">
+    <div class="plan-info-icon">🎯</div>
+    <div>
+      <div class="plan-info-label">Fitness Goal</div>
+      <div class="plan-info-value">{{ profile.health_goal }}</div>
+    </div>
+  </div>
+  <div class="plan-divider"></div>
+  <div class="plan-info-item">
+    <div class="plan-info-icon">⚡</div>
+    <div>
+      <div class="plan-info-label">Fitness Level</div>
+      <div class="plan-info-value">{{ profile.activity_level }}</div>
+    </div>
+  </div>
+  <div class="plan-divider"></div>
+  <div class="plan-info-item">
+    <div class="plan-info-icon">🏠</div>
+    <div>
+      <div class="plan-info-label">Workout Location</div>
+      <div class="plan-info-value">{{ profile.workout_location }}</div>
+    </div>
+  </div>
+  <div class="plan-divider"></div>
+  <div class="plan-info-item">
+    <div class="plan-info-icon">⏱️</div>
+    <div>
+      <div class="plan-info-label">Today's Duration</div>
+      <div class="plan-info-value">{% if is_rest_day %}Rest Day{% else %}{{ total_duration }} mins{% endif %}</div>
+    </div>
+  </div>
+</div>
 
       <!-- Stats Row -->
       <div class="stats-row">
