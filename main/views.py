@@ -130,7 +130,9 @@ def diet_plan(request):
         # Call AI agent
         ai_response = nutrition_agent(user_profile)
 
-        
+        # 🤔 Why try/except here?
+        # AI might return extra text around JSON sometimes
+        # We try to clean and parse it safely!
         try:
             # Clean response — remove markdown if any
             clean = ai_response.strip()
