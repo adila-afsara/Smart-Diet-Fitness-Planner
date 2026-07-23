@@ -17,7 +17,7 @@ GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.
 
 def call_gemini(prompt):
     """
-
+    
     This is the BASE function that talks to Gemini API.
     All our 4 agents will use this function!
     Like a phone — all agents use the same phone to call Gemini!
@@ -185,22 +185,72 @@ IMPORTANT RULES:
    - Advanced: intense cardio, strength training (55-60 mins)
 3. If workout location is Home: no gym equipment needed
 4. If workout location is Gym: include equipment exercises
-5. Include rest days (every 3rd day)
-6. For each exercise show: name, duration, sets, reps, calories burned
+5. Include rest days (every 3rd day) — mark these with "is_rest_day": true and an empty exercises list
+6. For each exercise show: name, duration in minutes, sets, reps, estimated calories burned
 7. If user has health condition, adjust intensity accordingly
-8. Format as a clear day by day workout plan
 
-Generate the complete 15-day fitness plan now.
+CRITICAL: You MUST respond with ONLY a valid JSON array. No other text before or after.
+The JSON must follow this exact format:
+
+[
+  {{
+    "day": 1,
+    "is_rest_day": false,
+    "exercises": [
+      {{
+        "exercise_name": "Morning Walk",
+        "duration_minutes": 15,
+        "sets": null,
+        "reps": null,
+        "calories_burned": 60
+      }},
+      {{
+        "exercise_name": "Bodyweight Squats",
+        "duration_minutes": 10,
+        "sets": 3,
+        "reps": 10,
+        "calories_burned": 50
+      }}
+    ]
+  }},
+  {{
+    "day": 3,
+    "is_rest_day": true,
+    "exercises": []
+  }}
+]
+
+IMPORTANT: Generate ALL 15 days. Start from day 1 to day 15.
+Do not stop before day 15. Generate the complete JSON array now.
 """
-    return call_gemini(prompt)
+    response1 = call_gemini(prompt + "\nGenerate days 1 to 8 only.")
+    response2 = call_gemini(prompt + "\nGenerate days 9 to 15 only. Start the JSON array from day 9.")
 
+    try:
+        clean1 = response1.strip()
+        if clean1.startswith('```'):
+            clean1 = clean1.split('```')[1]
+            if clean1.startswith('json'):
+                clean1 = clean1[4:]
+        clean1 = clean1.strip().rstrip(',').rstrip(']')
 
+        clean2 = response2.strip()
+        if clean2.startswith('```'):
+            clean2 = clean2.split('```')[1]
+            if clean2.startswith('json'):
+                clean2 = clean2[4:]
+        clean2 = clean2.strip().lstrip('[')
+
+        combined = clean1 + ',' + clean2
+        return combined
+    except:
+        return response1
 # ════════════════════════════════════════
 # 📊 AGENT 3 — HEALTH TRACKING AGENT
 # ════════════════════════════════════════
 def health_tracking_agent(user_data, logs):
     """
-
+    
     This agent analyzes the user's daily logs and generates
     progress reports with AI feedback!
     """
@@ -239,7 +289,7 @@ Generate the progress report now.
 # ════════════════════════════════════════
 def chatbot_agent(user_name, user_message, user_progress):
     """
-  
+
     This agent responds to user messages with personalized
     motivation, health tips, and encouragement!
     """
