@@ -330,6 +330,7 @@ def fitness_plan(request):
 
         is_rest_day = not todays_exercises.exists()
         total_duration = sum(e.duration_minutes or 0 for e in todays_exercises)
+        total_calories = sum(e.calories_burned or 0 for e in todays_exercises)
 
         return render(request, 'DietMate_fitnessplan.html', {
             'user': user,
