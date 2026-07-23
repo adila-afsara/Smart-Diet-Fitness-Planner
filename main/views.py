@@ -90,10 +90,143 @@ def dashboard(request):
     user = User.objects.get(id=user_id)
     return render(request, 'DietMate_dashboard_v2.html', {'user': user})
 
+ 
 def diet_plan(request):
     if 'user_id' not in request.session:
         return redirect('login')
-    return render(request, 'DietMate_dietplan.html')
+
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+
+    try:
+        profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        return redirect('dashboard')
+
+    from .models import DietPlan, DietPlanMeal
+    from datetime import date, timedelta
+    import json
+
+    active_plan = DietPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    if not active_plan:
+        from .agents import nutrition_agent
+
+        user_profile = {
+            'age': profile.age,
+            'weight': profile.weight,
+            'height': profile.height,
+            'gender': profile.gender,
+            'health_goal': profile.health_goal,
+            'health_condition': profile.health_condition,
+            'weekly_budget': profile.weekly_budget,
+            'food_preferences': profile.food_preferences,
+            'avoid_foods': profile.avoid_foods,
+        }
+
+        # Call AI agent
+        ai_response = nutrition_agent(user_profile)
+
+        # 🤔 Why try/except here?
+        # AI might return extra text around JSON sometimes
+        # We try to clean and parse it safely!
+        try:
+            # Clean response — remove markdown if any
+            clean = ai_response.strip()
+            if clean.startswith('```'):
+                clean = clean.split('```')[1]
+                if clean.startswith('json'):
+                    clean = clean[4:]
+            clean = clean.strip()
+
+            meal_data = json.loads(clean)
+
+            # Save plan to database
+            today = date.today()
+            active_plan = DietPlan.objects.create(
+                user=user,
+                plan_start_date=today,
+                plan_end_date=today + timedelta(days=15),
+                plan_status='Active'
+            )
+
+            # Save each meal to database
+            for day_data in meal_data:
+                day_num = day_data.get('day')
+                for meal in day_data.get('meals', []):
+                    DietPlanMeal.objects.create(
+                        plan=active_plan,
+                        day_number=day_num,
+                        meal_type=meal.get('meal_type'),
+                        meal_name=meal.get('meal_name'),
+                        ingredients=meal.get('ingredients'),
+                        calories=meal.get('calories'),
+                        protein=meal.get('protein'),
+                        carbs=meal.get('carbs'),
+                        fats=meal.get('fats'),
+                        estimated_cost_bdt=meal.get('cost_bdt')
+                    )
+
+        except Exception as e:
+            print(f"Error parsing AI response: {e}")
+            print(f"AI Response was: {ai_response}")
+
+    # Get today's day number in the plan
+    from datetime import date
+    if active_plan:
+        today = date.today()
+        day_number = (today - active_plan.plan_start_date).days + 1
+        if day_number < 1:
+            day_number = 1
+        if day_number > 15:
+            day_number = 15
+
+        # Get today's meals from database
+        todays_meals = DietPlanMeal.objects.filter(
+            plan=active_plan,
+            day_number=day_number
+        )
+
+        # Get all meals grouped by day
+        all_meals = {}
+        for d in range(1, 16):
+            all_meals[d] = DietPlanMeal.objects.filter(
+                plan=active_plan,
+                day_number=d
+            )
+
+        # Calculate daily totals for today
+        total_calories = sum(m.calories or 0 for m in todays_meals)
+        total_cost = sum(m.estimated_cost_bdt or 0 for m in todays_meals)
+        total_protein = sum(float(m.protein or 0) for m in todays_meals)
+        total_carbs = sum(float(m.carbs or 0) for m in todays_meals)
+        total_fats = sum(float(m.fats or 0) for m in todays_meals)
+
+        return render(request, 'DietMate_dietplan.html', {
+            'user': user,
+            'profile': profile,
+            'plan': active_plan,
+            'todays_meals': todays_meals,
+            'all_meals': all_meals,
+            'day_number': day_number,
+            'total_calories': total_calories,
+            'total_cost': total_cost,
+            'total_protein': round(total_protein, 1),
+            'total_carbs': round(total_carbs, 1),
+            'total_fats': round(total_fats, 1),
+            'daily_budget': round(float(profile.weekly_budget or 0) / 7, 2),
+        })
+
+    return render(request, 'DietMate_dietplan.html', {
+        'user': user,
+        'profile': profile,
+        'plan': None,
+    })
+
+
 
 def fitness_plan(request):
     if 'user_id' not in request.session:
