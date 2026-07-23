@@ -130,7 +130,7 @@ def diet_plan(request):
         # Call AI agent
         ai_response = nutrition_agent(user_profile)
 
-        # 🤔 Why try/except here?
+        
         # AI might return extra text around JSON sometimes
         # We try to clean and parse it safely!
         try:
@@ -301,8 +301,6 @@ def fitness_plan(request):
                 if day_data.get('is_rest_day'):
                     continue
                 for ex in day_data.get('exercises', []):
-                    calories = ex.get('calories_burned')
-                    notes = f"{calories} kcal burned" if calories is not None else None
                     FitnessPlanExercise.objects.create(
                         fitness_plan=active_plan,
                         day_number=day_num,
@@ -310,7 +308,7 @@ def fitness_plan(request):
                         duration_minutes=ex.get('duration_minutes'),
                         sets=ex.get('sets'),
                         reps=ex.get('reps'),
-                        notes=notes
+                        calories_burned=ex.get('calories_burned')
                     )
 
         except Exception as e:
