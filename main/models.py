@@ -113,6 +113,7 @@ class FitnessPlanExercise(models.Model):
     duration_minutes = models.IntegerField(null=True, blank=True)
     sets = models.IntegerField(null=True, blank=True)
     reps = models.IntegerField(null=True, blank=True)
+    calories_burned = models.IntegerField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
 
     def __str__(self):
