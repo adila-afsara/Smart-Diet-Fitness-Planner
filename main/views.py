@@ -237,9 +237,116 @@ def diet_plan(request):
 
 
 def fitness_plan(request):
+    
     if 'user_id' not in request.session:
         return redirect('login')
-    return render(request, 'DietMate_fitnessplan.html')
+
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+
+    try:
+        profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        return redirect('dashboard')
+
+    from .models import FitnessPlan, FitnessPlanExercise
+    from datetime import date, timedelta
+    import json
+
+    active_plan = FitnessPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    if not active_plan:
+        from .agents import fitness_agent
+
+        user_profile = {
+            'age': profile.age,
+            'weight': profile.weight,
+            'health_goal': profile.health_goal,
+            'activity_level': profile.activity_level,
+            'workout_location': profile.workout_location,
+            'health_condition': profile.health_condition,
+        }
+
+        ai_response = fitness_agent(user_profile)
+
+        try:
+            clean = ai_response.strip()
+            if clean.startswith('```'):
+                clean = clean.split('```')[1]
+                if clean.startswith('json'):
+                    clean = clean[4:]
+            clean = clean.strip()
+
+            plan_data = json.loads(clean)
+
+            if len(plan_data) < 15:
+                print(f"Incomplete fitness plan generated — only {len(plan_data)} days. Not saving.")
+                raise ValueError("Incomplete fitness plan")
+
+            today = date.today()
+            active_plan = FitnessPlan.objects.create(
+                user=user,
+                plan_start_date=today,
+                plan_end_date=today + timedelta(days=15),
+                fitness_level=profile.activity_level,
+                workout_location=profile.workout_location,
+                plan_status='Active'
+            )
+
+            for day_data in plan_data:
+                day_num = day_data.get('day')
+                if day_data.get('is_rest_day'):
+                    continue
+                for ex in day_data.get('exercises', []):
+                    calories = ex.get('calories_burned')
+                    notes = f"{calories} kcal burned" if calories is not None else None
+                    FitnessPlanExercise.objects.create(
+                        fitness_plan=active_plan,
+                        day_number=day_num,
+                        exercise_name=ex.get('exercise_name'),
+                        duration_minutes=ex.get('duration_minutes'),
+                        sets=ex.get('sets'),
+                        reps=ex.get('reps'),
+                        notes=notes
+                    )
+
+        except Exception as e:
+            print(f"Error parsing AI fitness response: {e}")
+            print(f"AI Response was: {ai_response}")
+
+    if active_plan:
+        today = date.today()
+        day_number = (today - active_plan.plan_start_date).days + 1
+        if day_number < 1:
+            day_number = 1
+        if day_number > 15:
+            day_number = 15
+
+        todays_exercises = FitnessPlanExercise.objects.filter(
+            fitness_plan=active_plan,
+            day_number=day_number
+        )
+
+        is_rest_day = not todays_exercises.exists()
+
+        return render(request, 'DietMate_fitnessplan.html', {
+            'user': user,
+            'profile': profile,
+            'plan': active_plan,
+            'todays_exercises': todays_exercises,
+            'is_rest_day': is_rest_day,
+            'day_number': day_number,
+            'day_range': range(1, 16),
+        })
+
+    return render(request, 'DietMate_fitnessplan.html', {
+        'user': user,
+        'profile': profile,
+        'plan': None,
+    })
 
 def progress(request):
     if 'user_id' not in request.session:
