@@ -58,7 +58,7 @@
     .topbar-left p { font-size: 13px; color: var(--muted); margin-top: 1px; }
     .topbar-right { display: flex; align-items: center; gap: 12px; }
     .cycle-badge { background: var(--red-light); border: 1px solid var(--red); color: var(--red); font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
-    .btn-primary { background: var(--red); color: white; border: none; border-radius: 6px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-primary { background: var(--green); color: white; border: none; border-radius: 6px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
     .btn-primary:hover { background: var(--hover); }
     .btn-secondary { background: transparent; color: var(--orange); border: 2px solid var(--orange); border-radius: 6px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .btn-secondary:hover { background: var(--orange); color: white; }
@@ -313,169 +313,45 @@
         <!-- Exercise List -->
         <div class="exercise-list-card">
           <div class="card-header">
-            <div class="card-title">📋 Week 1 Exercise Schedule</div>
-            <span class="card-badge badge-orange">Days 1 – 7</span>
-          </div>
+            <div class="day-section">
+    <div class="day-label-row">
+      <div class="day-pill {% if is_rest_day %}rest{% endif %}">Day {{ day_number }}</div>
+      <div class="day-date">Today</div>
+      <div class="day-line"></div>
+      {% if is_rest_day %}
+        <span class="card-badge badge-green">Rest Day</span>
+      {% else %}
+        <span class="card-badge badge-orange">In Progress</span>
+      {% endif %}
+    </div>
 
-          <!-- Day 1 -->
-          <div class="day-section">
-            <div class="day-label-row">
-              <div class="day-pill">Day 1 — Mon</div>
-              <div class="day-date">July 1</div>
-              <div class="day-line"></div>
-              <span class="card-badge badge-green">Done ✓</span>
-            </div>
-            <div class="exercise-item done">
-              <div class="ex-number done-num">1</div>
-              <div class="ex-icon">🚶</div>
-              <div class="ex-details">
-                <div class="ex-name">Morning Walk</div>
-                <div class="ex-meta">Light pace · Outdoors or indoors</div>
-              </div>
-              <div class="ex-badges">
-                <span class="ex-badge duration">15 min</span>
-                <span class="ex-badge calories">60 kcal</span>
-                <span class="ex-badge done-badge">✓ Done</span>
-              </div>
-            </div>
-            <div class="exercise-item done">
-              <div class="ex-number done-num">2</div>
-              <div class="ex-icon">🧘</div>
-              <div class="ex-details">
-                <div class="ex-name">Bodyweight Squats</div>
-                <div class="ex-meta">3 sets × 10 reps · Rest 30 sec</div>
-              </div>
-              <div class="ex-badges">
-                <span class="ex-badge duration">10 min</span>
-                <span class="ex-badge calories">50 kcal</span>
-                <span class="ex-badge done-badge">✓ Done</span>
-              </div>
-            </div>
-            <div class="exercise-item done">
-              <div class="ex-number done-num">3</div>
-              <div class="ex-icon">🤸</div>
-              <div class="ex-details">
-                <div class="ex-name">Full Body Stretching</div>
-                <div class="ex-meta">Cool down · Hold each stretch 20 sec</div>
-              </div>
-              <div class="ex-badges">
-                <span class="ex-badge duration">10 min</span>
-                <span class="ex-badge calories">25 kcal</span>
-                <span class="ex-badge done-badge">✓ Done</span>
-              </div>
+    {% if is_rest_day %}
+      <div class="rest-day-card">
+        <p>🌿 Rest Day — Let your muscles recover. Light walking or yoga is optional.</p>
+      </div>
+    {% else %}
+      {% for exercise in todays_exercises %}
+        <div class="exercise-item">
+          <div class="ex-number">{{ forloop.counter }}</div>
+          <div class="ex-icon">🏃</div>
+          <div class="ex-details">
+            <div class="ex-name">{{ exercise.exercise_name }}</div>
+            <div class="ex-meta">
+              {% if exercise.sets %}{{ exercise.sets }} sets × {{ exercise.reps }} reps{% else %}Duration-based{% endif %}
             </div>
           </div>
-
-          <!-- Day 2 -->
-          <div class="day-section">
-            <div class="day-label-row">
-              <div class="day-pill">Day 2 — Tue</div>
-              <div class="day-date">July 2</div>
-              <div class="day-line"></div>
-              <span class="card-badge badge-green">Done ✓</span>
-            </div>
-            <div class="exercise-item done">
-              <div class="ex-number done-num">1</div>
-              <div class="ex-icon">💪</div>
-              <div class="ex-details">
-                <div class="ex-name">Wall Push-Ups</div>
-                <div class="ex-meta">3 sets × 12 reps · Beginner friendly</div>
-              </div>
-              <div class="ex-badges">
-                <span class="ex-badge duration">10 min</span>
-                <span class="ex-badge calories">45 kcal</span>
-                <span class="ex-badge done-badge">✓ Done</span>
-              </div>
-            </div>
-            <div class="exercise-item done">
-              <div class="ex-number done-num">2</div>
-              <div class="ex-icon">🦵</div>
-              <div class="ex-details">
-                <div class="ex-name">Standing Lunges</div>
-                <div class="ex-meta">3 sets × 8 reps each leg</div>
-              </div>
-              <div class="ex-badges">
-                <span class="ex-badge duration">10 min</span>
-                <span class="ex-badge calories">55 kcal</span>
-                <span class="ex-badge done-badge">✓ Done</span>
-              </div>
-            </div>
-            <div class="exercise-item done">
-              <div class="ex-number done-num">3</div>
-              <div class="ex-icon">🤸</div>
-              <div class="ex-details">
-                <div class="ex-name">Full Body Stretching</div>
-                <div class="ex-meta">Cool down</div>
-              </div>
-              <div class="ex-badges">
-                <span class="ex-badge duration">10 min</span>
-                <span class="ex-badge calories">20 kcal</span>
-                <span class="ex-badge done-badge">✓ Done</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Day 3 — Rest -->
-          <div class="day-section">
-            <div class="day-label-row">
-              <div class="day-pill rest">Day 3 — Wed</div>
-              <div class="day-date">July 3</div>
-              <div class="day-line"></div>
-              <span class="card-badge badge-green">Rest Day</span>
-            </div>
-            <div class="rest-day-card">
-              <p>🌿 Rest Day — Let your muscles recover. Light walking or yoga is optional.</p>
-            </div>
-          </div>
-
-          <!-- Day 7 Today -->
-          <div class="day-section">
-            <div class="day-label-row">
-              <div class="day-pill">Day 8 — Thu</div>
-              <div class="day-date">Today · July 8</div>
-              <div class="day-line"></div>
-              <span class="card-badge badge-orange">In Progress</span>
-            </div>
-            <div class="exercise-item done">
-              <div class="ex-number done-num">1</div>
-              <div class="ex-icon">🚶</div>
-              <div class="ex-details">
-                <div class="ex-name">Brisk Morning Walk</div>
-                <div class="ex-meta">Slightly faster than Day 1</div>
-              </div>
-              <div class="ex-badges">
-                <span class="ex-badge duration">20 min</span>
-                <span class="ex-badge calories">80 kcal</span>
-                <span class="ex-badge done-badge">✓ Done</span>
-              </div>
-            </div>
-            <div class="exercise-item done">
-              <div class="ex-number done-num">2</div>
-              <div class="ex-icon">🧘</div>
-              <div class="ex-details">
-                <div class="ex-name">Bodyweight Squats</div>
-                <div class="ex-meta">3 sets × 12 reps · Progressing!</div>
-              </div>
-              <div class="ex-badges">
-                <span class="ex-badge duration">10 min</span>
-                <span class="ex-badge calories">55 kcal</span>
-                <span class="ex-badge done-badge">✓ Done</span>
-              </div>
-            </div>
-            <div class="exercise-item">
-              <div class="ex-number">3</div>
-              <div class="ex-icon">🤸</div>
-              <div class="ex-details">
-                <div class="ex-name">Full Body Stretching</div>
-                <div class="ex-meta">Cool down routine</div>
-              </div>
-              <div class="ex-badges">
-                <span class="ex-badge duration">10 min</span>
-                <span class="ex-badge calories">25 kcal</span>
-              </div>
-            </div>
+          <div class="ex-badges">
+            <span class="ex-badge duration">{{ exercise.duration_minutes }} min</span>
+            <span class="ex-badge calories">{{ exercise.calories_burned }} kcal</span>
           </div>
         </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+             
+            </div>
+          </div>
+        
 
         <!-- Side Panel -->
         <div class="side-panel">
