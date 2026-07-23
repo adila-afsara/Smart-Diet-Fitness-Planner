@@ -310,7 +310,7 @@
 <p>Cycle 1 — {{ plan.plan_start_date }} to {{ plan.plan_end_date }} · Budget: ৳{{ profile.weekly_budget }}/week</p>
       </div>
       <div class="topbar-right">
-        <div class="cycle-badge">🔄 Day 8 of 15</div>
+        <div class="cycle-badge">🔄 Day {{ day_number }} of 15</div>
         <button class="btn-secondary">📥 Download Plan</button>
         <button class="btn-primary">🔄 Regenerate Plan</button>
       </div>
@@ -352,30 +352,8 @@
         </div>
     </div>
 </div>
-        <div class="plan-divider"></div>
-        <div class="plan-info-item">
-          <div class="plan-info-icon">🩺</div>
-          <div>
-            <div class="plan-info-label">Health Condition</div>
-            <div class="plan-info-value">{{ profile.health_condition }}</div>
-          </div>
-        </div>
-        <div class="plan-divider"></div>
-        <div class="plan-info-item">
-          <div class="plan-info-icon">🔥</div>
-          <div>
-            <div class="plan-info-label">Daily Calorie Target</div>
-            <div class="plan-info-value">AI Generated</div>
-          </div>
-        </div>
-        <div class="plan-divider"></div>
-        <div class="plan-info-item">
-          <div class="plan-info-icon">💰</div>
-          <div>
-            <div class="plan-info-label">Daily Budget</div>
-            <div class="plan-info-value">৳ {{ profile.weekly_budget }} / week</div>
-          </div>
-        </div>
+        
+        
         <div class="plan-divider"></div>
         <div class="budget-bar-wrap">
           <div class="budget-bar-label">
@@ -413,30 +391,25 @@
 
       <!-- Budget Alert -->
       <div class="budget-alert">
-        <div class="budget-alert-icon">💡</div>
-        <div class="budget-alert-text">
-          <strong>Budget Tip:</strong> Chicken was replaced with Eggs & Lentils in today's dinner to keep your meal within your ৳300 daily budget. You saved ৳ 65!
-        </div>
-      </div>
-
+    <div class="budget-alert-icon">💡</div>
+    <div class="budget-alert-text">
+        <strong>Budget Tip:</strong> Your meal plan has been optimized to fit within your ৳{{ profile.weekly_budget }} weekly budget. Daily budget: ৳{{ daily_budget }}
+    </div>
+</div>
       <!-- Day Tabs -->
       <div class="day-tabs">
-        <div class="day-tab"><div class="tab-day">Day 1</div><div class="tab-label">Mon</div></div>
-        <div class="day-tab"><div class="tab-day">Day 2</div><div class="tab-label">Tue</div></div>
-        <div class="day-tab"><div class="tab-day">Day 3</div><div class="tab-label">Wed</div></div>
-        <div class="day-tab"><div class="tab-day">Day 4</div><div class="tab-label">Thu</div></div>
-        <div class="day-tab"><div class="tab-day">Day 5</div><div class="tab-label">Fri</div></div>
-        <div class="day-tab"><div class="tab-day">Day 6</div><div class="tab-label">Sat</div></div>
-        <div class="day-tab has-report"><div class="tab-day">Day 7</div><div class="tab-label">📊 Report</div></div>
-        <div class="day-tab active"><div class="tab-day">Day 8</div><div class="tab-label">Today</div></div>
-        <div class="day-tab"><div class="tab-day">Day 9</div><div class="tab-label">Mon</div></div>
-        <div class="day-tab"><div class="tab-day">Day 10</div><div class="tab-label">Tue</div></div>
-        <div class="day-tab"><div class="tab-day">Day 11</div><div class="tab-label">Wed</div></div>
-        <div class="day-tab"><div class="tab-day">Day 12</div><div class="tab-label">Thu</div></div>
-        <div class="day-tab"><div class="tab-day">Day 13</div><div class="tab-label">Fri</div></div>
-        <div class="day-tab"><div class="tab-day">Day 14</div><div class="tab-label">Sat</div></div>
-        <div class="day-tab has-report"><div class="tab-day">Day 15</div><div class="tab-label">📊 Final</div></div>
+  {% for d in day_range %}
+    <div class="day-tab {% if d == day_number %}active{% elif d == 7 or d == 15 %}has-report{% endif %}">
+      <div class="tab-day">Day {{ d }}</div>
+      <div class="tab-label">
+        {% if d == day_number %}Today
+        {% elif d == 7 %}📊 Report
+        {% elif d == 15 %}📊 Final
+        {% else %}Day {{ d }}{% endif %}
       </div>
+    </div>
+  {% endfor %}
+</div>
 
       <!-- Daily Summary -->
       <div class="daily-summary">
@@ -502,9 +475,9 @@
           <div class="food-macros">
             {{ meal.calories }} kcal · Protein: {{ meal.protein }}g · Carbs: {{ meal.carbs }}g · Fat: {{ meal.fats }}g
           </div>
-          <div class="food-macros" style="margin-top:4px; color:var(--green);">
-            {{ meal.ingredients }}
-          </div>
+          <div class="food-macros" style="margin-top:6px; color:var(--green); font-size:13px; font-weight:500;">
+    🥘 {{ meal.ingredients }}
+         </div>
         </div>
         <div class="food-cost">৳ {{ meal.estimated_cost_bdt }}</div>
       </div>
@@ -522,13 +495,8 @@
   </div>
   {% endfor %}
 </div>
-
-   
-
- 
-
-      </div>
-    </div>
+</div>
+</div>
   </main>
 
 </body>
