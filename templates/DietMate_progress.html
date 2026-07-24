@@ -224,33 +224,39 @@
         <button class="report-btn">View Full Report →</button>
       </div>
 
+      
       <!-- Stats Row -->
       <div class="stats-row">
         <div class="stat-card s1">
           <div class="stat-icon">⚖️</div>
-          <div class="stat-value">62.2 <span style="font-size:16px">kg</span></div>
+          <div class="stat-value">{% if latest_log %}{{ latest_log.current_weight }} <span style="font-size:16px">kg</span>{% else %}—{% endif %}</div>
           <div class="stat-label">Current Weight</div>
-          <div class="stat-sub">↓ 0.8kg since Day 1</div>
+          <div class="stat-sub">
+            {% if weight_change is not None %}{% if weight_change < 0 %}↓{% else %}↑{% endif %} {{ weight_change }}kg since first log{% else %}No history yet{% endif %}
+          </div>
         </div>
         <div class="stat-card s2">
           <div class="stat-icon">📏</div>
-          <div class="stat-value">23.4</div>
+          <div class="stat-value">{% if latest_bmi %}{{ latest_bmi.bmi_value }}{% else %}—{% endif %}</div>
           <div class="stat-label">Current BMI</div>
-          <div class="stat-sub">↓ from 24.1 — Improved!</div>
+          <div class="stat-sub">
+            {% if bmi_change is not None %}{% if bmi_change < 0 %}↓{% else %}↑{% endif %} {{ bmi_change }} since first log{% else %}No history yet{% endif %}
+          </div>
         </div>
         <div class="stat-card s3">
           <div class="stat-icon">💧</div>
-          <div class="stat-value">1.25 <span style="font-size:16px">L</span></div>
+          <div class="stat-value">{% if water_today_glasses %}{{ water_today_glasses }} <span style="font-size:16px">glasses</span>{% else %}—{% endif %}</div>
           <div class="stat-label">Water Today</div>
-          <div class="stat-sub">Target: 2L daily</div>
+          <div class="stat-sub">Target: 8 glasses</div>
         </div>
         <div class="stat-card s4">
           <div class="stat-icon">🏃</div>
-          <div class="stat-value">71%</div>
+          <div class="stat-value">{{ exercise_rate }}%</div>
           <div class="stat-label">Exercise Rate</div>
-          <div class="stat-sub">5 of 7 days done</div>
+          <div class="stat-sub">Across {{ total_logs }} logged day{{ total_logs|pluralize }}</div>
         </div>
       </div>
+          
 
       <!-- Main Grid — BMI + Weight Chart -->
       <div class="main-grid">
