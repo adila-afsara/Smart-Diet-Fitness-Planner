@@ -127,14 +127,9 @@ def diet_plan(request):
             'avoid_foods': profile.avoid_foods,
         }
 
-        # Call AI agent
         ai_response = nutrition_agent(user_profile)
 
-        
-        # AI might return extra text around JSON sometimes
-        # We try to clean and parse it safely!
         try:
-            # Clean response — remove markdown if any
             clean = ai_response.strip()
             if clean.startswith('```'):
                 clean = clean.split('```')[1]
@@ -144,12 +139,10 @@ def diet_plan(request):
 
             meal_data = json.loads(clean)
 
-
             if len(meal_data) < 15:
                 print(f"Incomplete plan generated — only {len(meal_data)} days. Not saving.")
                 raise ValueError("Incomplete plan")
 
-            # Save plan to database
             today = date.today()
             active_plan = DietPlan.objects.create(
                 user=user,
@@ -158,7 +151,6 @@ def diet_plan(request):
                 plan_status='Active'
             )
 
-            # Save each meal to database
             for day_data in meal_data:
                 day_num = day_data.get('day')
                 for meal in day_data.get('meals', []):
@@ -179,7 +171,6 @@ def diet_plan(request):
             print(f"Error parsing AI response: {e}")
             print(f"AI Response was: {ai_response}")
 
-    # Get today's day number in the plan
     from datetime import date
     if active_plan:
         today = date.today()
@@ -189,13 +180,11 @@ def diet_plan(request):
         if day_number > 15:
             day_number = 15
 
-        # Get today's meals from database
         todays_meals = DietPlanMeal.objects.filter(
             plan=active_plan,
             day_number=day_number
         )
 
-        # Get all meals grouped by day
         all_meals = {}
         for d in range(1, 16):
             all_meals[d] = DietPlanMeal.objects.filter(
@@ -203,7 +192,6 @@ def diet_plan(request):
                 day_number=d
             )
 
-        # Calculate daily totals for today
         total_calories = sum(m.calories or 0 for m in todays_meals)
         total_cost = sum(m.estimated_cost_bdt or 0 for m in todays_meals)
         total_protein = sum(float(m.protein or 0) for m in todays_meals)
@@ -219,13 +207,11 @@ def diet_plan(request):
             'day_number': day_number,
             'day_range': range(1, 16),
             'total_calories': total_calories,
-            'total_calories': total_calories,
             'total_cost': total_cost,
             'total_protein': round(total_protein, 1),
             'total_carbs': round(total_carbs, 1),
             'total_fats': round(total_fats, 1),
             'daily_budget': round(float(profile.weekly_budget or 0) / 7, 2),
-
         })
 
     return render(request, 'DietMate_dietplan.html', {
@@ -235,9 +221,19 @@ def diet_plan(request):
     })
 
 
+# List of rotating fitness tips — one is picked per day based on day_number
+FITNESS_TIPS = [
+    "Drink a glass of water before your workout and another after. Staying hydrated helps you perform better and recover faster! 💧",
+    "Warm up for 5 minutes before starting — it reduces injury risk and improves performance. 🔥",
+    "Focus on your form over speed, especially for strength exercises like squats and push-ups. 🧘",
+    "Getting 7-8 hours of sleep helps your muscles recover and grow stronger overnight. 😴",
+    "Eat a light snack with some protein about 30 minutes before your workout for extra energy. 🍌",
+    "Consistency beats intensity — showing up daily matters more than one perfect workout. 📅",
+    "Stretch after your workout, not just before — it helps reduce muscle soreness the next day. 🤸",
+    "Listen to your body — if something hurts (not just feels tough), it's okay to rest that area. 🩺",
+]
 
 def fitness_plan(request):
-    
     if 'user_id' not in request.session:
         return redirect('login')
 
@@ -332,6 +328,8 @@ def fitness_plan(request):
         total_duration = sum(e.duration_minutes or 0 for e in todays_exercises)
         total_calories = sum(e.calories_burned or 0 for e in todays_exercises)
 
+        daily_tip = FITNESS_TIPS[(day_number - 1) % len(FITNESS_TIPS)]
+
         return render(request, 'DietMate_fitnessplan.html', {
             'user': user,
             'profile': profile,
@@ -342,6 +340,7 @@ def fitness_plan(request):
             'day_range': range(1, 16),
             'total_duration': total_duration,
             'total_calories': total_calories,
+            'daily_tip': daily_tip,
         })
 
     return render(request, 'DietMate_fitnessplan.html', {
@@ -349,6 +348,7 @@ def fitness_plan(request):
         'profile': profile,
         'plan': None,
     })
+
 
 def progress(request):
     if 'user_id' not in request.session:
