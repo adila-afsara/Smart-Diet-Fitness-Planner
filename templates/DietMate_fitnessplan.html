@@ -253,18 +253,13 @@
     </div>
   </div>
   <div class="plan-divider"></div>
-  <div class="plan-info-item">
-    <div class="plan-info-icon">⏱️</div>
-    <div>
-      <div class="plan-info-label">Today's Duration</div>
-      <div class="plan-info-value">{% if is_rest_day %}Rest Day{% else %}{{ total_duration }} mins{% endif %}</div>
-  <div class="plan-divider"></div>
-  <div class="plan-info-item">
-    <div class="plan-info-icon">🔥</div>
-    <div>
-      <div class="plan-info-label">Today's Calories Burned</div>
-      <div class="plan-info-value">{% if is_rest_day %}—{% else %}~{{ total_calories }} kcal{% endif %}</div>
-    </div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">⏱️🔥</div>
+          <div>
+            <div class="plan-info-label">Today's Workout</div>
+            <div class="plan-info-value">{% if is_rest_day %}Rest Day{% else %}{{ total_duration }} mins · ~{{ total_calories }} kcal{% endif %}</div>
+          </div>
+        </div>
   </div>
     </div>
   </div>
@@ -415,7 +410,7 @@
               <div class="tip-title">Today's Fitness Tip</div>
             </div>
               <div class="tip-text">
-               {{ daily_tip }}
+                  {{ daily_tip }}
               </div>
           </div>
 
