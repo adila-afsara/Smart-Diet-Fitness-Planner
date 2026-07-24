@@ -353,7 +353,72 @@ def fitness_plan(request):
 def progress(request):
     if 'user_id' not in request.session:
         return redirect('login')
-    return render(request, 'DietMate_progress.html')
+
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+
+    try:
+        profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        return redirect('dashboard')
+
+    from .models import DailyLog, BMIRecord
+    from datetime import date
+    from decimal import Decimal
+
+    if request.method == 'POST':
+        current_weight = request.POST.get('current_weight')
+        water_glasses = request.POST.get('water_glasses')
+        meal_followed = request.POST.get('meal_followed') == 'on'
+        exercise_completed = request.POST.get('exercise_completed') == 'on'
+        feeling = request.POST.get('feeling')
+
+        if current_weight:
+            current_weight = Decimal(current_weight)
+
+            # Convert glasses to liters (1 glass ≈ 0.25L) for the DailyLog model
+            water_liters = None
+            if water_glasses:
+                water_liters = Decimal(water_glasses) * Decimal('0.25')
+
+            DailyLog.objects.create(
+                user=user,
+                log_date=date.today(),
+                current_weight=current_weight,
+                water_intake_liters=water_liters,
+                meal_followed=meal_followed,
+                exercise_completed=exercise_completed,
+                notes=feeling
+            )
+
+            # Calculate and save BMI using the profile's height
+            if profile.height:
+                height_m = float(profile.height) / 100
+                bmi_value = round(float(current_weight) / (height_m ** 2), 2)
+
+                if bmi_value < 18.5:
+                    bmi_category = 'Underweight'
+                elif bmi_value < 25:
+                    bmi_category = 'Normal Weight'
+                elif bmi_value < 30:
+                    bmi_category = 'Overweight'
+                else:
+                    bmi_category = 'Obese'
+
+                BMIRecord.objects.create(
+                    user=user,
+                    weight=current_weight,
+                    height=profile.height,
+                    bmi_value=bmi_value,
+                    bmi_category=bmi_category
+                )
+
+        return redirect('progress')
+
+    return render(request, 'DietMate_progress.html', {
+        'user': user,
+        'profile': profile,
+    })
 
 def chatbot(request):
     if 'user_id' not in request.session:
