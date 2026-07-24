@@ -214,16 +214,19 @@
 
     <div class="content">
 
-      <!-- Mid Cycle Report Banner -->
+      
+      <!-- Progress Summary Banner -->
+      {% if total_logs > 0 %}
       <div class="report-card">
         <div class="report-icon">📋</div>
         <div class="report-text">
-          <h3>Your Mid-Cycle Report is Ready! 🎉</h3>
-          <p>Day 7 report generated. You've lost 0.8kg, your BMI improved from 24.1 to 23.4 and you completed 71% of your workouts. Great progress!</p>
+          <h3>Your Progress Summary 🎉</h3>
+          <p>
+            {% if weight_change is not None %}You've {% if weight_change < 0 %}lost {{ weight_change }}{% else %}gained {{ weight_change }}{% endif %}kg{% else %}Keep logging daily to track your weight change{% endif %}{% if bmi_change is not None %}, your BMI changed from {{ first_bmi.bmi_value }} to {{ latest_bmi.bmi_value }}{% endif %}, and you completed {{ exercise_rate }}% of your logged workouts. Keep it up!
+          </p>
         </div>
-        <button class="report-btn">View Full Report →</button>
       </div>
-
+      {% endif %}
       
       <!-- Stats Row -->
       <div class="stats-row">
