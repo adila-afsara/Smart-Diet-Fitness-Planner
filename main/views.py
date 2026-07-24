@@ -455,6 +455,7 @@ def progress(request):
         'profile': profile,
         'latest_log': latest_log,
         'latest_bmi': latest_bmi,
+        'first_bmi': first_bmi,
         'weight_change': round(weight_change, 1) if weight_change is not None else None,
         'bmi_change': round(bmi_change, 1) if bmi_change is not None else None,
         'exercise_rate': exercise_rate,
