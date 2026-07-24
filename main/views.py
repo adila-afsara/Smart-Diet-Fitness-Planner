@@ -415,10 +415,56 @@ def progress(request):
 
         return redirect('progress')
 
+    # Get all logs and BMI records for this user, most recent first
+    all_logs = DailyLog.objects.filter(user=user).order_by('-log_date')
+    all_bmi_records = BMIRecord.objects.filter(user=user).order_by('-recorded_at')
+
+    latest_log = all_logs.first()
+    latest_bmi = all_bmi_records.first()
+    first_log = all_logs.order_by('log_date').first()
+
+    # Weight change since the very first logged entry
+    weight_change = None
+    if latest_log and first_log and latest_log != first_log:
+        weight_change = float(latest_log.current_weight) - float(first_log.current_weight)
+
+    # BMI change since the first recorded BMI
+    bmi_change = None
+    first_bmi = all_bmi_records.order_by('recorded_at').first()
+    if latest_bmi and first_bmi and latest_bmi != first_bmi:
+        bmi_change = float(latest_bmi.bmi_value) - float(first_bmi.bmi_value)
+
+    # Exercise completion rate over logged days
+    total_logs = all_logs.count()
+    exercise_done_count = all_logs.filter(exercise_completed=True).count()
+    meal_done_count = all_logs.filter(meal_followed=True).count()
+    exercise_rate = round((exercise_done_count / total_logs) * 100) if total_logs else 0
+    meal_rate = round((meal_done_count / total_logs) * 100) if total_logs else 0
+
+    # Water intake today, in glasses (stored in liters, so convert back)
+    water_today_glasses = None
+    if latest_log and latest_log.water_intake_liters:
+        water_today_glasses = round(float(latest_log.water_intake_liters) / 0.25)
+
+    # Recent logs for the history table (most recent 8)
+    recent_logs = list(all_logs[:8])
+    recent_logs.reverse()  # show oldest to newest, left to right feel
+
     return render(request, 'DietMate_progress.html', {
         'user': user,
         'profile': profile,
+        'latest_log': latest_log,
+        'latest_bmi': latest_bmi,
+        'weight_change': round(weight_change, 1) if weight_change is not None else None,
+        'bmi_change': round(bmi_change, 1) if bmi_change is not None else None,
+        'exercise_rate': exercise_rate,
+        'meal_rate': meal_rate,
+        'water_today_glasses': water_today_glasses,
+        'recent_logs': recent_logs,
+        'total_logs': total_logs,
+         'today': date.today(),
     })
+    
 
 def chatbot(request):
     if 'user_id' not in request.session:
