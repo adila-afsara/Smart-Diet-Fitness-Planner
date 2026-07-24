@@ -203,10 +203,10 @@
     <div class="topbar">
       <div class="topbar-left">
         <h2>📊 Progress & BMI Tracker</h2>
-        <p>Cycle 1 — July 1 to July 15, 2025 · Day 8 of 15</p>
+        <p>{{ today }} · {{ total_logs }} day{{ total_logs|pluralize }} logged so far</p>
       </div>
       <div class="topbar-right">
-        <div class="cycle-badge">🔄 Day 8 of 15</div>
+        <div class="cycle-badge">📅 {{ today }}</div>
         <button class="btn-secondary">📥 Export Report</button>
         <button class="btn-primary">+ Log Today</button>
       </div>
@@ -268,9 +268,9 @@
             <span class="card-badge badge-green">Normal Weight</span>
           </div>
           <div class="bmi-big">
-            <div class="bmi-number">23.4</div>
+            <div class="bmi-number">{% if latest_bmi %}{{ latest_bmi.bmi_value }}{% else %}—{% endif %}</div>
             <div class="bmi-unit">kg/m²</div>
-            <div class="bmi-category-badge">✅ Normal Weight</div>
+            <div class="bmi-category-badge">{% if latest_bmi %}{{ latest_bmi.bmi_category }}{% else %}No data yet{% endif %}</div>
             <div class="bmi-scale-wrap">
               <div class="bmi-scale">
                 <div class="bmi-s1"></div>
@@ -287,8 +287,7 @@
             </div>
             <div class="bmi-pointer-wrap">
               <div class="bmi-pointer-dot"></div>
-              <div class="bmi-pointer-text">Your BMI is <span>23.4</span> — You're in the healthy range! 🎉</div>
-            </div>
+             <div class="bmi-pointer-text">{% if latest_bmi %}Your BMI is <span>{{ latest_bmi.bmi_value }}</span> — {{ latest_bmi.bmi_category }}{% else %}Log your weight to see your BMI here.{% endif %}</div>
           </div>
           <div class="bmi-history">
             <div class="bmi-history-title">BMI History</div>
@@ -504,14 +503,23 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td><span class="log-day-badge">Day 1</span></td><td>July 1</td><td>63.0 kg</td><td>24.1</td><td>6 glasses</td><td>1,450 kcal</td><td class="check-yes">✓</td><td class="check-yes">✓</td><td>😊</td></tr>
-            <tr><td><span class="log-day-badge">Day 2</span></td><td>July 2</td><td>62.8 kg</td><td>24.0</td><td>5 glasses</td><td>1,480 kcal</td><td class="check-yes">✓</td><td class="check-yes">✓</td><td>😊</td></tr>
-            <tr><td><span class="log-day-badge">Day 3</span></td><td>July 3</td><td>62.8 kg</td><td>24.0</td><td>4 glasses</td><td>1,500 kcal</td><td class="check-yes">✓</td><td class="check-no">✗</td><td>😐</td></tr>
-            <tr><td><span class="log-day-badge">Day 4</span></td><td>July 4</td><td>62.6 kg</td><td>23.9</td><td>7 glasses</td><td>1,460 kcal</td><td class="check-yes">✓</td><td class="check-yes">✓</td><td>😊</td></tr>
-            <tr><td><span class="log-day-badge">Day 5</span></td><td>July 5</td><td>62.5 kg</td><td>23.8</td><td>3 glasses</td><td>1,490 kcal</td><td class="check-no">✗</td><td class="check-yes">✓</td><td>😔</td></tr>
-            <tr><td><span class="log-day-badge">Day 6</span></td><td>July 6</td><td>62.4 kg</td><td>23.7</td><td>6 glasses</td><td>1,480 kcal</td><td class="check-yes">✓</td><td class="check-no">✗</td><td>😐</td></tr>
-            <tr><td><span class="log-day-badge">Day 7</span></td><td>July 7</td><td>62.3 kg</td><td>23.6</td><td>5 glasses</td><td>1,470 kcal</td><td class="check-yes">✓</td><td class="check-yes">✓</td><td>😊</td></tr>
-            <tr style="background:var(--orange-light)"><td><span class="log-day-badge today">Day 8</span></td><td>Today</td><td>62.2 kg</td><td>23.4</td><td>5 glasses</td><td>1,380 kcal</td><td class="check-yes">✓</td><td class="check-no">⏳</td><td>😊</td></tr>
+            <tbody>
+            {% for log in recent_logs %}
+            <tr>
+              <td><span class="log-day-badge">{{ log.log_date }}</span></td>
+              <td>{{ log.log_date }}</td>
+              <td>{{ log.current_weight }} kg</td>
+              <td>—</td>
+              <td>{% if log.water_intake_liters %}{{ log.water_intake_liters }} L{% else %}—{% endif %}</td>
+              <td>—</td>
+              <td class="{% if log.meal_followed %}check-yes{% else %}check-no{% endif %}">{% if log.meal_followed %}✓{% else %}✗{% endif %}</td>
+              <td class="{% if log.exercise_completed %}check-yes{% else %}check-no{% endif %}">{% if log.exercise_completed %}✓{% else %}✗{% endif %}</td>
+              <td>{{ log.notes|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" style="text-align:center; color:var(--muted); padding:20px;">No logs yet — save today's log above to get started!</td></tr>
+            {% endfor %}
+          </tbody>
           </tbody>
         </table>
       </div>
