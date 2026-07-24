@@ -431,46 +431,49 @@
         </div>
 
         <!-- Log Today -->
+      
         <div class="card">
           <div class="card-header">
             <div class="card-title">📅 Log Today — Day 8</div>
             <span class="card-badge badge-orange">July 8, 2025</span>
           </div>
-          <div class="log-form">
+          
+              <form class="log-form" method="POST" action="{% url 'progress' %}">
+            {% csrf_token %}
             <div class="form-group">
               <label class="form-label">⚖️ Current Weight (kg)</label>
-              <input class="form-input" type="number" placeholder="e.g. 62.2" value="62.2"/>
+              <input class="form-input" type="number" step="0.1" name="current_weight" placeholder="e.g. 62.2" required/>
             </div>
             <div class="form-group">
               <label class="form-label">💧 Water Intake (glasses)</label>
-              <input class="form-input" type="number" placeholder="e.g. 5" value="5"/>
+              <input class="form-input" type="number" name="water_glasses" placeholder="e.g. 5"/>
             </div>
             <div class="form-group">
               <label class="form-label">🔥 Calories Consumed</label>
-              <input class="form-input" type="number" placeholder="e.g. 1480" value="1380"/>
+              <input class="form-input" type="number" name="calories_consumed" placeholder="e.g. 1480"/>
             </div>
             <div class="form-group">
               <label class="form-label">😊 How do you feel?</label>
-              <select class="form-input">
-                <option>😊 Great!</option>
-                <option>😐 Okay</option>
-                <option>😔 Tired</option>
+              <select class="form-input" name="feeling">
+                <option value="Great">😊 Great!</option>
+                <option value="Okay">😐 Okay</option>
+                <option value="Tired">😔 Tired</option>
               </select>
             </div>
             <div class="form-group">
               <div class="form-checkbox-group">
-                <input class="form-checkbox" type="checkbox" id="meal" checked/>
+                <input class="form-checkbox" type="checkbox" id="meal" name="meal_followed"/>
                 <label class="form-checkbox-label" for="meal">🍱 Followed meal plan today</label>
               </div>
             </div>
             <div class="form-group">
               <div class="form-checkbox-group">
-                <input class="form-checkbox" type="checkbox" id="exercise"/>
+                <input class="form-checkbox" type="checkbox" id="exercise" name="exercise_completed"/>
                 <label class="form-checkbox-label" for="exercise">🏃 Completed exercise today</label>
               </div>
             </div>
-            <button class="log-submit">✅ Save Today's Log</button>
-          </div>
+            <button class="log-submit" type="submit">✅ Save Today's Log</button>
+          </form>
         </div>
       </div>
 
