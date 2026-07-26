@@ -221,7 +221,7 @@
         <div class="report-text">
           <h3>Your Progress Summary 🎉</h3>
           <p>
-            {% if weight_change is not None %}You've {% if weight_change < 0 %}lost {{ weight_change }}{% else %}gained {{ weight_change }}{% endif %}kg{% else %}Keep logging daily to track your weight change{% endif %}{% if bmi_change is not None %}, your BMI changed from {{ first_bmi.bmi_value }} to {{ latest_bmi.bmi_value }}{% endif %}, and you completed {{ exercise_rate }}% of your logged workouts. Keep it up!
+            {% if weight_change is not None %}You've {% if weight_change < 0 %}lost {{ weight_change_abs }}{% else %}gained {{ weight_change_abs }}{% endif %}kg{% else %}Keep logging daily to track your weight change{% endif %}{% if bmi_change is not None %}, your BMI changed from {{ first_bmi.bmi_value }} to {{ latest_bmi.bmi_value }}{% endif %}, and you completed {{ exercise_rate }}% of your logged workouts. Keep it up!
           </p>
         </div>
       </div>
@@ -234,7 +234,7 @@
           <div class="stat-value">{% if latest_log %}{{ latest_log.current_weight }} <span style="font-size:16px">kg</span>{% else %}—{% endif %}</div>
           <div class="stat-label">Current Weight</div>
           <div class="stat-sub">
-            {% if weight_change is not None %}{% if weight_change < 0 %}↓{% else %}↑{% endif %} {{ weight_change }}kg since first log{% else %}No history yet{% endif %}
+            {% if weight_change is not None %}{% if weight_change < 0 %}↓{% else %}↑{% endif %} {{ weight_change_abs }}kg since first log{% else %}No history yet{% endif %}
           </div>
         </div>
         <div class="stat-card s2">
@@ -242,7 +242,7 @@
           <div class="stat-value">{% if latest_bmi %}{{ latest_bmi.bmi_value }}{% else %}—{% endif %}</div>
           <div class="stat-label">Current BMI</div>
           <div class="stat-sub">
-            {% if bmi_change is not None %}{% if bmi_change < 0 %}↓{% else %}↑{% endif %} {{ bmi_change }} since first log{% else %}No history yet{% endif %}
+          {% if bmi_change is not None %}{% if bmi_change < 0 %}↓{% else %}↑{% endif %} {{ bmi_change_abs }} since first log{% else %}No history yet{% endif %}
           </div>
         </div>
         <div class="stat-card s3">
