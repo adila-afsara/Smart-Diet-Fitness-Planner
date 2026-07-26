@@ -377,7 +377,7 @@
             </div>
             <div style="flex:1; text-align:center; padding:12px; background:var(--green-light); border-radius:8px;">
               <div style="font-size:11px; color:var(--muted)">{% if chart_weight_change <= 0 %}Lost So Far{% else %}Gained So Far{% endif %}</div>
-              <div style="font-family:'Playfair Display',serif; font-size:20px; color:var(--green); font-weight:700;">{% if chart_weight_change < 0 %}↓{% else %}↑{% endif %} {{ chart_weight_change|floatformat:1 }} kg</div>
+              <div style="font-family:'Playfair Display',serif; font-size:20px; color:var(--green); font-weight:700;">{% if chart_weight_change < 0 %}↓{% else %}↑{% endif %} {{ chart_weight_change_abs|floatformat:1 }} kg</div>
             </div>
           </div>
           {% endif %}
@@ -502,7 +502,7 @@
               <td><span class="log-day-badge">{{ log.log_date }}</span></td>
               <td>{{ log.log_date }}</td>
               <td>{{ log.current_weight }} kg</td>
-              <td>—</td>
+               <td>{% if log.bmi_display %}{{ log.bmi_display }}{% else %}—{% endif %}</td>
               <td>{% if log.water_intake_liters %}{{ log.water_intake_liters }} L{% else %}—{% endif %}</td>
               <td>{% if log.calories_consumed %}{{ log.calories_consumed }} kcal{% else %}—{% endif %}</td>
               <td class="{% if log.meal_followed %}check-yes{% else %}check-no{% endif %}">{% if log.meal_followed %}✓{% else %}✗{% endif %}</td>
