@@ -369,6 +369,7 @@ def progress(request):
     if request.method == 'POST':
         current_weight = request.POST.get('current_weight')
         water_glasses = request.POST.get('water_glasses')
+        calories_consumed = request.POST.get('calories_consumed')
         meal_followed = request.POST.get('meal_followed') == 'on'
         exercise_completed = request.POST.get('exercise_completed') == 'on'
         feeling = request.POST.get('feeling')
@@ -478,6 +479,10 @@ def progress(request):
     # Recent logs for the history table (most recent 8)
     recent_logs = list(all_logs[:8])
     recent_logs.reverse()  # show oldest to newest, left to right feel
+    # Attach each log's matching same-day BMI value, since BMI lives in a separate table
+    for log in recent_logs:
+        matching_bmi = BMIRecord.objects.filter(user=user, recorded_at__date=log.log_date).first()
+        log.bmi_display = matching_bmi.bmi_value if matching_bmi else None
 
     # Build Weight Trend chart data — last up to 8 logs, oldest to newest
     chart_logs = list(all_logs.order_by('log_date'))
@@ -533,6 +538,7 @@ def progress(request):
         chart_start_weight = weights[0]
         chart_current_weight = weights[-1]
         chart_weight_change = round(chart_current_weight - chart_start_weight, 1)
+        chart_weight_change_abs = abs(chart_weight_change)
 
     return render(request, 'DietMate_progress.html', {
         'user': user,
@@ -556,6 +562,7 @@ def progress(request):
         'chart_start_weight': chart_start_weight,
         'chart_current_weight': chart_current_weight,
         'chart_weight_change': chart_weight_change,
+        'chart_weight_change_abs': chart_weight_change_abs,
         'total_logs': total_logs,
         'today': date.today(),
         'water_goal_rate': water_goal_rate,
