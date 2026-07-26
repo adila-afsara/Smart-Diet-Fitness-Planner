@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models 
 #database tables
 # ── TABLE 1: Users ──
 class User(models.Model):
@@ -129,6 +129,7 @@ class DailyLog(models.Model):
     log_date = models.DateField()
     current_weight = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     water_intake_liters = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+    calories_consumed = models.IntegerField(null=True, blank=True)
     meal_followed = models.BooleanField(default=False)
     exercise_completed = models.BooleanField(default=False)
     notes = models.TextField(null=True, blank=True)
