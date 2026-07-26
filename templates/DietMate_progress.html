@@ -192,8 +192,8 @@
     <div class="sidebar-user">
       <div class="user-avatar">👩</div>
       <div>
-        <div class="user-name">Adila Afsara</div>
-        <div class="user-goal">Goal: Lose Weight</div>
+        <div class="user-name">{{ user.full_name }}</div>
+        <div class="user-goal">Goal: {{ profile.health_goal }}</div>
       </div>
     </div>
   </aside>
@@ -214,7 +214,6 @@
 
     <div class="content">
 
-      
       <!-- Progress Summary Banner -->
       {% if total_logs > 0 %}
       <div class="report-card">
@@ -227,7 +226,7 @@
         </div>
       </div>
       {% endif %}
-      
+
       <!-- Stats Row -->
       <div class="stats-row">
         <div class="stat-card s1">
@@ -259,7 +258,6 @@
           <div class="stat-sub">Across {{ total_logs }} logged day{{ total_logs|pluralize }}</div>
         </div>
       </div>
-          
 
       <!-- Main Grid — BMI + Weight Chart -->
       <div class="main-grid">
@@ -290,8 +288,8 @@
             </div>
             <div class="bmi-pointer-wrap">
               <div class="bmi-pointer-dot"></div>
-             <div class="bmi-pointer-text">{% if latest_bmi %}Your BMI is <span>{{ latest_bmi.bmi_value }}</span> — {{ latest_bmi.bmi_category }}{% else %}Log your weight to see your BMI here.{% endif %}</div>
-          </div>
+              <div class="bmi-pointer-text">{% if latest_bmi %}Your BMI is <span>{{ latest_bmi.bmi_value }}</span> — {{ latest_bmi.bmi_category }}{% else %}Log your weight to see your BMI here.{% endif %}</div>
+            </div>
           </div>
           <div class="bmi-history">
             <div class="bmi-history-title">BMI History</div>
@@ -305,7 +303,7 @@
             <div style="text-align:center; color:var(--muted); padding:10px; font-size:13px;">No BMI history yet.</div>
             {% endfor %}
           </div>
-        </div> 
+        </div>
 
         <!-- Weight Chart -->
         <div class="card">
@@ -314,75 +312,75 @@
             <span class="card-badge badge-red">Last 8 Days</span>
           </div>
           <div class="weight-chart">
-  <svg class="chart-svg" viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
-    <!-- Grid lines -->
-    <line x1="40" y1="20" x2="40" y2="155" stroke="#F0EEE8" stroke-width="1"/>
-    <line x1="40" y1="155" x2="390" y2="155" stroke="#F0EEE8" stroke-width="1"/>
-    <line x1="40" y1="20" x2="390" y2="20" stroke="#F0EEE8" stroke-width="1" stroke-dasharray="4"/>
-    <line x1="40" y1="65" x2="390" y2="65" stroke="#F0EEE8" stroke-width="1" stroke-dasharray="4"/>
-    <line x1="40" y1="110" x2="390" y2="110" stroke="#F0EEE8" stroke-width="1" stroke-dasharray="4"/>
+            <svg class="chart-svg" viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+              <!-- Grid lines -->
+              <line x1="40" y1="20" x2="40" y2="155" stroke="#F0EEE8" stroke-width="1"/>
+              <line x1="40" y1="155" x2="390" y2="155" stroke="#F0EEE8" stroke-width="1"/>
+              <line x1="40" y1="20" x2="390" y2="20" stroke="#F0EEE8" stroke-width="1" stroke-dasharray="4"/>
+              <line x1="40" y1="65" x2="390" y2="65" stroke="#F0EEE8" stroke-width="1" stroke-dasharray="4"/>
+              <line x1="40" y1="110" x2="390" y2="110" stroke="#F0EEE8" stroke-width="1" stroke-dasharray="4"/>
 
-    <!-- Y axis labels -->
-    {% if weight_y_labels %}
-    <text x="5" y="24" font-size="10" fill="#999">{{ weight_y_labels.0 }}</text>
-    <text x="5" y="69" font-size="10" fill="#999">{{ weight_y_labels.1 }}</text>
-    <text x="5" y="114" font-size="10" fill="#999">{{ weight_y_labels.2 }}</text>
-    <text x="5" y="159" font-size="10" fill="#999">{{ weight_y_labels.3 }}</text>
-    {% endif %}
+              <!-- Y axis labels -->
+              {% if weight_y_labels %}
+              <text x="5" y="24" font-size="10" fill="#999">{{ weight_y_labels.0 }}</text>
+              <text x="5" y="69" font-size="10" fill="#999">{{ weight_y_labels.1 }}</text>
+              <text x="5" y="114" font-size="10" fill="#999">{{ weight_y_labels.2 }}</text>
+              <text x="5" y="159" font-size="10" fill="#999">{{ weight_y_labels.3 }}</text>
+              {% endif %}
 
-    {% if weight_area_path %}
-    <!-- Area fill -->
-    <path d="{{ weight_area_path }}" fill="url(#weightGrad)" opacity="0.3"/>
+              {% if weight_area_path %}
+              <!-- Area fill -->
+              <path d="{{ weight_area_path }}" fill="url(#weightGrad)" opacity="0.3"/>
 
-    <!-- Line -->
-    <polyline points="{{ weight_polyline }}" fill="none" stroke="#D62828" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+              <!-- Line -->
+              <polyline points="{{ weight_polyline }}" fill="none" stroke="#D62828" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
 
-    <!-- Dots -->
-    {% for point in weight_chart_points %}
-      {% if point.is_last %}
-        <circle cx="{{ point.x }}" cy="{{ point.y }}" r="7" fill="#F77F00" stroke="white" stroke-width="2"/>
-        <text x="{{ point.x|add:-12 }}" y="{{ point.y|add:-5 }}" font-size="9" fill="#F77F00" font-weight="700">Today</text>
-      {% else %}
-        <circle cx="{{ point.x }}" cy="{{ point.y }}" r="5" fill="#D62828" stroke="white" stroke-width="2"/>
-      {% endif %}
-      <text x="{{ point.x|add:-8 }}" y="170" font-size="9" fill="#999">{{ point.date|date:"n/j" }}</text>
-    {% endfor %}
+              <!-- Dots -->
+              {% for point in weight_chart_points %}
+                {% if point.is_last %}
+                  <circle cx="{{ point.x }}" cy="{{ point.y }}" r="7" fill="#F77F00" stroke="white" stroke-width="2"/>
+                  <text x="{{ point.x|add:-12 }}" y="{{ point.y|add:-5 }}" font-size="9" fill="#F77F00" font-weight="700">Today</text>
+                {% else %}
+                  <circle cx="{{ point.x }}" cy="{{ point.y }}" r="5" fill="#D62828" stroke="white" stroke-width="2"/>
+                {% endif %}
+                <text x="{{ point.x|add:-8 }}" y="170" font-size="9" fill="#999">{{ point.date|date:"n/j" }}</text>
+              {% endfor %}
 
-    <defs>
-      <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#D62828" stop-opacity="0.4"/>
-        <stop offset="100%" stop-color="#D62828" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-    {% endif %}
-  </svg>
-</div>
+              <defs>
+                <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#D62828" stop-opacity="0.4"/>
+                  <stop offset="100%" stop-color="#D62828" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              {% endif %}
+            </svg>
+          </div>
 
-{% if weight_chart_points|length < 2 %}
-<div class="chart-label">Log a few more days to see your weight trend here 📈</div>
-{% elif chart_weight_change < 0 %}
-<div class="chart-label">Weight decreasing steadily 📉 — great progress!</div>
-{% else %}
-<div class="chart-label">Keep logging daily to track your trend 📊</div>
-{% endif %}
+          {% if weight_chart_points|length < 2 %}
+          <div class="chart-label">Log a few more days to see your weight trend here 📈</div>
+          {% elif chart_weight_change < 0 %}
+          <div class="chart-label">Weight decreasing steadily 📉 — great progress!</div>
+          {% else %}
+          <div class="chart-label">Keep logging daily to track your trend 📊</div>
+          {% endif %}
 
-<!-- Weight summary -->
-{% if chart_start_weight %}
-<div style="display:flex; gap:12px; margin-top:16px;">
-  <div style="flex:1; text-align:center; padding:12px; background:var(--red-light); border-radius:8px;">
-    <div style="font-size:11px; color:var(--muted)">Start Weight</div>
-    <div style="font-family:'Playfair Display',serif; font-size:20px; color:var(--red); font-weight:700;">{{ chart_start_weight }} kg</div>
-  </div>
-  <div style="flex:1; text-align:center; padding:12px; background:var(--orange-light); border-radius:8px;">
-    <div style="font-size:11px; color:var(--muted)">Current</div>
-    <div style="font-family:'Playfair Display',serif; font-size:20px; color:var(--orange); font-weight:700;">{{ chart_current_weight }} kg</div>
-  </div>
-  <div style="flex:1; text-align:center; padding:12px; background:var(--green-light); border-radius:8px;">
-    <div style="font-size:11px; color:var(--muted)">{% if chart_weight_change <= 0 %}Lost So Far{% else %}Gained So Far{% endif %}</div>
-    <div style="font-family:'Playfair Display',serif; font-size:20px; color:var(--green); font-weight:700;">{% if chart_weight_change < 0 %}↓{% else %}↑{% endif %} {{ chart_weight_change|floatformat:1 }} kg</div>
-  </div>
-</div>
-{% endif %}
+          <!-- Weight summary -->
+          {% if chart_start_weight %}
+          <div style="display:flex; gap:12px; margin-top:16px;">
+            <div style="flex:1; text-align:center; padding:12px; background:var(--red-light); border-radius:8px;">
+              <div style="font-size:11px; color:var(--muted)">Start Weight</div>
+              <div style="font-family:'Playfair Display',serif; font-size:20px; color:var(--red); font-weight:700;">{{ chart_start_weight }} kg</div>
+            </div>
+            <div style="flex:1; text-align:center; padding:12px; background:var(--orange-light); border-radius:8px;">
+              <div style="font-size:11px; color:var(--muted)">Current</div>
+              <div style="font-family:'Playfair Display',serif; font-size:20px; color:var(--orange); font-weight:700;">{{ chart_current_weight }} kg</div>
+            </div>
+            <div style="flex:1; text-align:center; padding:12px; background:var(--green-light); border-radius:8px;">
+              <div style="font-size:11px; color:var(--muted)">{% if chart_weight_change <= 0 %}Lost So Far{% else %}Gained So Far{% endif %}</div>
+              <div style="font-family:'Playfair Display',serif; font-size:20px; color:var(--green); font-weight:700;">{% if chart_weight_change < 0 %}↓{% else %}↑{% endif %} {{ chart_weight_change|floatformat:1 }} kg</div>
+            </div>
+          </div>
+          {% endif %}
         </div>
       </div>
 
@@ -434,14 +432,12 @@
         </div>
 
         <!-- Log Today -->
-      
         <div class="card">
           <div class="card-header">
             <div class="card-title">📅 Log Today</div>
             <span class="card-badge badge-orange">{{ today }}</span>
           </div>
-          
-              <form class="log-form" method="POST" action="{% url 'progress' %}">
+          <form class="log-form" method="POST" action="{% url 'progress' %}">
             {% csrf_token %}
             <div class="form-group">
               <label class="form-label">⚖️ Current Weight (kg)</label>
@@ -500,8 +496,7 @@
               <th>Feeling</th>
             </tr>
           </thead>
-          
-            <tbody>
+          <tbody>
             {% for log in recent_logs %}
             <tr>
               <td><span class="log-day-badge">{{ log.log_date }}</span></td>
@@ -509,7 +504,7 @@
               <td>{{ log.current_weight }} kg</td>
               <td>—</td>
               <td>{% if log.water_intake_liters %}{{ log.water_intake_liters }} L{% else %}—{% endif %}</td>
-              <td>—</td>
+              <td>{% if log.calories_consumed %}{{ log.calories_consumed }} kcal{% else %}—{% endif %}</td>
               <td class="{% if log.meal_followed %}check-yes{% else %}check-no{% endif %}">{% if log.meal_followed %}✓{% else %}✗{% endif %}</td>
               <td class="{% if log.exercise_completed %}check-yes{% else %}check-no{% endif %}">{% if log.exercise_completed %}✓{% else %}✗{% endif %}</td>
               <td>{{ log.notes|default:"—" }}</td>
@@ -518,7 +513,6 @@
             <tr><td colspan="9" style="text-align:center; color:var(--muted); padding:20px;">No logs yet — save today's log above to get started!</td></tr>
             {% endfor %}
           </tbody>
-          
         </table>
       </div>
 
