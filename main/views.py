@@ -381,16 +381,20 @@ def progress(request):
             if water_glasses:
                 water_liters = Decimal(water_glasses) * Decimal('0.25')
 
-            DailyLog.objects.create(
+            # update_or_create: if today's entry already exists, update it instead of
+            # making a duplicate row for the same date
+            DailyLog.objects.update_or_create(
                 user=user,
                 log_date=date.today(),
-                current_weight=current_weight,
-                water_intake_liters=water_liters,
-                meal_followed=meal_followed,
-                exercise_completed=exercise_completed,
-                notes=feeling
+                defaults={
+                    'current_weight': current_weight,
+                    'water_intake_liters': water_liters,
+                    'calories_consumed': int(calories_consumed) if calories_consumed else None,
+                    'meal_followed': meal_followed,
+                    'exercise_completed': exercise_completed,
+                    'notes': feeling,
+                }
             )
-
             # Calculate and save BMI using the profile's height
             if profile.height:
                 height_m = float(profile.height) / 100
@@ -404,7 +408,9 @@ def progress(request):
                     bmi_category = 'Overweight'
                 else:
                     bmi_category = 'Obese'
-
+                # Remove any earlier BMI record from today before adding the new one,
+                # so re-saving today's log doesn't pile up duplicate BMI entries
+                BMIRecord.objects.filter(user=user, recorded_at__date=date.today()).delete()
                 BMIRecord.objects.create(
                     user=user,
                     weight=current_weight,
@@ -435,20 +441,98 @@ def progress(request):
         bmi_change = float(latest_bmi.bmi_value) - float(first_bmi.bmi_value)
 
     # Exercise completion rate over logged days
-    total_logs = all_logs.count()
-    exercise_done_count = all_logs.filter(exercise_completed=True).count()
-    meal_done_count = all_logs.filter(meal_followed=True).count()
-    exercise_rate = round((exercise_done_count / total_logs) * 100) if total_logs else 0
-    meal_rate = round((meal_done_count / total_logs) * 100) if total_logs else 0
+    # Look only at the last 7 days for the Weekly Progress percentages
+    from datetime import timedelta
+    week_start = date.today() - timedelta(days=6)  # today + 6 previous days = 7 total
+    week_logs = all_logs.filter(log_date__gte=week_start)
 
+    total_logs = all_logs.count()          # all-time count, still used for the stats row
+    week_log_count = week_logs.count()     # this week's count, used for the % bars
+
+    exercise_done_count = week_logs.filter(exercise_completed=True).count()
+    meal_done_count = week_logs.filter(meal_followed=True).count()
+    exercise_rate = round((exercise_done_count / week_log_count) * 100) if week_log_count else 0
+    meal_rate = round((meal_done_count / week_log_count) * 100) if week_log_count else 0
     # Water intake today, in glasses (stored in liters, so convert back)
     water_today_glasses = None
     if latest_log and latest_log.water_intake_liters:
         water_today_glasses = round(float(latest_log.water_intake_liters) / 0.25)
+    
+   # Water goal rate — days this week where at least 2L (8 glasses) was logged
+    water_goal_days = week_logs.filter(water_intake_liters__gte=2.0).count()
+    water_goal_rate = round((water_goal_days / week_log_count) * 100) if week_log_count else 0
+
+    # Calories logged rate — days this week where calories_consumed was actually filled in
+    calories_logged_days = week_logs.exclude(calories_consumed__isnull=True).count()
+    calories_logged_rate = round((calories_logged_days / week_log_count) * 100) if week_log_count else 0
+    # Simple rule-based feedback message based on the weakest area
+    rates = {'meal plan': meal_rate, 'exercise': exercise_rate, 'water intake': water_goal_rate}
+    weakest_area = min(rates, key=rates.get)
+    if total_logs == 0:
+        ai_feedback = "Log your first day to start getting personalized feedback here!"
+    elif rates[weakest_area] >= 80:
+        ai_feedback = f"Excellent consistency across the board! Keep up the great work, especially with your {weakest_area}."
+    else:
+        ai_feedback = f"You're doing well overall — try focusing a bit more on your {weakest_area}, it's at {rates[weakest_area]}% right now. Small improvements add up!"
 
     # Recent logs for the history table (most recent 8)
     recent_logs = list(all_logs[:8])
     recent_logs.reverse()  # show oldest to newest, left to right feel
+
+    # Build Weight Trend chart data — last up to 8 logs, oldest to newest
+    chart_logs = list(all_logs.order_by('log_date'))
+    if len(chart_logs) > 8:
+        chart_logs = chart_logs[-8:]
+
+    weight_chart_points = []
+    weight_polyline = ""
+    weight_area_path = ""
+    weight_y_labels = []
+    chart_start_weight = None
+    chart_current_weight = None
+    chart_weight_change = None
+
+    if chart_logs:
+        weights = [float(l.current_weight) for l in chart_logs]
+        min_w = min(weights)
+        max_w = max(weights)
+        if max_w == min_w:
+            max_w = min_w + 1  # avoid a divide-by-zero on a perfectly flat line
+
+        chart_left, chart_right = 60, 380
+        chart_top, chart_bottom = 30, 155
+        n = len(chart_logs)
+
+        for i, log in enumerate(chart_logs):
+            w = float(log.current_weight)
+            x = chart_left if n == 1 else chart_left + (chart_right - chart_left) * (i / (n - 1))
+            y = chart_bottom - ((w - min_w) / (max_w - min_w)) * (chart_bottom - chart_top)
+            weight_chart_points.append({
+                'x': round(x, 1),
+                'y': round(y, 1),
+                'weight': w,
+                'date': log.log_date,
+                'is_last': (i == n - 1),
+            })
+
+        weight_polyline = " ".join(f"{p['x']},{p['y']}" for p in weight_chart_points)
+
+        first_p, last_p = weight_chart_points[0], weight_chart_points[-1]
+        path_parts = [f"M{first_p['x']},{chart_bottom}"]
+        path_parts += [f"L{p['x']},{p['y']}" for p in weight_chart_points]
+        path_parts += [f"L{last_p['x']},{chart_bottom}", "Z"]
+        weight_area_path = " ".join(path_parts)
+
+        weight_y_labels = [
+            round(max_w, 1),
+            round(max_w - (max_w - min_w) / 3, 1),
+            round(max_w - 2 * (max_w - min_w) / 3, 1),
+            round(min_w, 1),
+        ]
+
+        chart_start_weight = weights[0]
+        chart_current_weight = weights[-1]
+        chart_weight_change = round(chart_current_weight - chart_start_weight, 1)
 
     return render(request, 'DietMate_progress.html', {
         'user': user,
@@ -456,16 +540,28 @@ def progress(request):
         'latest_log': latest_log,
         'latest_bmi': latest_bmi,
         'first_bmi': first_bmi,
+        'all_bmi_records': all_bmi_records,
         'weight_change': round(weight_change, 1) if weight_change is not None else None,
         'bmi_change': round(bmi_change, 1) if bmi_change is not None else None,
         'exercise_rate': exercise_rate,
         'meal_rate': meal_rate,
         'water_today_glasses': water_today_glasses,
         'recent_logs': recent_logs,
+        'weight_chart_points': weight_chart_points,
+        'weight_polyline': weight_polyline,
+        'weight_area_path': weight_area_path,
+        'weight_y_labels': weight_y_labels,
+        'chart_start_weight': chart_start_weight,
+        'chart_current_weight': chart_current_weight,
+        'chart_weight_change': chart_weight_change,
         'total_logs': total_logs,
-         'today': date.today(),
+        'today': date.today(),
+        'water_goal_rate': water_goal_rate,
+        'calories_logged_rate': calories_logged_rate,
+        'ai_feedback': ai_feedback,
+        'week_log_count': week_log_count,
     })
-    
+
 
 def chatbot(request):
     if 'user_id' not in request.session:
