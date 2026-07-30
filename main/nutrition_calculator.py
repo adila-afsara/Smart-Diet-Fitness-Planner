@@ -30,3 +30,18 @@ def calculate_tdee(bmr, activity_level):
     factor = activity_factors.get(activity_level.lower(), 1.20)
 
     return round(bmr * factor)
+
+def calculate_daily_calories(tdee, goal):
+    """
+    Calculate recommended daily calories
+    according to the user's goal.
+    """
+
+    if goal == "Lose Weight":
+        return max(tdee - 500, 1200)
+
+    elif goal == "Gain Weight":
+        return tdee + 300
+
+    else:      # Stay Healthy
+        return tdee
