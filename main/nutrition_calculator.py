@@ -42,3 +42,17 @@ def calculate_daily_calories(tdee, goal):
 
     else:      # Stay Healthy
         return tdee
+
+def calculate_protein_goal(weight, goal):
+    """
+    Calculate daily protein requirement.
+    """
+
+    if goal == "Lose Weight":
+        return round(weight * 1.6)
+
+    elif goal == "Gain Weight":
+        return round(weight * 1.8)
+
+    else:      # Stay Healthy
+        return round(weight * 1.2)
