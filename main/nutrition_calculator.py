@@ -13,21 +13,18 @@ def calculate_bmr(weight, height, age, gender):
 
     return round(bmr)
 
-def calculate_tdee(bmr, activity_level):
+def calculate_tdee(bmr, fitness_level):
     """
-    Calculate Total Daily Energy Expenditure (TDEE)
-    based on activity level.
+    Estimate TDEE from the user's fitness level.
     """
 
-    activity_factors = {
-        "sedentary": 1.20,
-        "lightly active": 1.375,
-        "moderately active": 1.55,
-        "very active": 1.725,
-        "extra active": 1.90,
+    fitness_factors = {
+        "Beginner": 1.375,
+        "Intermediate": 1.55,
+        "Advanced": 1.725
     }
 
-    factor = activity_factors.get(activity_level.lower(), 1.20)
+    factor = fitness_factors.get(fitness_level, 1.375)
 
     return round(bmr * factor)
 
