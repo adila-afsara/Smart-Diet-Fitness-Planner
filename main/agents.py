@@ -1,6 +1,12 @@
 import os
-import requests
+import requests 
 from dotenv import load_dotenv
+from .nutrition_calculator import (
+    calculate_bmr,
+    calculate_tdee,
+    calculate_daily_calories,
+    calculate_protein_goal
+)
 
 load_dotenv(override=True)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -19,8 +25,7 @@ def call_gemini(prompt):
     """
     
     This is the BASE function that talks to Gemini API.
-    All our 4 agents will use this function!
-    Like a phone — all agents use the same phone to call Gemini!
+    
     """
     payload = {
        "contents": [{
@@ -48,6 +53,28 @@ def call_gemini(prompt):
 # ════════════════════════════════════════
 
 def nutrition_agent(user_profile):
+    # Calculate nutrition targets
+
+bmr = calculate_bmr(
+    float(user_profile.get("weight")),
+    float(user_profile.get("height")),
+    int(user_profile.get("age")),
+    user_profile.get("gender")
+)
+
+tdee = calculate_tdee(
+    bmr,
+    user_profile.get("activity_level")
+)
+
+daily_calories = calculate_daily_calories(
+    tdee,
+    user_profile.get("health_goal")
+)
+protein_goal = calculate_protein_goal(
+    float(user_profile.get("weight")),
+    user_profile.get("health_goal")
+)
     prompt = f"""
 You are a professional nutritionist creating a 15-day diet plan for a Bangladeshi user.
 
@@ -57,6 +84,12 @@ User Details:
 - Height: {user_profile.get('height')} cm
 - Gender: {user_profile.get('gender')}
 - Health Goal: {user_profile.get('health_goal')}
+Nutrition Targets:
+- Estimated BMR: {bmr} kcal/day
+- Estimated TDEE: {tdee} kcal/day
+- Daily Calorie Target: {daily_calories} kcal/day
+- Daily Protein Target: {protein_goal} g
+
 - Health Condition: {user_profile.get('health_condition')}
 - Weekly Budget: ৳{user_profile.get('weekly_budget')} BDT
 - Preferred Foods: {user_profile.get('food_preferences')}
@@ -75,7 +108,17 @@ IMPORTANT RULES:
    - High Cholesterol: low saturated fat, high omega-3
    - None: balanced healthy meals
 8. Bangladeshi people commonly enjoy chai (tea) with breakfast or as a snack, and roti as a staple — include chai for breakfast/snack time where appropriate, and use roti as a regular option across meals, unless it conflicts with the user's health condition or avoid list
+9. The total calories from Breakfast, Lunch, Snack and Dinner for each day should be approximately equal to the Daily Calorie Target (within ±50 kcal).
 
+10. The total daily protein should be close to the Daily Protein Target.
+
+11. Distribute calories approximately as:
+- Breakfast: 25%
+- Lunch: 35%
+- Snack: 10%
+- Dinner: 30%
+
+12. Do not exceed the user's daily budget while meeting the calorie and protein targets.
 CRITICAL: You MUST respond with ONLY a valid JSON array. No other text before or after.
 The JSON must follow this exact format:
 
@@ -162,7 +205,7 @@ Do not stop before day 15. Generate the complete JSON array now.
 # ════════════════════════════════════════
 def fitness_agent(user_profile):
     """
-    
+
     This agent generates a personalized 15-day fitness plan
     based on the user's fitness level and workout location!
     """
