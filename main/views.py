@@ -98,6 +98,7 @@ def dashboard(request):
     return render(request, 'DietMate_dashboard_v2.html', {'user': user})
 
 def diet_plan(request):
+    
     if 'user_id' not in request.session:
         return redirect('login')
 
@@ -623,3 +624,24 @@ def dietitian(request):
     if 'user_id' not in request.session:
         return redirect('login')
     return render(request, 'DietMate_dietitian.html')
+def regenerate_plan(request):
+    if request.method != "POST":
+        return redirect("diet_plan")
+
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user = User.objects.get(id=request.session['user_id'])
+
+    from .models import DietPlan, DietPlanMeal
+
+    active_plan = DietPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    if active_plan:
+        DietPlanMeal.objects.filter(plan=active_plan).delete()
+        active_plan.delete()
+
+    return redirect('diet_plan')
