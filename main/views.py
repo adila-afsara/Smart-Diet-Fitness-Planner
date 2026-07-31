@@ -64,6 +64,7 @@ def signup(request):
         activity_level = request.POST.get('activity_level')
         workout_location = request.POST.get('workout_location')
         weekly_budget = request.POST.get('weekly_budget')
+        location = request.POST.get('location')
         food_preferences = request.POST.get('food_preferences')
         avoid_foods = request.POST.get('avoid_foods')
 
@@ -78,6 +79,7 @@ def signup(request):
             activity_level=activity_level,
             workout_location=workout_location,
             weekly_budget=weekly_budget,
+            location=location,
             food_preferences=food_preferences,
             avoid_foods=avoid_foods
         )
@@ -625,7 +627,64 @@ def chatbot(request):
 def dietitian(request):
     if 'user_id' not in request.session:
         return redirect('login')
-    return render(request, 'DietMate_dietitian.html')
+
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+
+    try:
+        profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        return redirect('dashboard')
+
+    import json
+    from .agents import dietitian_agent
+
+    # Get search filters from form
+    search_location = request.GET.get('location', profile.location or '')
+    search_specialty = request.GET.get('specialty', '')
+    search_budget = request.GET.get('budget', '')
+
+    # Build user profile for agent
+    user_profile = {
+        'location': search_location or profile.location,
+        'health_condition': profile.health_condition,
+        'weekly_budget': profile.weekly_budget,
+        'specialty': search_specialty,
+    }
+
+    # Call AI agent
+    ai_response = dietitian_agent(user_profile)
+    dietitians = []
+    error_message = None
+
+    try:
+        clean = ai_response.strip()
+        if clean.startswith('```'):
+            clean = clean.split('```')[1]
+            if clean.startswith('json'):
+                clean = clean[4:]
+        clean = clean.strip()
+
+        data = json.loads(clean)
+
+        # Check if error returned
+        if data and 'error' in data[0]:
+            error_message = data[0]['error']
+        else:
+            dietitians = data
+
+    except Exception as e:
+        error_message = "Unable to fetch recommendations. Please try again."
+        print(f"Dietitian agent error: {e}")
+
+    return render(request, 'DietMate_dietitian.html', {
+        'user': user,
+        'profile': profile,
+        'dietitians': dietitians,
+        'error_message': error_message,
+        'search_location': search_location,
+        'search_specialty': search_specialty,
+    })
 def regenerate_plan(request):
     if request.method != "POST":
         return redirect("diet_plan")
