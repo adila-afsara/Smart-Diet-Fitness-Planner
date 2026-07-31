@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import User, UserProfile
 from .agents import nutrition_agent
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
 from .nutrition_calculator import (
     calculate_bmr,
     calculate_tdee,
@@ -645,3 +647,124 @@ def regenerate_plan(request):
         active_plan.delete()
 
     return redirect('diet_plan')
+
+def download_plan(request):
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user = User.objects.get(id=request.session['user_id'])
+    profile = UserProfile.objects.get(user=user)
+
+    from .models import DietPlan, DietPlanMeal
+
+    active_plan = DietPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    if not active_plan:
+        return HttpResponse("No active diet plan found.")
+
+    # Calculate calorie target
+    bmr = calculate_bmr(
+        float(profile.weight),
+        float(profile.height),
+        int(profile.age),
+        profile.gender
+    )
+
+    tdee = calculate_tdee(
+        bmr,
+        profile.activity_level
+    )
+
+    daily_calorie_target = calculate_daily_calories(
+        tdee,
+        profile.health_goal
+    )
+
+    # Create PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="DietMate_DietPlan.pdf"'
+
+    p = canvas.Canvas(response)
+
+    # =============================
+    # Title
+    # =============================
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(180, 810, "DietMate")
+
+    p.setFont("Helvetica", 13)
+    p.drawString(130, 790, "Personalized 15-Day Diet Plan")
+
+    # =============================
+    # User Information
+    # =============================
+    y = 760
+
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(40, y, "User Information")
+
+    y -= 20
+    p.setFont("Helvetica", 11)
+    p.drawString(40, y, f"Name: {user.full_name}")
+
+    y -= 18
+    p.drawString(40, y, f"Health Goal: {profile.health_goal}")
+
+    y -= 18
+    p.drawString(40, y, f"Weekly Budget: BDT {profile.weekly_budget}")
+
+    y -= 18
+    p.drawString(40, y, f"Daily Calorie Target: {daily_calorie_target} kcal")
+
+    y -= 30
+
+    # =============================
+    # Meal Plan
+    # =============================
+    for day in range(1, 16):
+
+        meals = DietPlanMeal.objects.filter(
+            plan=active_plan,
+            day_number=day
+        )
+
+        # Start a new page if needed
+        if y < 120:
+            p.showPage()
+            y = 800
+
+        p.setFont("Helvetica-Bold", 13)
+        p.drawString(40, y, f"Day {day}")
+
+        y -= 20
+
+        p.setFont("Helvetica", 11)
+
+        for meal in meals:
+
+            p.drawString(
+                50,
+                y,
+                f"{meal.meal_type}: {meal.meal_name}"
+            )
+
+            y -= 15
+
+            p.drawString(
+                70,
+                y,
+                f"Calories: {meal.calories} kcal   "
+                f"Protein: {meal.protein} g   "
+                f"Cost: BDT {meal.estimated_cost_bdt}"
+            )
+
+            y -= 20
+
+        y -= 10 
+
+    p.save()
+
+    return response
