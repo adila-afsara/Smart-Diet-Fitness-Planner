@@ -1,7 +1,14 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import User, UserProfile
+from .agents import nutrition_agent
+from .nutrition_calculator import (
+    calculate_bmr,
+    calculate_tdee,
+    calculate_daily_calories,
+)
 import hashlib
+
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -90,7 +97,6 @@ def dashboard(request):
     user = User.objects.get(id=user_id)
     return render(request, 'DietMate_dashboard_v2.html', {'user': user})
 
- 
 def diet_plan(request):
     if 'user_id' not in request.session:
         return redirect('login')
@@ -112,8 +118,10 @@ def diet_plan(request):
         plan_status='Active'
     ).first()
 
+    print("Active Plan =", active_plan)
+
+    # Generate AI plan only if no active plan exists
     if not active_plan:
-        from .agents import nutrition_agent
 
         user_profile = {
             'age': profile.age,
@@ -121,6 +129,7 @@ def diet_plan(request):
             'height': profile.height,
             'gender': profile.gender,
             'health_goal': profile.health_goal,
+            'activity_level': profile.activity_level,
             'health_condition': profile.health_condition,
             'weekly_budget': profile.weekly_budget,
             'food_preferences': profile.food_preferences,
@@ -131,19 +140,22 @@ def diet_plan(request):
 
         try:
             clean = ai_response.strip()
-            if clean.startswith('```'):
-                clean = clean.split('```')[1]
-                if clean.startswith('json'):
+
+            if clean.startswith("```"):
+                clean = clean.split("```")[1]
+                if clean.startswith("json"):
                     clean = clean[4:]
+
             clean = clean.strip()
 
             meal_data = json.loads(clean)
 
             if len(meal_data) < 15:
-                print(f"Incomplete plan generated — only {len(meal_data)} days. Not saving.")
+                print(f"Incomplete plan generated — only {len(meal_data)} days.")
                 raise ValueError("Incomplete plan")
 
             today = date.today()
+
             active_plan = DietPlan.objects.create(
                 user=user,
                 plan_start_date=today,
@@ -152,31 +164,37 @@ def diet_plan(request):
             )
 
             for day_data in meal_data:
-                day_num = day_data.get('day')
-                for meal in day_data.get('meals', []):
+                day_num = day_data.get("day")
+
+                for meal in day_data.get("meals", []):
+
                     DietPlanMeal.objects.create(
                         plan=active_plan,
                         day_number=day_num,
-                        meal_type=meal.get('meal_type'),
-                        meal_name=meal.get('meal_name'),
-                        ingredients=meal.get('ingredients'),
-                        calories=meal.get('calories'),
-                        protein=meal.get('protein'),
-                        carbs=meal.get('carbs'),
-                        fats=meal.get('fats'),
-                        estimated_cost_bdt=meal.get('cost_bdt')
+                        meal_type=meal.get("meal_type"),
+                        meal_name=meal.get("meal_name"),
+                        ingredients=meal.get("ingredients"),
+                        calories=meal.get("calories"),
+                        protein=meal.get("protein"),
+                        carbs=meal.get("carbs"),
+                        fats=meal.get("fats"),
+                        estimated_cost_bdt=meal.get("cost_bdt")
                     )
 
         except Exception as e:
-            print(f"Error parsing AI response: {e}")
-            print(f"AI Response was: {ai_response}")
+            print("Error parsing AI response:", e)
+            print(ai_response)
 
-    from datetime import date
+    # If a plan exists, show it
     if active_plan:
+
         today = date.today()
+
         day_number = (today - active_plan.plan_start_date).days + 1
+
         if day_number < 1:
             day_number = 1
+
         if day_number > 15:
             day_number = 15
 
@@ -186,6 +204,7 @@ def diet_plan(request):
         )
 
         all_meals = {}
+
         for d in range(1, 16):
             all_meals[d] = DietPlanMeal.objects.filter(
                 plan=active_plan,
@@ -193,11 +212,33 @@ def diet_plan(request):
             )
 
         total_calories = sum(m.calories or 0 for m in todays_meals)
-        total_cost = sum(m.estimated_cost_bdt or 0 for m in todays_meals)
+        total_cost = float(sum(m.estimated_cost_bdt or 0 for m in todays_meals))
         total_protein = sum(float(m.protein or 0) for m in todays_meals)
         total_carbs = sum(float(m.carbs or 0) for m in todays_meals)
         total_fats = sum(float(m.fats or 0) for m in todays_meals)
 
+        # Calculate calorie target
+        bmr = calculate_bmr(
+            float(profile.weight),
+            float(profile.height),
+            int(profile.age),
+            profile.gender
+        )
+
+        tdee = calculate_tdee(
+            bmr,
+            profile.activity_level
+        )
+
+        daily_calorie_target = calculate_daily_calories(
+            tdee,
+            profile.health_goal
+        )
+        daily_budget = round(float(profile.weekly_budget or 0) / 7, 2)
+        remaining_budget = daily_budget - total_cost
+
+        if remaining_budget < 0:
+          remaining_budget = 0
         return render(request, 'DietMate_dietplan.html', {
             'user': user,
             'profile': profile,
@@ -211,16 +252,17 @@ def diet_plan(request):
             'total_protein': round(total_protein, 1),
             'total_carbs': round(total_carbs, 1),
             'total_fats': round(total_fats, 1),
-            'daily_budget': round(float(profile.weekly_budget or 0) / 7, 2),
+            'daily_budget':  daily_budget,
+            'remaining_budget': round(remaining_budget, 2),
+            'daily_calorie_target': daily_calorie_target,
         })
+        
 
     return render(request, 'DietMate_dietplan.html', {
         'user': user,
         'profile': profile,
         'plan': None,
     })
-
-
 # List of rotating fitness tips — one is picked per day based on day_number
 FITNESS_TIPS = [
     "Drink a glass of water before your workout and another after. Staying hydrated helps you perform better and recover faster! 💧",
