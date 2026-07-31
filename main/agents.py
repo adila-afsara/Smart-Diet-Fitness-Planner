@@ -53,28 +53,40 @@ def call_gemini(prompt):
 # ════════════════════════════════════════
 
 def nutrition_agent(user_profile):
+
+    print("Nutrition Agent Started")
     # Calculate nutrition targets
 
-bmr = calculate_bmr(
-    float(user_profile.get("weight")),
-    float(user_profile.get("height")),
-    int(user_profile.get("age")),
-    user_profile.get("gender")
-)
+    bmr = calculate_bmr(
+        float(user_profile.get("weight")),
+        float(user_profile.get("height")),
+        int(user_profile.get("age")),
+        user_profile.get("gender")
+    )
+    print("BMR =", bmr)
 
-tdee = calculate_tdee(
-    bmr,
-    user_profile.get("activity_level")
-)
-
-daily_calories = calculate_daily_calories(
-    tdee,
-    user_profile.get("health_goal")
-)
-protein_goal = calculate_protein_goal(
-    float(user_profile.get("weight")),
-    user_profile.get("health_goal")
-)
+    tdee = calculate_tdee(
+        bmr,
+        user_profile.get("activity_level")
+    )
+    print("TDEE =", tdee)
+    daily_calories = calculate_daily_calories(
+                    tdee,
+                    user_profile.get("health_goal")
+    )
+    print("Calories =", daily_calories)
+   
+    protein_goal = calculate_protein_goal(
+                float(user_profile.get("weight")),
+                user_profile.get("health_goal")
+    )
+    print("Protein =", protein_goal)
+    print("===== Nutrition Calculation =====")
+    print("BMR:", bmr)
+    print("TDEE:", tdee)
+    print("Daily Calories:", daily_calories)
+    print("Protein Goal:", protein_goal)
+    print("===============================")
     prompt = f"""
 You are a professional nutritionist creating a 15-day diet plan for a Bangladeshi user.
 
