@@ -13,4 +13,6 @@ urlpatterns = [
     path('progress/', views.progress, name='progress'),
     path('chatbot/', views.chatbot, name='chatbot'),
     path('dietitian/', views.dietitian, name='dietitian'),
+    path('regenerate-plan/', views.regenerate_plan, name='regenerate_plan'),
+    path('download-plan/', views.download_plan, name='download_plan'),
 ]
