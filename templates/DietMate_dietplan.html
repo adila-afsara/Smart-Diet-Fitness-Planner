@@ -7,20 +7,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      --white:        #FFFFFF;
-      --offwhite:     #FFFDF5;
-      --yellow:       #F5C518;
-      --yellow-light: #FFF8CC;
-      --red:          #D62828;
-      --red-light:    #FDEAEA;
-      --orange:       #F77F00;
-      --orange-light: #FFF0DC;
-      --green:        #2E8B57;
-      --green-light:  #E8F5EE;
-      --text:         #1A1A1A;
-      --muted:        #666666;
-      --hover:        #8B1A1A;
-      --sidebar-w:    240px;
+      --white:         #FFFFFF;
+      --offwhite:      #FFFDF5;
+      --yellow:        #F5C518;
+      --yellow-light:  #FFF8CC;
+      --red:           #D62828;
+      --red-light:     #FDEAEA;
+      --orange:        #F77F00;
+      --orange-light:  #FFF0DC;
+      --green:         #2E8B57;
+      --green-light:   #E8F5EE;
+      --text:          #1A1A1A;
+      --muted:         #666666;
+      --hover:         #8B1A1A;
+      --sidebar-w:     240px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -117,7 +117,7 @@
 
     .plan-divider { width: 1px; height: 36px; background: var(--offwhite); }
 
-    .budget-bar-wrap { flex: 1; min-width: 200px; }
+    .budget-bar-wrap { flex: 1; min-width: 200px; margin-bottom: 24px; }
     .budget-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
     .budget-bar-label span:first-child { color: var(--muted); }
     .budget-bar-label span:last-child { color: var(--green); font-weight: 600; }
@@ -295,14 +295,14 @@
     </nav>
     <div class="sidebar-user">
       <div class="user-avatar">
-    {% if profile.gender == "Female" %}
-        👩
-    {% elif profile.gender == "Male" %}
-        👨
-    {% else %}
-        🧑
-    {% endif %}
-    </div>
+        {% if profile.gender == "Female" %}
+            👩
+        {% elif profile.gender == "Male" %}
+            👨
+        {% else %}
+            🧑
+        {% endif %}
+      </div>
       <div>
         <div class="user-name">{{ user.full_name }}</div>
         <div class="user-goal">Goal: {{ profile.health_goal }}</div>
@@ -315,18 +315,21 @@
     <div class="topbar">
       <div class="topbar-left">
         <h2>🍱 My 15-Day Diet Plan</h2>
-<p>Cycle 1 — {{ plan.plan_start_date }} to {{ plan.plan_end_date }} · Budget: ৳{{ profile.weekly_budget }}/week</p>
+        <p>Cycle 1 — {{ plan.plan_start_date }} to {{ plan.plan_end_date }} · Budget: ৳{{ profile.weekly_budget }}/week</p>
       </div>
       <div class="topbar-right">
         <div class="cycle-badge">🔄 Day {{ day_number }} of 15</div>
-        <button class="btn-secondary">📥 Download Plan</button>
-        <form action="{% url 'regenerate_plan' %}" method="post" style="display:inline;">
-              {% csrf_token %}
+        <form action="{% url 'download_plan' %}" method="get" style="display:inline;">
           <button type="submit" class="btn-secondary">
-          🔄 Regenerate Plan
+            📥 Download Plan
           </button>
         </form>
-        
+        <form action="{% url 'regenerate_plan' %}" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn-secondary">
+            🔄 Regenerate Plan
+          </button>
+        </form>
       </div>
     </div>
 
@@ -334,97 +337,96 @@
 
       <!-- Plan Info Bar -->
       <div class="plan-info-bar">
-    <div class="plan-info-item">
-        <div class="plan-info-icon">🎯</div>
-        <div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">🎯</div>
+          <div>
             <div class="plan-info-label">Health Goal</div>
             <div class="plan-info-value">{{ profile.health_goal }}</div>
+          </div>
         </div>
-    </div>
-    <div class="plan-divider"></div>
-    <div class="plan-info-item">
-        <div class="plan-info-icon">🩺</div>
-        <div>
+        <div class="plan-divider"></div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">🩺</div>
+          <div>
             <div class="plan-info-label">Health Condition</div>
             <div class="plan-info-value">{{ profile.health_condition }}</div>
+          </div>
         </div>
-    </div>
-    <div class="plan-divider"></div>
-    <div class="plan-info-item">
-        <div class="plan-info-icon">🔥</div>
-        <div>
+        <div class="plan-divider"></div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">🔥</div>
+          <div>
             <div class="plan-info-label">Daily Calorie Target</div>
             <div class="plan-info-value">{{ daily_calorie_target }} kcal</div>
+          </div>
         </div>
-    </div>
-    <div class="plan-divider"></div>
-    <div class="plan-info-item">
-        <div class="plan-info-icon">💰</div>
-        <div>
+        <div class="plan-divider"></div>
+        <div class="plan-info-item">
+          <div class="plan-info-icon">💰</div>
+          <div>
             <div class="plan-info-label">Weekly Budget</div>
             <div class="plan-info-value">৳ {{ profile.weekly_budget }}</div>
-        </div>
-    </div>
-</div>
-        
-        
-        <div class="plan-divider"></div>
-        <div class="budget-bar-wrap">
-          <div class="budget-bar-label">
-            
-            <span>Today's Spend: ৳ {{ total_cost }}</span>
-            <span>{{ remaining_budget }} remaining</span>
           </div>
-          <div class="budget-bar"></div></div>
         </div>
       </div>
+        
+      <!-- Budget Bar -->
+      <div class="budget-bar-wrap">
+        <div class="budget-bar-label">
+          <span>Today's Spend: ৳ {{ total_cost }}</span>
+          <span>{{ remaining_budget }} remaining</span>
+        </div>
+        <div class="budget-bar"><div class="budget-fill"></div></div>
+      </div>
+
       <!-- AI Generated Diet Plan -->
-{% if ai_diet_plan %}
-<div style="background: var(--white); border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 2px solid var(--green);">
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-        <span style="font-size:24px;">🤖</span>
-        <h2 style="font-family:'Playfair Display',serif; font-size:20px; color:var(--green);">
+      {% if ai_diet_plan %}
+      <div style="background: var(--white); border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 2px solid var(--green);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+          <span style="font-size:24px;">🤖</span>
+          <h2 style="font-family:'Playfair Display',serif; font-size:20px; color:var(--green);">
             Your AI Generated 15-Day Diet Plan
-        </h2>
-    </div>
-    <div style="background:var(--offwhite); border-radius:8px; padding:20px; font-size:14px; line-height:1.8; color:var(--text); white-space:pre-wrap;">
-        {{ ai_diet_plan }}
-    </div>
-</div>
-{% endif %}
+          </h2>
+        </div>
+        <div style="background:var(--offwhite); border-radius:8px; padding:20px; font-size:14px; line-height:1.8; color:var(--text); white-space:pre-wrap;">
+          {{ ai_diet_plan }}
+        </div>
+      </div>
+      {% endif %}
 
       <!-- Disease Alert -->
       {% if profile.health_condition != 'None' %}
-<div class="disease-alert">
-    <div class="disease-alert-icon">🩺</div>
-    <div class="disease-alert-text">
-        <strong>{{ profile.health_condition }}-Aware Plan Active:</strong>
-        Your meals have been automatically adjusted based on your health condition.
-    </div>
-</div>
-{% endif %}
+      <div class="disease-alert">
+        <div class="disease-alert-icon">🩺</div>
+        <div class="disease-alert-text">
+          <strong>{{ profile.health_condition }}-Aware Plan Active:</strong>
+          Your meals have been automatically adjusted based on your health condition.
+        </div>
+      </div>
+      {% endif %}
 
       <!-- Budget Alert -->
       <div class="budget-alert">
-    <div class="budget-alert-icon">💡</div>
-    <div class="budget-alert-text">
-        <strong>Budget Tip:</strong> Your meal plan has been optimized to fit within your ৳{{ profile.weekly_budget }} weekly budget. Daily budget: ৳{{ daily_budget }}
-    </div>
-</div>
+        <div class="budget-alert-icon">💡</div>
+        <div class="budget-alert-text">
+          <strong>Budget Tip:</strong> Your meal plan has been optimized to fit within your ৳{{ profile.weekly_budget }} weekly budget. Daily budget: ৳{{ daily_budget }}
+        </div>
+      </div>
+
       <!-- Day Tabs -->
       <div class="day-tabs">
-  {% for d in day_range %}
-    <div class="day-tab {% if d == day_number %}active{% elif d == 7 or d == 15 %}has-report{% endif %}">
-      <div class="tab-day">Day {{ d }}</div>
-      <div class="tab-label">
-        {% if d == day_number %}Today
-        {% elif d == 7 %}📊 Report
-        {% elif d == 15 %}📊 Final
-        {% else %}Day {{ d }}{% endif %}
+        {% for d in day_range %}
+          <div class="day-tab {% if d == day_number %}active{% elif d == 7 or d == 15 %}has-report{% endif %}">
+            <div class="tab-day">Day {{ d }}</div>
+            <div class="tab-label">
+              {% if d == day_number %}Today
+              {% elif d == 7 %}📊 Report
+              {% elif d == 15 %}📊 Final
+              {% else %}Day {{ d }}{% endif %}
+            </div>
+          </div>
+        {% endfor %}
       </div>
-    </div>
-  {% endfor %}
-</div>
 
       <!-- Daily Summary -->
       <div class="daily-summary">
@@ -437,81 +439,79 @@
           </div>
           <div class="summary-item">
             <div class="summary-circle circle-protein">{{ total_protein }}g</div>
-           <div class="summary-label">Protein</div>
-           <div class="summary-value">Today's intake</div>
+            <div class="summary-label">Protein</div>
+            <div class="summary-value">Today's intake</div>
           </div>
           <div class="summary-item">
             <div class="summary-circle circle-carbs">{{ total_carbs }}g</div>
-           <div class="summary-label">Carbohydrates</div>
-           <div class="summary-value">Today's intake</div>
+            <div class="summary-label">Carbohydrates</div>
+            <div class="summary-value">Today's intake</div>
           </div>
           <div class="summary-item">
             <div class="summary-circle circle-fat">{{ total_fats }}g</div>
             <div class="summary-label">Healthy Fats</div>
-         <div class="summary-value">Today's intake</div>
+            <div class="summary-value">Today's intake</div>
           </div>
         </div>
       </div>
 
-      
-     
-         <!-- Meal Cards Grid -->
-    <div class="meal-grid">
-          {% for meal in todays_meals %}
-        <div class="meal-card">
-        <div class="meal-card-header">
-         <div class="meal-type-icon
-        {% if meal.meal_type == 'Breakfast' %}breakfast-icon
-        {% elif meal.meal_type == 'Lunch' %}lunch-icon
-        {% elif meal.meal_type == 'Dinner' %}dinner-icon
-        {% else %}snack-icon{% endif %}">
-        {% if meal.meal_type == 'Breakfast' %}🌅
-        {% elif meal.meal_type == 'Lunch' %}☀️
-        {% elif meal.meal_type == 'Dinner' %}🌙
-        {% else %}🌿{% endif %}
-      </div>
-      <div class="meal-type-info">
-        <div class="meal-type-name">{{ meal.meal_type }}</div>
-        <div class="meal-type-time">
-          {% if meal.meal_type == 'Breakfast' %}⏰ 7:00 AM — 8:00 AM
-          {% elif meal.meal_type == 'Lunch' %}⏰ 1:00 PM — 2:00 PM
-          {% elif meal.meal_type == 'Snack' %}⏰ 4:30 PM — 5:00 PM
-          {% else %}⏰ 8:00 PM — 9:00 PM{% endif %}
-        </div>
-      </div>
-      <div class="meal-cal-badge">{{ meal.calories }} kcal</div>
-    </div>
+      <!-- Meal Cards Grid -->
+      <div class="meal-grid">
+        {% for meal in todays_meals %}
+          <div class="meal-card">
+            <div class="meal-card-header">
+              <div class="meal-type-icon
+                {% if meal.meal_type == 'Breakfast' %}breakfast-icon
+                {% elif meal.meal_type == 'Lunch' %}lunch-icon
+                {% elif meal.meal_type == 'Dinner' %}dinner-icon
+                {% else %}snack-icon{% endif %}">
+                {% if meal.meal_type == 'Breakfast' %}🌅
+                {% elif meal.meal_type == 'Lunch' %}☀️
+                {% elif meal.meal_type == 'Dinner' %}🌙
+                {% else %}🌿{% endif %}
+              </div>
+              <div class="meal-type-info">
+                <div class="meal-type-name">{{ meal.meal_type }}</div>
+                <div class="meal-type-time">
+                  {% if meal.meal_type == 'Breakfast' %}⏰ 7:00 AM — 8:00 AM
+                  {% elif meal.meal_type == 'Lunch' %}⏰ 1:00 PM — 2:00 PM
+                  {% elif meal.meal_type == 'Snack' %}⏰ 4:30 PM — 5:00 PM
+                  {% else %}⏰ 8:00 PM — 9:00 PM{% endif %}
+                </div>
+              </div>
+              <div class="meal-cal-badge">{{ meal.calories }} kcal</div>
+            </div>
 
-    <div class="meal-items-list">
-      <div class="meal-food-item">
-        <div class="food-emoji">🍽️</div>
-        <div class="food-details">
-          <div class="food-name">{{ meal.meal_name }}</div>
-          <div class="food-macros">
-            {{ meal.calories }} kcal · Protein: {{ meal.protein }}g · Carbs: {{ meal.carbs }}g · Fat: {{ meal.fats }}g
+            <div class="meal-items-list">
+              <div class="meal-food-item">
+                <div class="food-emoji">🍽️</div>
+                <div class="food-details">
+                  <div class="food-name">{{ meal.meal_name }}</div>
+                  <div class="food-macros">
+                    {{ meal.calories }} kcal · Protein: {{ meal.protein }}g · Carbs: {{ meal.carbs }}g · Fat: {{ meal.fats }}g
+                  </div>
+                  <div class="food-macros" style="margin-top:6px; color:var(--green); font-size:13px; font-weight:500;">
+                    🥘 {{ meal.ingredients }}
+                  </div>
+                </div>
+                <div class="food-cost">৳ {{ meal.estimated_cost_bdt }}</div>
+              </div>
+            </div>
+
+            <div class="meal-footer">
+              <div class="meal-total">
+                Total: <span>{{ meal.calories }} kcal · ৳ {{ meal.estimated_cost_bdt }}</span>
+              </div>
+            </div>
           </div>
-          <div class="food-macros" style="margin-top:6px; color:var(--green); font-size:13px; font-weight:500;">
-    🥘 {{ meal.ingredients }}
-         </div>
-        </div>
-        <div class="food-cost">৳ {{ meal.estimated_cost_bdt }}</div>
+        {% empty %}
+          <div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--muted);">
+            <p>No meals found for today. Please regenerate your plan.</p>
+          </div>
+        {% endfor %}
       </div>
-    </div>
 
-    <div class="meal-footer">
-      <div class="meal-total">
-        Total: <span>{{ meal.calories }} kcal · ৳ {{ meal.estimated_cost_bdt }}</span>
-      </div>
     </div>
-  </div>
-  {% empty %}
-  <div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--muted);">
-    <p>No meals found for today. Please regenerate your plan.</p>
-  </div>
-  {% endfor %}
-</div>
-</div>
-</div>
   </main>
 
 </body>
