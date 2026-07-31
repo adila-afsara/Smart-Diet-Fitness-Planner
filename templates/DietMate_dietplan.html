@@ -294,10 +294,18 @@
       <a class="nav-item" href="#"><span class="nav-icon">🚪</span> Logout</a>
     </nav>
     <div class="sidebar-user">
-      <div class="user-avatar">👩</div>
+      <div class="user-avatar">
+    {% if profile.gender == "Female" %}
+        👩
+    {% elif profile.gender == "Male" %}
+        👨
+    {% else %}
+        🧑
+    {% endif %}
+    </div>
       <div>
-        <div class="user-name">Adila Afsara</div>
-        <div class="user-goal">Goal: Lose Weight</div>
+        <div class="user-name">{{ user.full_name }}</div>
+        <div class="user-goal">Goal: {{ profile.health_goal }}</div>
       </div>
     </div>
   </aside>
@@ -340,7 +348,7 @@
         <div class="plan-info-icon">🔥</div>
         <div>
             <div class="plan-info-label">Daily Calorie Target</div>
-            <div class="plan-info-value">AI Generated</div>
+            <div class="plan-info-value">{{ daily_calorie_target }} kcal</div>
         </div>
     </div>
     <div class="plan-divider"></div>
@@ -357,10 +365,11 @@
         <div class="plan-divider"></div>
         <div class="budget-bar-wrap">
           <div class="budget-bar-label">
-            <span>Today's Spend: ৳ 210</span>
-            <span>৳ 90 remaining</span>
+            
+            <span>Today's Spend: ৳ {{ total_cost }}</span>
+            <span>{{ remaining_budget }} remaining</span>
           </div>
-          <div class="budget-bar"><div class="budget-fill"></div></div>
+          <div class="budget-bar"></div></div>
         </div>
       </div>
       <!-- AI Generated Diet Plan -->
@@ -413,7 +422,7 @@
 
       <!-- Daily Summary -->
       <div class="daily-summary">
-        <div class="summary-title">📊 Day 8 — Nutrition Summary</div>
+        <div class="summary-title">📊 Day {{ day_number }} - Nutrition Summary</div>
         <div class="summary-grid">
           <div class="summary-item">
             <div class="summary-circle circle-cal">{{ total_calories }}<br/>kcal</div>
