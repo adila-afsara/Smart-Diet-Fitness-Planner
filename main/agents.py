@@ -373,3 +373,51 @@ IMPORTANT RULES:
 Respond to the user's message now.
 """
     return call_gemini(prompt)
+
+# ════════════════════════════════════════
+# 🏥 AGENT 5 — DIETITIAN RECOMMENDER AGENT
+# ════════════════════════════════════════
+def dietitian_agent(user_profile):
+    """
+    This agent recommends real dietitians, nutritionists
+    and doctors based on user's location and health condition.
+    If information is not available, it returns null values.
+    """
+    prompt = f"""
+You are a healthcare directory assistant for Bangladesh.
+Recommend real dietitians, nutritionists, or doctors based on:
+
+User Location: {user_profile.get('location')}
+Health Condition: {user_profile.get('health_condition')}
+Weekly Budget: ৳{user_profile.get('weekly_budget')}
+
+IMPORTANT RULES:
+1. Only recommend REAL professionals you have knowledge about
+2. Prefer professionals near the user's location
+3. If you don't know a specific detail, write null for that field
+4. Never make up fake phone numbers or emails
+5. If you cannot find professionals in that exact location, suggest nearby areas
+6. Focus on Bangladesh-based professionals only
+7. Recommend 4-6 professionals if possible
+
+Respond with ONLY a valid JSON array in this exact format:
+[
+  {{
+    "name": "Dr. Example Name",
+    "title": "MBBS, MSc Nutrition",
+    "specialty": "Diabetes & Weight Management",
+    "hospital": "Hospital or Clinic Name or null",
+    "location": "Area, City",
+    "fee": "500" or null,
+    "phone": "01XXXXXXXXX" or null,
+    "email": "email@example.com" or null,
+    "available_days": "Sat-Thu" or null,
+    "rating": "4.5" or null,
+    "notes": "Any additional info or null"
+  }}
+]
+
+If you cannot find any real professionals, return:
+[{{"error": "No professionals found in this area"}}]
+"""
+    return call_gemini(prompt)
