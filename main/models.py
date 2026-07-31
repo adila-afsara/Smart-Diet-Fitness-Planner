@@ -31,6 +31,7 @@ class UserProfile(models.Model):
     activity_level = models.CharField(max_length=20, choices=LEVEL_CHOICES, null=True, blank=True)
     workout_location = models.CharField(max_length=10, choices=LOCATION_CHOICES, null=True, blank=True)
     health_condition = models.CharField(max_length=30, choices=CONDITION_CHOICES, default='None')
+    location = models.CharField(max_length=100, null=True, blank=True)
     food_preferences = models.TextField(null=True, blank=True)
     avoid_foods = models.TextField(null=True, blank=True)
     weekly_budget = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
