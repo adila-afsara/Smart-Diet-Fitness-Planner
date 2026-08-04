@@ -211,8 +211,10 @@ class ChatbotConversation(models.Model):
         db_table = 'chatbot_conversations'
 
 
-# ── TABLE 11: Medical Specialist ──
+# ── TABLE 11: Medical specialist ──
 class MedicalSpecialist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
     full_name = models.CharField(max_length=100)
 
     title = models.CharField(
@@ -220,12 +222,12 @@ class MedicalSpecialist(models.Model):
         null=True,
         blank=True
     )
+
     specialist_type = models.CharField(
         max_length=50,
         null=True,
         blank=True
     )
-
 
     specialty = models.CharField(
         max_length=100,
@@ -286,13 +288,13 @@ class MedicalSpecialist(models.Model):
         blank=True
     )
 
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
-
     source = models.CharField(
         max_length=100,
         default="Gemini AI"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
     )
 
     def __str__(self):
@@ -300,6 +302,3 @@ class MedicalSpecialist(models.Model):
 
     class Meta:
         db_table = "medical_specialists"
-
-
- 
