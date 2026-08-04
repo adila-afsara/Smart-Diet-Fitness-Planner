@@ -17,9 +17,9 @@
       --orange-light: #FFF0DC;
       --green:        #2E8B57;
       --green-light:  #E8F5EE;
+      --green-hover:  #216640;
       --text:         #1A1A1A;
       --muted:        #666666;
-      --hover:        #8B1A1A;
       --sidebar-w:    240px;
     }
 
@@ -35,7 +35,7 @@
     .folk-strip { height: 8px; background: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 8px, var(--yellow) 8px, var(--yellow) 16px, var(--orange) 16px, var(--orange) 24px, var(--green) 24px, var(--green) 32px); }
     .sidebar-nav { flex: 1; padding: 16px 0; display: flex; flex-direction: column; gap: 2px; }
     .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; text-decoration: none; }
-    .nav-item:hover { color: var(--hover); background: var(--offwhite); border-left-color: var(--orange); }
+    .nav-item:hover { color: var(--green); background: var(--offwhite); border-left-color: var(--orange); }
     .nav-item.active { color: var(--red); background: var(--red-light); border-left-color: var(--red); font-weight: 600; }
     .nav-icon { font-size: 18px; flex-shrink: 0; }
     .nav-section-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; padding: 14px 20px 4px; }
@@ -59,8 +59,8 @@
     /* ── AI SUGGESTION BANNER ── */
     .ai-banner { background: var(--yellow-light); border: 2px solid var(--yellow); border-radius: 12px; padding: 16px 22px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
     .ai-banner-icon { font-size: 28px; flex-shrink: 0; }
-    .ai-banner-text { font-size: 13px; color: var(--hover); line-height: 1.6; }
-    .ai-banner-text strong { color: var(--hover); }
+    .ai-banner-text { font-size: 13px; color: #8B1A1A; line-height: 1.6; }
+    .ai-banner-text strong { color: #8B1A1A; }
 
     /* ── SEARCH & FILTERS ── */
     .search-filter-bar { background: var(--white); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; border: 2px solid var(--offwhite); }
@@ -69,8 +69,10 @@
     .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; }
     .search-input { width: 100%; padding: 10px 12px 10px 38px; border: 2px solid var(--offwhite); border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif; background: var(--offwhite); transition: border-color 0.2s; outline: none; }
     .search-input:focus { border-color: var(--orange); background: var(--white); }
+    
+    /* GREEN BUTTON */
     .search-btn { background: var(--red); color: white; border: none; border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
-    .search-btn:hover { background: var(--hover); }
+    .search-btn:hover { background: var(--green-hover); }
 
     .filter-row { display: flex; gap: 10px; flex-wrap: wrap; }
     .filter-label { font-size: 12px; font-weight: 600; color: var(--muted); padding-top: 8px; white-space: nowrap; }
@@ -122,17 +124,19 @@
     .detail-value { color: var(--text); font-weight: 500; }
 
     .doctor-footer { display: flex; gap: 10px; align-items: center; padding-top: 12px; border-top: 1px solid var(--offwhite); }
-    .fee-badge { background: var(--green-light); color: var(--green); font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 8px; }
-    .book-btn { flex: 1; background: var(--red); color: white; border: none; border-radius: 8px; padding: 9px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-align: center; }
-    .book-btn:hover { background: var(--hover); }
-    .view-btn { background: transparent; color: var(--orange); border: 2px solid var(--orange); border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .view-btn:hover { background: var(--orange); color: white; }
+    
+    /* GREEN BUTTON */
+    .view-btn { flex: 1; background: var(--green); color: white; border: none; border-radius: 8px; padding: 9px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-align: center; }
+    .view-btn:hover { background: var(--green-hover); }
+    
+    .external-btn { flex: 1; background: transparent; color: var(--orange); border: 2px solid var(--orange); border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; text-align: center; display: inline-block; white-space: nowrap; }
+    .external-btn:hover { background: var(--orange); color: white; }
 
     /* ── PAGINATION ── */
     .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
     .page-btn { width: 36px; height: 36px; border-radius: 8px; border: 2px solid var(--offwhite); background: var(--white); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: var(--muted); }
     .page-btn:hover { border-color: var(--orange); color: var(--orange); }
-    .page-btn.active { background: var(--red); color: white; border-color: var(--red); }
+    .page-btn.active { background: var(--green); color: white; border-color: var(--green); }
   </style>
 </head>
 <body>
@@ -183,7 +187,7 @@
       <div class="ai-banner">
         <div class="ai-banner-icon">🤖</div>
         <div class="ai-banner-text">
-          <strong>AI Recommendation:</strong> Based on your health condition (Diabetes) and location (Dhaka), we found <strong>4 highly rated dietitians</strong> who specialize in diabetes management. Consultations range from ৳300 to ৳800 — within affordable range!
+          <strong>AI Recommendation:</strong> Based on your health condition (Diabetes) and location (Dhaka), we found <strong>4 highly rated dietitians</strong> who specialize in diabetes management.
         </div>
       </div>
 
@@ -212,12 +216,6 @@
             <option>🩺 Heart Health</option>
             <option>🩺 General Nutrition</option>
           </select>
-          <select class="filter-select">
-            <option>💰 Any Budget</option>
-            <option selected>💰 Under ৳500</option>
-            <option>💰 ৳500 – ৳1000</option>
-            <option>💰 Above ৳1000</option>
-          </select>
           <div class="filter-chip active">⭐ AI Recommended</div>
           <div class="filter-chip">🏥 Hospital</div>
           <div class="filter-chip">🏠 Chamber</div>
@@ -231,7 +229,6 @@
         <select class="sort-select">
           <option>Sort by: AI Recommended</option>
           <option>Sort by: Rating</option>
-          <option>Sort by: Fee (Low to High)</option>
           <option>Sort by: Experience</option>
         </select>
       </div>
@@ -267,9 +264,8 @@
             <div class="detail-item"><span class="detail-icon">💻</span><span class="detail-value">Online available</span></div>
           </div>
           <div class="doctor-footer">
-            <div class="fee-badge">৳ 500 / visit</div>
             <button class="view-btn">View Profile</button>
-            <button class="book-btn">📅 Book Appointment</button>
+            <a href="https://birdem.org.bd" target="_blank" class="external-btn">Official Site ↗</a>
           </div>
         </div>
 
@@ -301,9 +297,8 @@
             <div class="detail-item"><span class="detail-icon">💻</span><span class="detail-value">Online available</span></div>
           </div>
           <div class="doctor-footer">
-            <div class="fee-badge">৳ 700 / visit</div>
             <button class="view-btn">View Profile</button>
-            <button class="book-btn">📅 Book Appointment</button>
+            <a href="https://bsmmu.ac.bd" target="_blank" class="external-btn">Official Site ↗</a>
           </div>
         </div>
 
@@ -334,9 +329,8 @@
             <div class="detail-item"><span class="detail-icon">💻</span><span class="detail-value">Online available</span></div>
           </div>
           <div class="doctor-footer">
-            <div class="fee-badge">৳ 300 / visit</div>
             <button class="view-btn">View Profile</button>
-            <button class="book-btn">📅 Book Appointment</button>
+            <a href="#" target="_blank" class="external-btn">Chamber Link ↗</a>
           </div>
         </div>
 
@@ -360,7 +354,7 @@
             <span class="doctor-tag tag-orange">General Nutrition</span>
           </div>
           <div class="doctor-details">
-            <div class="detail-item"><span class="detail-icon">🏥</span><span class="detail-icon"></span><span class="detail-value">Ibn Sina Hospital</span></div>
+            <div class="detail-item"><span class="detail-icon">🏥</span><span class="detail-value">Ibn Sina Hospital</span></div>
             <div class="detail-item"><span class="detail-icon">📍</span><span class="detail-value">Mirpur, Dhaka</span></div>
             <div class="detail-item"><span class="detail-icon">⏰</span><span class="detail-value">Mon – Fri, 9AM–1PM</span></div>
             <div class="detail-item"><span class="detail-icon">🎓</span><span class="detail-value">9 years experience</span></div>
@@ -368,9 +362,8 @@
             <div class="detail-item"><span class="detail-icon">💻</span><span class="detail-value">Not available online</span></div>
           </div>
           <div class="doctor-footer">
-            <div class="fee-badge">৳ 400 / visit</div>
             <button class="view-btn">View Profile</button>
-            <button class="book-btn">📅 Book Appointment</button>
+            <a href="https://ibnsinatrust.com" target="_blank" class="external-btn">Official Site ↗</a>
           </div>
         </div>
 
