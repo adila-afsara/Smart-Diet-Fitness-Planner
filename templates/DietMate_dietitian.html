@@ -235,87 +235,114 @@
 
       <!-- Doctors Grid -->
       <div class="doctors-grid">
+        <div class="doctors-grid">
 
-        <!-- Doctor 1 — Recommended -->
-        <div class="doctor-card recommended">
-          <div class="doctor-header">
-            <div class="doctor-avatar avatar-1">👩‍⚕️</div>
-            <div class="doctor-info">
-              <div class="doctor-name">Dr. Fatema Begum</div>
-              <div class="doctor-title">MBBS, MSc Nutrition & Dietetics</div>
-              <div class="doctor-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-num">4.9</span>
-                <span class="rating-count">(128 reviews)</span>
-              </div>
+           {% for specialist in specialists %}
+
+         <div class="doctor-card {% if forloop.first %}recommended{% endif %}">
+
+        <div class="doctor-header">
+
+         <div class="doctor-avatar avatar-1">
+            👨‍⚕️
+         </div>
+
+        <div class="doctor-info">
+
+            <div class="doctor-name">
+                {{ specialist.full_name }}
             </div>
+
+              <div class="doctor-title">
+                {{ specialist.title }}
+              </div>
+
           </div>
-          <div class="doctor-tags">
-            <span class="doctor-tag tag-red">Diabetes</span>
-            <span class="doctor-tag tag-orange">Weight Loss</span>
-            <span class="doctor-tag tag-green">Clinical Nutrition</span>
-          </div>
-          <div class="doctor-details">
-            <div class="detail-item"><span class="detail-icon">🏥</span><span class="detail-value">Birdem General Hospital</span></div>
-            <div class="detail-item"><span class="detail-icon">📍</span><span class="detail-value">Shahbag, Dhaka</span></div>
-            <div class="detail-item"><span class="detail-icon">⏰</span><span class="detail-value">Sat – Thu, 10AM–2PM</span></div>
-            <div class="detail-item"><span class="detail-icon">🎓</span><span class="detail-value">12 years experience</span></div>
-            <div class="detail-item"><span class="detail-icon">📞</span><span class="detail-value">+880 1711-XXXXXX</span></div>
-            <div class="detail-item"><span class="detail-icon">💻</span><span class="detail-value">Online available</span></div>
-          </div>
-          <div class="doctor-footer">
-            <button class="view-btn">View Profile</button>
-            <a href="https://birdem.org.bd" target="_blank" class="external-btn">Official Site ↗</a>
-          </div>
+
         </div>
 
-        <!-- Doctor 2 -->
-        <div class="doctor-card">
-          <div class="doctor-header">
-            <div class="doctor-avatar avatar-2">👨‍⚕️</div>
-            <div class="doctor-info">
-              <div class="doctor-name">Dr. Rafiqul Islam</div>
-              <div class="doctor-title">MBBS, MD Endocrinology & Nutrition</div>
-              <div class="doctor-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-num">4.8</span>
-                <span class="rating-count">(94 reviews)</span>
-              </div>
-            </div>
-          </div>
-          <div class="doctor-tags">
-            <span class="doctor-tag tag-red">Diabetes</span>
-            <span class="doctor-tag tag-yellow">Endocrinology</span>
-            <span class="doctor-tag tag-green">Diet Planning</span>
-          </div>
-          <div class="doctor-details">
-            <div class="detail-item"><span class="detail-icon">🏥</span><span class="detail-value">BSMMU Hospital</span></div>
-            <div class="detail-item"><span class="detail-icon">📍</span><span class="detail-value">Shahbag, Dhaka</span></div>
-            <div class="detail-item"><span class="detail-icon">⏰</span><span class="detail-value">Sun – Thu, 4PM–8PM</span></div>
-            <div class="detail-item"><span class="detail-icon">🎓</span><span class="detail-value">15 years experience</span></div>
-            <div class="detail-item"><span class="detail-icon">📞</span><span class="detail-value">+880 1812-XXXXXX</span></div>
-            <div class="detail-item"><span class="detail-icon">💻</span><span class="detail-value">Online available</span></div>
-          </div>
-          <div class="doctor-footer">
-            <button class="view-btn">View Profile</button>
-            <a href="https://bsmmu.ac.bd" target="_blank" class="external-btn">Official Site ↗</a>
-          </div>
+       <div class="doctor-tags">
+
+        <span class="doctor-tag tag-red">
+            {{ specialist.specialist_type }}
+        </span>
+
+        <span class="doctor-tag tag-green">
+            {{ specialist.specialty }}
+        </span>
+
+    </div>
+
+    <div class="doctor-details">
+
+        <div class="detail-item">
+            🏥
+            <span class="detail-value">
+                {{ specialist.hospital_clinic }}
+            </span>
         </div>
 
-        <!-- Doctor 3 -->
-        <div class="doctor-card">
-          <div class="doctor-header">
-            <div class="doctor-avatar avatar-3">👩‍⚕️</div>
-            <div class="doctor-info">
-              <div class="doctor-name">Nutritionist Sumaiya Akter</div>
-              <div class="doctor-title">BSc & MSc in Food & Nutrition</div>
-              <div class="doctor-rating">
-                <span class="stars">★★★★☆</span>
-                <span class="rating-num">4.6</span>
-                <span class="rating-count">(67 reviews)</span>
-              </div>
-            </div>
+        <div class="detail-item">
+            📍
+            <span class="detail-value">
+                {{ specialist.location }}
+            </span>
+        </div>
+
+        <div class="detail-item">
+            💰
+            <span class="detail-value">
+
+                {% if specialist.consultation_fee_bdt %}
+                    ৳{{ specialist.consultation_fee_bdt }}
+                {% else %}
+                    Not Available
+                {% endif %}
+
+            </span>
+        </div>
+
+        <div class="detail-item">
+            📞
+            <span class="detail-value">
+
+                {% if specialist.contact_number %}
+                    {{ specialist.contact_number }}
+                {% else %}
+                    Not Available
+                {% endif %}
+
+            </span>
+        </div>
+
+    </div>
+
+    <div class="doctor-footer">
+
+        {% if specialist.website %}
+
+        <a href="{{ specialist.website }}"
+           target="_blank"
+           class="external-btn">
+           Official Website ↗
+        </a>
+
+        {% endif %}
+
+    </div>
+
+     </div>
+
+      {% empty %}
+
+    <h3>No specialists found.</h3>
+
+            {% endfor %}
+
           </div>
+
+
+  </div>
           <div class="doctor-tags">
             <span class="doctor-tag tag-orange">Weight Management</span>
             <span class="doctor-tag tag-green">Diabetes Diet</span>
