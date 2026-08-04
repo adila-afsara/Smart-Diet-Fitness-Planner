@@ -399,6 +399,8 @@ Always prioritize evidence-based healthcare recommendations.
 
 If possible, recommend professionals whose information is available on official hospital websites. If an official website cannot be identified, return null instead of inventing one.
 
+When appropriate, try to recommend professionals from different categories rather than multiple professionals from the same category, unless the user's condition specifically requires otherwise.
+
 =================================
 USER PROFILE
 =================================
