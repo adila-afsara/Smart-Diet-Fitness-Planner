@@ -20,7 +20,19 @@ class UserProfile(models.Model):
     GOAL_CHOICES = [('Lose Weight', 'Lose Weight'), ('Gain Weight', 'Gain Weight'), ('Stay Healthy', 'Stay Healthy')]
     LEVEL_CHOICES = [('Beginner', 'Beginner'), ('Intermediate', 'Intermediate'), ('Advanced', 'Advanced')]
     LOCATION_CHOICES = [('Home', 'Home'), ('Gym', 'Gym')]
-    CONDITION_CHOICES = [('None', 'None'), ('Diabetes', 'Diabetes'), ('High Blood Pressure', 'High Blood Pressure'), ('High Cholesterol', 'High Cholesterol')]
+    CONDITION_CHOICES = [('None', 'None'),
+                    ('Diabetes', 'Diabetes'),
+                    ('High Blood Pressure', 'High Blood Pressure'),
+                    ('High Cholesterol', 'High Cholesterol'),
+                    ('Obesity', 'Obesity'),
+                    ('Underweight', 'Underweight'),
+                    ('PCOS', 'PCOS'),
+                    ('Thyroid Disorder', 'Thyroid Disorder'),
+                    ('Kidney Disease', 'Kidney Disease'),
+                    ('Heart Disease', 'Heart Disease'),
+                    ('Digestive Problems', 'Digestive Problems'),
+                    ('Food Allergy', 'Food Allergy'),
+                    ('Other', 'Other'),]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     age = models.IntegerField(null=True, blank=True)
