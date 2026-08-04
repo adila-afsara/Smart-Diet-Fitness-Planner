@@ -45,8 +45,9 @@ The system is powered by **4 specialized AI agents** using Claude API:
 
 -  **Nutrition & Diet Agent** — Meal planning, budget optimization, disease-aware adjustments
 -  **Fitness Agent** — Workout plan generation and adaptive updates
--  **Health Tracking Agent** — BMI monitoring, progress reports, dietitian suggestions
+-  **Health Tracking Agent** — BMI monitoring, progress reports
 -  **Motivational Chatbot Agent** — Daily motivation, affirmations, milestone celebrations
+-  **Dietitian/Medical Professional Suggester Agent** — Helps find and connect with local specialists
 
 ---
 
