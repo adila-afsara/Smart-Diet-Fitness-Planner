@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import User, UserProfile
-from .agents import nutrition_agent
+from .models import User, UserProfile, DietPlan, MedicalSpecialist
+from .models import User, UserProfile, DietPlan, MedicalSpecialist
+from .agents import nutrition_agent, medical_specialist_agent, parse_gemini_json
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
 from .nutrition_calculator import (
@@ -638,13 +639,11 @@ def medical_specialist(request):
     except UserProfile.DoesNotExist:
         return redirect('dashboard')
 
-    from .agents import medical_specialist_agent, parse_gemini_json
-
-    # Get search filters from form
+    # Get search filters
     search_location = request.GET.get('location', profile.location or '')
     search_specialty = request.GET.get('specialty', '')
 
-    # Build user profile for AI agent
+    # Build user profile for AI
     user_profile = {
         "age": profile.age,
         "gender": profile.gender,
@@ -658,8 +657,9 @@ def medical_specialist(request):
         "location": search_location or profile.location,
     }
 
-    # Call AI Medical Specialist Agent
+    # Call Gemini AI
     ai_response = medical_specialist_agent(user_profile)
+
     print("\n========== GEMINI RESPONSE ==========")
     print(ai_response)
     print("=====================================\n")
@@ -678,19 +678,56 @@ def medical_specialist(request):
             summary = data.get("summary", "")
             recommended_specialists = data.get("recommended_specialists", [])
 
-    except Exception as e:
-        error_message = "Unable to fetch AI recommendations."
-        print(f"Medical Specialist Agent Error: {e}")
+            print("Number of specialists received:", len(recommended_specialists))
 
-    return render(request, 'DietMate_dietitian.html', {
-        'user': user,
-        'profile': profile,
-        'recommended_specialists': recommended_specialists,
-        'summary': summary,
-        'error_message': error_message,
-        'search_location': search_location,
-        'search_specialty': search_specialty,
-    })
+            # Remove previous AI recommendations
+            MedicalSpecialist.objects.filter(user=user).delete()
+
+            # Save new recommendations
+            for specialist in recommended_specialists:
+
+                print("Saving:", specialist.get("full_name"))
+
+                MedicalSpecialist.objects.create(
+                    user=user,
+                    full_name=specialist.get("full_name"),
+                    title=specialist.get("title"),
+                    specialist_type=specialist.get("specialist_type"),
+                    specialty=specialist.get("specialty"),
+                    hospital_clinic=specialist.get("hospital_clinic"),
+                    location=specialist.get("location"),
+                    consultation_fee_bdt=specialist.get("consultation_fee_bdt"),
+                    website=specialist.get("website"),
+                    contact_number=specialist.get("contact_number"),
+                    email=specialist.get("email"),
+                    available_days=specialist.get("available_days"),
+                    rating=specialist.get("rating"),
+                    notes=specialist.get("notes"),
+                    source=specialist.get("source", "Gemini AI")
+                )
+
+            print("================================")
+            print("Saved specialists:", MedicalSpecialist.objects.count())
+            print("================================")
+
+    except Exception:
+        import traceback
+
+        error_message = "Unable to fetch AI recommendations."
+
+        print("\n========== ERROR ==========")
+        traceback.print_exc()
+        print("===========================\n")
+    specialists = MedicalSpecialist.objects.filter(user=request.user)
+    return render(
+    request,
+    "medical_specialist.html",
+    {
+        "specialists": specialists,
+        "summary": ai_response.get("summary", "")
+    }
+    )
+
 def regenerate_plan(request):
     if request.method != "POST":
         return redirect("diet_plan")
