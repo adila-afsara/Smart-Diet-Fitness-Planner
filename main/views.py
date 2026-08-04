@@ -201,6 +201,8 @@ def diet_plan(request):
             day_number = 1
 
         if day_number > 15:
+            active_plan.plan_status = "Completed"
+            active_plan.save()
             day_number = 15
 
         todays_meals = DietPlanMeal.objects.filter(
@@ -658,6 +660,9 @@ def medical_specialist(request):
 
     # Call AI Medical Specialist Agent
     ai_response = medical_specialist_agent(user_profile)
+    print("\n========== GEMINI RESPONSE ==========")
+    print(ai_response)
+    print("=====================================\n")
 
     recommended_specialists = []
     summary = ""
