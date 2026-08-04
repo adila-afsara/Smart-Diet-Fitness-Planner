@@ -377,22 +377,27 @@ Respond to the user's message now.
     return call_gemini(prompt)
 
 # ════════════════════════════════════════
-# 🏥 AGENT 5 — DIETITIAN RECOMMENDER AGENT
+# 🏥 AGENT 5 — DIETITIAN/Medical Specialist RECOMMENDER AGENT
 # ════════════════════════════════════════
 def medical_specialist_agent(user_profile):
     """
     AI Agent:
     Analyzes the user's health profile and recommends
-    appropriate healthcare specialists.
+    REAL healthcare professionals in Bangladesh.
 
-    This agent DOES NOT recommend individual doctors.
-    It only recommends specialist types with reasons.
+    Recommendations include dietitians, nutritionists,
+    fitness trainers and medical specialists based on
+    the user's health condition and location.
     """
 
     prompt = f"""
 You are the Medical Recommendation AI Agent for DietMate BD.
 
-Your responsibility is to analyze the user's health profile and recommend the most appropriate healthcare specialists.
+Your responsibility is to analyze the user's health profile and recommend REAL healthcare professionals in Bangladesh who best match the user's health condition, health goal, lifestyle, and location.
+
+Always prioritize evidence-based healthcare recommendations.
+
+If possible, recommend professionals whose information is available on official hospital websites. If an official website cannot be identified, return null instead of inventing one.
 
 =================================
 USER PROFILE
@@ -413,90 +418,123 @@ Location: {user_profile.get("location")}
 YOUR TASK
 =================================
 
-Analyze the user's profile carefully and recommend the most appropriate healthcare specialists.
+Analyze the user's profile carefully and recommend REAL healthcare professionals in Bangladesh that best match the user's health condition, health goal, and location.
 
-Possible specialists include:
+Possible healthcare professionals include:
 
 - Dietitian
 - Nutritionist
 - Fitness Trainer
 - General Physician
-- Endocrinologist
 - Cardiologist
+- Endocrinologist
 - Neurologist
 - Gastroenterologist
 - Nephrologist
 - Orthopedic Specialist
 - Physiotherapist
+- Gynecologist
 
-Rules:
+=================================
+RULES
+=================================
 
-1. Recommend only specialists that are medically relevant to the user's health condition, health goal, and overall profile.
+1. Recommend only REAL healthcare professionals in Bangladesh.
 
-2. Typically recommend between 1 and 5 specialists.
+2. Recommend between 3 and 5 professionals whenever possible.
 
-3. Avoid unnecessary or duplicate recommendations.
+3. Prioritize professionals located in or near the user's location.
 
-4. If the user's health condition is "None", recommend preventive healthcare specialists such as:
+4. If the user's health condition is "None", recommend:
    - Dietitian
    - Nutritionist
    - Fitness Trainer
 
-   Explain that these specialists can help the user maintain a healthy lifestyle, improve nutrition, build healthy exercise habits, and prevent future health problems.
+5. If the user has a medical condition, recommend the appropriate specialist(s) together with a Dietitian or Nutritionist whenever beneficial.
 
-5. Do NOT recommend individual doctors.
+6. Never invent doctor names, phone numbers, consultation fees, email addresses, ratings, websites, or hospital names.
 
-6. Do NOT recommend hospitals.
+7. If any information is unavailable, return null for that field.
 
-7. Do NOT mention consultation fees.
+8. Prefer official hospital websites or official doctor profile pages.
 
-8. Do NOT mention appointments.
+9. Do not recommend duplicate professionals.
 
-9. Return ONLY valid JSON.
+10. In the "notes" field, briefly explain why each professional is suitable for this user.
 
-10. Do NOT include markdown, code blocks, or any explanation outside the JSON response.
+11. Recommendations should assist users in finding healthcare professionals but should never replace consultation with a licensed medical professional.
+
+12. Return ONLY valid JSON.
+
+13. Do NOT include markdown.
+
+14. Do NOT use ```json.
+
+15. Do NOT write any explanation before or after the JSON.
 
 =================================
 RECOMMENDATION GUIDELINES
 =================================
 
-Use these as examples only.
+Examples only:
 
-• Diabetes → Dietitian, Endocrinologist
-• High Blood Pressure → Cardiologist, Dietitian
-• High Cholesterol → Dietitian, Cardiologist
-• Obesity → Dietitian, Fitness Trainer
-• Underweight → Dietitian, Nutritionist
-• Thyroid Disorder → Endocrinologist, Dietitian
-• Kidney Disease → Nephrologist, Dietitian
-• Heart Disease → Cardiologist, Dietitian
-• Digestive Problems → Gastroenterologist, Dietitian
-• Food Allergy → Dietitian, General Physician
-• PCOS → Gynecologist, Dietitian
-• None → Dietitian, Nutritionist, Fitness Trainer
+• Diabetes → Endocrinologist + Dietitian
+• High Blood Pressure → Cardiologist + Dietitian
+• High Cholesterol → Cardiologist + Dietitian
+• Obesity → Dietitian + Fitness Trainer
+• Underweight → Dietitian + Nutritionist
+• Thyroid Disorder → Endocrinologist + Dietitian
+• Kidney Disease → Nephrologist + Dietitian
+• Heart Disease → Cardiologist + Dietitian
+• Digestive Problems → Gastroenterologist + Dietitian
+• Food Allergy → General Physician + Dietitian
+• PCOS → Gynecologist + Dietitian
+• None → Dietitian + Nutritionist + Fitness Trainer
 
 =================================
 OUTPUT FORMAT
 =================================
 
 {{
-    "summary": "A short personalized summary explaining why these specialists are recommended.",
+  "summary": "A short personalized explanation of why these professionals were recommended.",
 
-    "recommended_specialists": [
-        {{
-            "type": "Dietitian",
-            "reason": "Helps create a personalized meal plan based on the user's health profile."
-        }}
-    ]
+  "recommended_specialists": [
+    {{
+      "full_name": "Dr. Example Name",
+
+      "title": "MBBS, FCPS, MD or null",
+
+      "specialist_type": "Cardiologist",
+
+      "specialty": "Hypertension & Preventive Cardiology",
+
+      "hospital_clinic": "Example Hospital",
+
+      "location": "Dhaka",
+
+      "consultation_fee_bdt": null,
+
+      "website": "https://examplehospital.com/doctor-profile",
+
+      "contact_number": null,
+
+      "email": null,
+
+      "available_days": null,
+
+      "rating": null,
+
+      "notes": "Recommended because the user has high blood pressure and wants to lose weight.",
+
+      "source": "Gemini AI"
+    }}
+  ]
 }}
 
-IMPORTANT:
+IMPORTANT
 
 - Your response MUST begin with '{{'
 - Your response MUST end with '}}'
-- Do NOT use ```json
-- Do NOT use markdown
-- Do NOT write any text before or after the JSON
 - Output ONLY valid JSON
 """
 
