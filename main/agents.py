@@ -377,47 +377,125 @@ Respond to the user's message now.
 # ════════════════════════════════════════
 # 🏥 AGENT 5 — DIETITIAN RECOMMENDER AGENT
 # ════════════════════════════════════════
-def dietitian_agent(user_profile):
+def medical_specialist_agent(user_profile):
     """
-    This agent recommends real dietitians, nutritionists
-    and doctors based on user's location and health condition.
-    If information is not available, it returns null values.
+    AI Agent:
+    Analyzes the user's health profile and recommends
+    appropriate healthcare specialists.
+
+    This agent DOES NOT recommend individual doctors.
+    It only recommends specialist types with reasons.
     """
+
     prompt = f"""
-You are a healthcare directory assistant for Bangladesh.
-Recommend real dietitians, nutritionists, or doctors based on:
+You are the Medical Recommendation AI Agent for DietMate BD.
 
-User Location: {user_profile.get('location')}
-Health Condition: {user_profile.get('health_condition')}
-Weekly Budget: ৳{user_profile.get('weekly_budget')}
+Your responsibility is to analyze the user's health profile and recommend the most appropriate healthcare specialists.
 
-IMPORTANT RULES:
-1. Only recommend REAL professionals you have knowledge about
-2. Prefer professionals near the user's location
-3. If you don't know a specific detail, write null for that field
-4. Never make up fake phone numbers or emails
-5. If you cannot find professionals in that exact location, suggest nearby areas
-6. Focus on Bangladesh-based professionals only
-7. Recommend 4-6 professionals if possible
+=================================
+USER PROFILE
+=================================
 
-Respond with ONLY a valid JSON array in this exact format:
-[
-  {{
-    "name": "Dr. Example Name",
-    "title": "MBBS, MSc Nutrition",
-    "specialty": "Diabetes & Weight Management",
-    "hospital": "Hospital or Clinic Name or null",
-    "location": "Area, City",
-    "fee": "500" or null,
-    "phone": "01XXXXXXXXX" or null,
-    "email": "email@example.com" or null,
-    "available_days": "Sat-Thu" or null,
-    "rating": "4.5" or null,
-    "notes": "Any additional info or null"
-  }}
-]
+Age: {user_profile.get("age")}
+Gender: {user_profile.get("gender")}
+Height: {user_profile.get("height")} cm
+Weight: {user_profile.get("weight")} kg
+Health Goal: {user_profile.get("health_goal")}
+Health Condition: {user_profile.get("health_condition")}
+Activity Level: {user_profile.get("activity_level")}
+Food Preferences: {user_profile.get("food_preferences")}
+Foods to Avoid: {user_profile.get("avoid_foods")}
+Location: {user_profile.get("location")}
 
-If you cannot find any real professionals, return:
-[{{"error": "No professionals found in this area"}}]
+=================================
+YOUR TASK
+=================================
+
+Analyze the user's profile carefully and recommend the most appropriate healthcare specialists.
+
+Possible specialists include:
+
+- Dietitian
+- Nutritionist
+- Fitness Trainer
+- General Physician
+- Endocrinologist
+- Cardiologist
+- Neurologist
+- Gastroenterologist
+- Nephrologist
+- Orthopedic Specialist
+- Physiotherapist
+
+Rules:
+
+1. Recommend only specialists that are medically relevant to the user's health condition, health goal, and overall profile.
+
+2. Typically recommend between 1 and 5 specialists.
+
+3. Avoid unnecessary or duplicate recommendations.
+
+4. If the user's health condition is "None", recommend preventive healthcare specialists such as:
+   - Dietitian
+   - Nutritionist
+   - Fitness Trainer
+
+   Explain that these specialists can help the user maintain a healthy lifestyle, improve nutrition, build healthy exercise habits, and prevent future health problems.
+
+5. Do NOT recommend individual doctors.
+
+6. Do NOT recommend hospitals.
+
+7. Do NOT mention consultation fees.
+
+8. Do NOT mention appointments.
+
+9. Return ONLY valid JSON.
+
+10. Do NOT include markdown, code blocks, or any explanation outside the JSON response.
+
+=================================
+RECOMMENDATION GUIDELINES
+=================================
+
+Use these as examples only.
+
+• Diabetes → Dietitian, Endocrinologist
+• High Blood Pressure → Cardiologist, Dietitian
+• High Cholesterol → Dietitian, Cardiologist
+• Obesity → Dietitian, Fitness Trainer
+• Underweight → Dietitian, Nutritionist
+• Thyroid Disorder → Endocrinologist, Dietitian
+• Kidney Disease → Nephrologist, Dietitian
+• Heart Disease → Cardiologist, Dietitian
+• Digestive Problems → Gastroenterologist, Dietitian
+• Food Allergy → Dietitian, General Physician
+• PCOS → Gynecologist, Dietitian
+• None → Dietitian, Nutritionist, Fitness Trainer
+
+=================================
+OUTPUT FORMAT
+=================================
+
+{{
+    "summary": "A short personalized summary explaining why these specialists are recommended.",
+
+    "recommended_specialists": [
+        {{
+            "type": "Dietitian",
+            "reason": "Helps create a personalized meal plan based on the user's health profile."
+        }}
+    ]
+}}
+
+IMPORTANT:
+
+- Your response MUST begin with '{{'
+- Your response MUST end with '}}'
+- Do NOT use ```json
+- Do NOT use markdown
+- Do NOT write any text before or after the JSON
+- Output ONLY valid JSON
 """
+
     return call_gemini(prompt)
