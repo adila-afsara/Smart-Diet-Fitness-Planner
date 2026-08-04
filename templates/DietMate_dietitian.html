@@ -187,7 +187,7 @@
       <div class="ai-banner">
         <div class="ai-banner-icon">🤖</div>
         <div class="ai-banner-text">
-          <strong>AI Recommendation:</strong> Based on your health condition (Diabetes) and location (Dhaka), we found <strong>4 highly rated dietitians</strong> who specialize in diabetes management.
+          <strong>AI Recommendation:</strong>  {{ summary }}<strong>
         </div>
       </div>
 
@@ -225,7 +225,7 @@
 
       <!-- Results Info -->
       <div class="results-info">
-        <div class="results-count">Showing <span>4 dietitians</span> matching your condition in <span>Dhaka</span></div>
+        <div class="results-count">Showing <span>{{ specialists|length }} specialists</span> matching your condition in <span>Dhaka</span></div>
         <select class="sort-select">
           <option>Sort by: AI Recommended</option>
           <option>Sort by: Rating</option>
