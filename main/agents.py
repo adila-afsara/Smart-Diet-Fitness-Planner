@@ -1,5 +1,7 @@
 import os
 import requests 
+import json
+import re
 from dotenv import load_dotenv
 from .nutrition_calculator import (
     calculate_bmr,
@@ -499,3 +501,29 @@ IMPORTANT:
 """
 
     return call_gemini(prompt)
+
+def parse_gemini_json(ai_response):
+    """
+    Cleans and parses Gemini JSON responses.
+    Returns a Python dictionary/list if successful,
+    otherwise returns None.
+    """
+
+    if not ai_response:
+        return None
+
+    try:
+        # Remove markdown code blocks
+        clean = ai_response.strip()
+
+        clean = re.sub(r"^```json", "", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"^```", "", clean)
+        clean = re.sub(r"```$", "", clean)
+
+        clean = clean.strip()
+
+        return json.loads(clean)
+
+    except Exception as e:
+        print("Gemini JSON Error:", e)
+        return None
