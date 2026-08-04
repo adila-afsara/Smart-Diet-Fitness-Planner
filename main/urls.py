@@ -12,7 +12,7 @@ urlpatterns = [
     path('fitness-plan/', views.fitness_plan, name='fitness_plan'),
     path('progress/', views.progress, name='progress'),
     path('chatbot/', views.chatbot, name='chatbot'),
-    path('dietitian/', views.dietitian, name='dietitian'),
+    path('medical-specialist/', views.medical_specialist, name='medical_specialist'),
     path('regenerate-plan/', views.regenerate_plan, name='regenerate_plan'),
     path('download-plan/', views.download_plan, name='download_plan'),
 ]
