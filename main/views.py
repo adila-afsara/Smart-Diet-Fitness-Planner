@@ -624,7 +624,7 @@ def chatbot(request):
         return redirect('login')
     return render(request, 'DietMate_chatbot.html')
 
-def dietitian(request):
+def medical_specialist(request):
     if 'user_id' not in request.session:
         return redirect('login')
 
@@ -636,51 +636,52 @@ def dietitian(request):
     except UserProfile.DoesNotExist:
         return redirect('dashboard')
 
-    import json
-    from .agents import dietitian_agent
+    from .agents import medical_specialist_agent, parse_gemini_json
 
     # Get search filters from form
     search_location = request.GET.get('location', profile.location or '')
     search_specialty = request.GET.get('specialty', '')
-    search_budget = request.GET.get('budget', '')
 
-    # Build user profile for agent
+    # Build user profile for AI agent
     user_profile = {
-        'location': search_location or profile.location,
-        'health_condition': profile.health_condition,
-        'weekly_budget': profile.weekly_budget,
-        'specialty': search_specialty,
+        "age": profile.age,
+        "gender": profile.gender,
+        "height": profile.height,
+        "weight": profile.weight,
+        "health_goal": profile.health_goal,
+        "health_condition": profile.health_condition,
+        "activity_level": profile.activity_level,
+        "food_preferences": profile.food_preferences,
+        "avoid_foods": profile.avoid_foods,
+        "location": search_location or profile.location,
     }
 
-    # Call AI agent
-    ai_response = dietitian_agent(user_profile)
-    dietitians = []
+    # Call AI Medical Specialist Agent
+    ai_response = medical_specialist_agent(user_profile)
+
+    recommended_specialists = []
+    summary = ""
     error_message = None
 
     try:
-        clean = ai_response.strip()
-        if clean.startswith('```'):
-            clean = clean.split('```')[1]
-            if clean.startswith('json'):
-                clean = clean[4:]
-        clean = clean.strip()
+        data = parse_gemini_json(ai_response)
 
-        data = json.loads(clean)
+        if data is None:
+            error_message = "Unable to fetch AI recommendations."
 
-        # Check if error returned
-        if data and 'error' in data[0]:
-            error_message = data[0]['error']
         else:
-            dietitians = data
+            summary = data.get("summary", "")
+            recommended_specialists = data.get("recommended_specialists", [])
 
     except Exception as e:
-        error_message = "Unable to fetch recommendations. Please try again."
-        print(f"Dietitian agent error: {e}")
+        error_message = "Unable to fetch AI recommendations."
+        print(f"Medical Specialist Agent Error: {e}")
 
     return render(request, 'DietMate_dietitian.html', {
         'user': user,
         'profile': profile,
-        'dietitians': dietitians,
+        'recommended_specialists': recommended_specialists,
+        'summary': summary,
         'error_message': error_message,
         'search_location': search_location,
         'search_specialty': search_specialty,
