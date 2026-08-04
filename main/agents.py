@@ -1,529 +1,830 @@
-import os
-import requests 
-import json
-import re
-from dotenv import load_dotenv
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import User, UserProfile
+from .agents import nutrition_agent
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
 from .nutrition_calculator import (
     calculate_bmr,
     calculate_tdee,
     calculate_daily_calories,
-    calculate_protein_goal
 )
+import hashlib
 
-load_dotenv(override=True)
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Fallback — read directly from .env if os.getenv fails
-if not GEMINI_API_KEY:
-    with open('.env', 'r') as f:
-        for line in f:
-            if line.startswith('GEMINI_API_KEY='):
-                GEMINI_API_KEY = line.strip().split('=', 1)[1]
-                break
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={GEMINI_API_KEY}"
+def landing(request):
+    return render(request, 'DietMate_landing_updated.html')
 
-def call_gemini(prompt):
-    """
+def login_view(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        hashed_password = hash_password(password)
+        try:
+            user = User.objects.get(email=email, password=hashed_password)
+            request.session['user_id'] = user.id
+            request.session['user_name'] = user.full_name
+            return redirect('dashboard')
+        except User.DoesNotExist:
+            messages.error(request, 'Invalid email or password. Please try again.')
+            return render(request, 'DietMate_login.html')
+    return render(request, 'DietMate_login.html')
+
+def signup(request):
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if password != confirm_password:
+            messages.error(request, 'Passwords do not match!')
+            return render(request, 'DietMate_signup.html')
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered. Please login.')
+            return render(request, 'DietMate_signup.html')
+
+        hashed_password = hash_password(password)
+        user = User.objects.create(
+            full_name=full_name,
+            email=email,
+            password=hashed_password
+        )
+
+        age = request.POST.get('age')
+        weight = request.POST.get('weight')
+        height = request.POST.get('height')
+        gender = request.POST.get('gender')
+        health_goal = request.POST.get('health_goal')
+        health_condition = request.POST.get('health_condition')
+        activity_level = request.POST.get('activity_level')
+        workout_location = request.POST.get('workout_location')
+        weekly_budget = request.POST.get('weekly_budget')
+        location = request.POST.get('location')
+        food_preferences = request.POST.get('food_preferences')
+        avoid_foods = request.POST.get('avoid_foods')
+
+        UserProfile.objects.create(
+            user=user,
+            age=age,
+            weight=weight,
+            height=height,
+            gender=gender,
+            health_goal=health_goal,
+            health_condition=health_condition,
+            activity_level=activity_level,
+            workout_location=workout_location,
+            weekly_budget=weekly_budget,
+            location=location,
+            food_preferences=food_preferences,
+            avoid_foods=avoid_foods
+        )
+
+        request.session['user_id'] = user.id
+        request.session['user_name'] = user.full_name
+        return redirect('dashboard')
+
+    return render(request, 'DietMate_signup.html')
+
+def logout_view(request):
+    request.session.flush()
+    return redirect('landing')
+
+def dashboard(request):
+    if 'user_id' not in request.session:
+        return redirect('login')
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+    return render(request, 'DietMate_dashboard_v2.html', {'user': user})
+
+def diet_plan(request):
     
-    This is the BASE function that talks to Gemini API.
-    
-    """
-    payload = {
-       "contents": [{
-           "parts": [{"text": prompt}]
-       }],
-       "generationConfig": {
-           "maxOutputTokens": 8192
-       }
-   }
-    headers = {"Content-Type": "application/json"}
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
 
     try:
-        response = requests.post(GEMINI_URL, json=payload, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            return data['candidates'][0]['content']['parts'][0]['text']
+        profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        return redirect('dashboard')
+
+    from .models import DietPlan, DietPlanMeal
+    from datetime import date, timedelta
+    import json
+
+    active_plan = DietPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    print("Active Plan =", active_plan)
+
+    # Generate AI plan only if no active plan exists
+    if not active_plan:
+
+        user_profile = {
+            'age': profile.age,
+            'weight': profile.weight,
+            'height': profile.height,
+            'gender': profile.gender,
+            'health_goal': profile.health_goal,
+            'activity_level': profile.activity_level,
+            'health_condition': profile.health_condition,
+            'weekly_budget': profile.weekly_budget,
+            'food_preferences': profile.food_preferences,
+            'avoid_foods': profile.avoid_foods,
+        }
+
+        ai_response = nutrition_agent(user_profile)
+
+        try:
+            clean = ai_response.strip()
+
+            if clean.startswith("```"):
+                clean = clean.split("```")[1]
+                if clean.startswith("json"):
+                    clean = clean[4:]
+
+            clean = clean.strip()
+
+            meal_data = json.loads(clean)
+
+            if len(meal_data) < 15:
+                print(f"Incomplete plan generated — only {len(meal_data)} days.")
+                raise ValueError("Incomplete plan")
+
+            today = date.today()
+
+            active_plan = DietPlan.objects.create(
+                user=user,
+                plan_start_date=today,
+                plan_end_date=today + timedelta(days=15),
+                plan_status='Active'
+            )
+
+            for day_data in meal_data:
+                day_num = day_data.get("day")
+
+                for meal in day_data.get("meals", []):
+
+                    DietPlanMeal.objects.create(
+                        plan=active_plan,
+                        day_number=day_num,
+                        meal_type=meal.get("meal_type"),
+                        meal_name=meal.get("meal_name"),
+                        ingredients=meal.get("ingredients"),
+                        calories=meal.get("calories"),
+                        protein=meal.get("protein"),
+                        carbs=meal.get("carbs"),
+                        fats=meal.get("fats"),
+                        estimated_cost_bdt=meal.get("cost_bdt")
+                    )
+
+        except Exception as e:
+            print("Error parsing AI response:", e)
+            print(ai_response)
+
+    # If a plan exists, show it
+    if active_plan:
+
+        today = date.today()
+
+        day_number = (today - active_plan.plan_start_date).days + 1
+
+        if day_number < 1:
+            day_number = 1
+
+        if day_number > 15:
+            day_number = 15
+
+        todays_meals = DietPlanMeal.objects.filter(
+            plan=active_plan,
+            day_number=day_number
+        )
+
+        all_meals = {}
+
+        for d in range(1, 16):
+            all_meals[d] = DietPlanMeal.objects.filter(
+                plan=active_plan,
+                day_number=d
+            )
+
+        total_calories = sum(m.calories or 0 for m in todays_meals)
+        total_cost = float(sum(m.estimated_cost_bdt or 0 for m in todays_meals))
+        total_protein = sum(float(m.protein or 0) for m in todays_meals)
+        total_carbs = sum(float(m.carbs or 0) for m in todays_meals)
+        total_fats = sum(float(m.fats or 0) for m in todays_meals)
+
+        # Calculate calorie target
+        bmr = calculate_bmr(
+            float(profile.weight),
+            float(profile.height),
+            int(profile.age),
+            profile.gender
+        )
+
+        tdee = calculate_tdee(
+            bmr,
+            profile.activity_level
+        )
+
+        daily_calorie_target = calculate_daily_calories(
+            tdee,
+            profile.health_goal
+        )
+        daily_budget = round(float(profile.weekly_budget or 0) / 7, 2)
+        remaining_budget = daily_budget - total_cost
+
+        if remaining_budget < 0:
+          remaining_budget = 0
+        return render(request, 'DietMate_dietplan.html', {
+            'user': user,
+            'profile': profile,
+            'plan': active_plan,
+            'todays_meals': todays_meals,
+            'all_meals': all_meals,
+            'day_number': day_number,
+            'day_range': range(1, 16),
+            'total_calories': total_calories,
+            'total_cost': total_cost,
+            'total_protein': round(total_protein, 1),
+            'total_carbs': round(total_carbs, 1),
+            'total_fats': round(total_fats, 1),
+            'daily_budget':  daily_budget,
+            'remaining_budget': round(remaining_budget, 2),
+            'daily_calorie_target': daily_calorie_target,
+        })
+        
+
+    return render(request, 'DietMate_dietplan.html', {
+        'user': user,
+        'profile': profile,
+        'plan': None,
+    })
+# List of rotating fitness tips — one is picked per day based on day_number
+FITNESS_TIPS = [
+    "Drink a glass of water before your workout and another after. Staying hydrated helps you perform better and recover faster! 💧",
+    "Warm up for 5 minutes before starting — it reduces injury risk and improves performance. 🔥",
+    "Focus on your form over speed, especially for strength exercises like squats and push-ups. 🧘",
+    "Getting 7-8 hours of sleep helps your muscles recover and grow stronger overnight. 😴",
+    "Eat a light snack with some protein about 30 minutes before your workout for extra energy. 🍌",
+    "Consistency beats intensity — showing up daily matters more than one perfect workout. 📅",
+    "Stretch after your workout, not just before — it helps reduce muscle soreness the next day. 🤸",
+    "Listen to your body — if something hurts (not just feels tough), it's okay to rest that area. 🩺",
+]
+
+def fitness_plan(request):
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+
+    try:
+        profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        return redirect('dashboard')
+
+    from .models import FitnessPlan, FitnessPlanExercise
+    from datetime import date, timedelta
+    import json
+
+    active_plan = FitnessPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    if not active_plan:
+        from .agents import fitness_agent
+
+        user_profile = {
+            'age': profile.age,
+            'weight': profile.weight,
+            'health_goal': profile.health_goal,
+            'activity_level': profile.activity_level,
+            'workout_location': profile.workout_location,
+            'health_condition': profile.health_condition,
+        }
+
+        ai_response = fitness_agent(user_profile)
+
+        try:
+            clean = ai_response.strip()
+            if clean.startswith('```'):
+                clean = clean.split('```')[1]
+                if clean.startswith('json'):
+                    clean = clean[4:]
+            clean = clean.strip()
+
+            plan_data = json.loads(clean)
+
+            if len(plan_data) < 15:
+                print(f"Incomplete fitness plan generated — only {len(plan_data)} days. Not saving.")
+                raise ValueError("Incomplete fitness plan")
+
+            today = date.today()
+            active_plan = FitnessPlan.objects.create(
+                user=user,
+                plan_start_date=today,
+                plan_end_date=today + timedelta(days=15),
+                fitness_level=profile.activity_level,
+                workout_location=profile.workout_location,
+                plan_status='Active'
+            )
+
+            for day_data in plan_data:
+                day_num = day_data.get('day')
+                if day_data.get('is_rest_day'):
+                    continue
+                for ex in day_data.get('exercises', []):
+                    FitnessPlanExercise.objects.create(
+                        fitness_plan=active_plan,
+                        day_number=day_num,
+                        exercise_name=ex.get('exercise_name'),
+                        duration_minutes=ex.get('duration_minutes'),
+                        sets=ex.get('sets'),
+                        reps=ex.get('reps'),
+                        calories_burned=ex.get('calories_burned')
+                    )
+
+        except Exception as e:
+            print(f"Error parsing AI fitness response: {e}")
+            print(f"AI Response was: {ai_response}")
+
+    if active_plan:
+        today = date.today()
+        day_number = (today - active_plan.plan_start_date).days + 1
+        if day_number < 1:
+            day_number = 1
+        if day_number > 15:
+            day_number = 15
+
+        todays_exercises = FitnessPlanExercise.objects.filter(
+            fitness_plan=active_plan,
+            day_number=day_number
+        )
+
+        is_rest_day = not todays_exercises.exists()
+        total_duration = sum(e.duration_minutes or 0 for e in todays_exercises)
+        total_calories = sum(e.calories_burned or 0 for e in todays_exercises)
+
+        daily_tip = FITNESS_TIPS[(day_number - 1) % len(FITNESS_TIPS)]
+
+        return render(request, 'DietMate_fitnessplan.html', {
+            'user': user,
+            'profile': profile,
+            'plan': active_plan,
+            'todays_exercises': todays_exercises,
+            'is_rest_day': is_rest_day,
+            'day_number': day_number,
+            'day_range': range(1, 16),
+            'total_duration': total_duration,
+            'total_calories': total_calories,
+            'daily_tip': daily_tip,
+        })
+
+    return render(request, 'DietMate_fitnessplan.html', {
+        'user': user,
+        'profile': profile,
+        'plan': None,
+    })
+
+
+def progress(request):
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+
+    try:
+        profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        return redirect('dashboard')
+
+    from .models import DailyLog, BMIRecord
+    from datetime import date
+    from decimal import Decimal
+
+    if request.method == 'POST':
+        current_weight = request.POST.get('current_weight')
+        water_glasses = request.POST.get('water_glasses')
+        calories_consumed = request.POST.get('calories_consumed')
+        meal_followed = request.POST.get('meal_followed') == 'on'
+        exercise_completed = request.POST.get('exercise_completed') == 'on'
+        feeling = request.POST.get('feeling')
+
+        if current_weight:
+            current_weight = Decimal(current_weight)
+
+            # Convert glasses to liters (1 glass ≈ 0.25L) for the DailyLog model
+            water_liters = None
+            if water_glasses:
+                water_liters = Decimal(water_glasses) * Decimal('0.25')
+
+            # update_or_create: if today's entry already exists, update it instead of
+            # making a duplicate row for the same date
+            DailyLog.objects.update_or_create(
+                user=user,
+                log_date=date.today(),
+                defaults={
+                    'current_weight': current_weight,
+                    'water_intake_liters': water_liters,
+                    'calories_consumed': int(calories_consumed) if calories_consumed else None,
+                    'meal_followed': meal_followed,
+                    'exercise_completed': exercise_completed,
+                    'notes': feeling,
+                }
+            )
+            # Calculate and save BMI using the profile's height
+            if profile.height:
+                height_m = float(profile.height) / 100
+                bmi_value = round(float(current_weight) / (height_m ** 2), 2)
+
+                if bmi_value < 18.5:
+                    bmi_category = 'Underweight'
+                elif bmi_value < 25:
+                    bmi_category = 'Normal Weight'
+                elif bmi_value < 30:
+                    bmi_category = 'Overweight'
+                else:
+                    bmi_category = 'Obese'
+                # Remove any earlier BMI record from today before adding the new one,
+                # so re-saving today's log doesn't pile up duplicate BMI entries
+                BMIRecord.objects.filter(user=user, recorded_at__date=date.today()).delete()
+                BMIRecord.objects.create(
+                    user=user,
+                    weight=current_weight,
+                    height=profile.height,
+                    bmi_value=bmi_value,
+                    bmi_category=bmi_category
+                )
+
+        return redirect('progress')
+
+    # Get all logs and BMI records for this user, most recent first
+    all_logs = DailyLog.objects.filter(user=user).order_by('-log_date')
+    all_bmi_records = BMIRecord.objects.filter(user=user).order_by('-recorded_at')
+
+    latest_log = all_logs.first()
+    latest_bmi = all_bmi_records.first()
+    first_log = all_logs.order_by('log_date').first()
+
+    # Weight change since the very first logged entry
+    weight_change = None
+    if latest_log and first_log and latest_log != first_log:
+        weight_change = float(latest_log.current_weight) - float(first_log.current_weight)
+
+    # BMI change since the first recorded BMI
+    bmi_change = None
+    first_bmi = all_bmi_records.order_by('recorded_at').first()
+    if latest_bmi and first_bmi and latest_bmi != first_bmi:
+        bmi_change = float(latest_bmi.bmi_value) - float(first_bmi.bmi_value)
+
+    # Exercise completion rate over logged days
+    # Look only at the last 7 days for the Weekly Progress percentages
+    from datetime import timedelta
+    week_start = date.today() - timedelta(days=6)  # today + 6 previous days = 7 total
+    week_logs = all_logs.filter(log_date__gte=week_start)
+
+    total_logs = all_logs.count()          # all-time count, still used for the stats row
+    week_log_count = week_logs.count()     # this week's count, used for the % bars
+
+    exercise_done_count = week_logs.filter(exercise_completed=True).count()
+    meal_done_count = week_logs.filter(meal_followed=True).count()
+    exercise_rate = round((exercise_done_count / week_log_count) * 100) if week_log_count else 0
+    meal_rate = round((meal_done_count / week_log_count) * 100) if week_log_count else 0
+    # Water intake today, in glasses (stored in liters, so convert back)
+    water_today_glasses = None
+    if latest_log and latest_log.water_intake_liters:
+        water_today_glasses = round(float(latest_log.water_intake_liters) / 0.25)
+    
+   # Water goal rate — days this week where at least 2L (8 glasses) was logged
+    water_goal_days = week_logs.filter(water_intake_liters__gte=2.0).count()
+    water_goal_rate = round((water_goal_days / week_log_count) * 100) if week_log_count else 0
+
+    # Calories logged rate — days this week where calories_consumed was actually filled in
+    calories_logged_days = week_logs.exclude(calories_consumed__isnull=True).count()
+    calories_logged_rate = round((calories_logged_days / week_log_count) * 100) if week_log_count else 0
+    # Simple rule-based feedback message based on the weakest area
+    rates = {'meal plan': meal_rate, 'exercise': exercise_rate, 'water intake': water_goal_rate}
+    weakest_area = min(rates, key=rates.get)
+    if total_logs == 0:
+        ai_feedback = "Log your first day to start getting personalized feedback here!"
+    elif rates[weakest_area] >= 80:
+        ai_feedback = f"Excellent consistency across the board! Keep up the great work, especially with your {weakest_area}."
+    else:
+        ai_feedback = f"You're doing well overall — try focusing a bit more on your {weakest_area}, it's at {rates[weakest_area]}% right now. Small improvements add up!"
+
+    # Recent logs for the history table (most recent 8)
+    recent_logs = list(all_logs[:8])
+    recent_logs.reverse()  # show oldest to newest, left to right feel
+    # Attach each log's matching same-day BMI value, since BMI lives in a separate table
+    for log in recent_logs:
+        matching_bmi = BMIRecord.objects.filter(user=user, recorded_at__date=log.log_date).first()
+        log.bmi_display = matching_bmi.bmi_value if matching_bmi else None
+
+    # Build Weight Trend chart data — last up to 8 logs, oldest to newest
+    chart_logs = list(all_logs.order_by('log_date'))
+    if len(chart_logs) > 8:
+        chart_logs = chart_logs[-8:]
+
+    weight_chart_points = []
+    weight_polyline = ""
+    weight_area_path = ""
+    weight_y_labels = []
+    chart_start_weight = None
+    chart_current_weight = None
+    chart_weight_change = None
+
+    if chart_logs:
+        weights = [float(l.current_weight) for l in chart_logs]
+        min_w = min(weights)
+        max_w = max(weights)
+        if max_w == min_w:
+            max_w = min_w + 1  # avoid a divide-by-zero on a perfectly flat line
+
+        chart_left, chart_right = 60, 380
+        chart_top, chart_bottom = 30, 155
+        n = len(chart_logs)
+
+        for i, log in enumerate(chart_logs):
+            w = float(log.current_weight)
+            x = chart_left if n == 1 else chart_left + (chart_right - chart_left) * (i / (n - 1))
+            y = chart_bottom - ((w - min_w) / (max_w - min_w)) * (chart_bottom - chart_top)
+            weight_chart_points.append({
+                'x': round(x, 1),
+                'y': round(y, 1),
+                'weight': w,
+                'date': log.log_date,
+                'is_last': (i == n - 1),
+            })
+
+        weight_polyline = " ".join(f"{p['x']},{p['y']}" for p in weight_chart_points)
+
+        first_p, last_p = weight_chart_points[0], weight_chart_points[-1]
+        path_parts = [f"M{first_p['x']},{chart_bottom}"]
+        path_parts += [f"L{p['x']},{p['y']}" for p in weight_chart_points]
+        path_parts += [f"L{last_p['x']},{chart_bottom}", "Z"]
+        weight_area_path = " ".join(path_parts)
+
+        weight_y_labels = [
+            round(max_w, 1),
+            round(max_w - (max_w - min_w) / 3, 1),
+            round(max_w - 2 * (max_w - min_w) / 3, 1),
+            round(min_w, 1),
+        ]
+
+        chart_start_weight = weights[0]
+        chart_current_weight = weights[-1]
+        chart_weight_change = round(chart_current_weight - chart_start_weight, 1)
+        chart_weight_change_abs = abs(chart_weight_change)
+
+    return render(request, 'DietMate_progress.html', {
+        'user': user,
+        'profile': profile,
+        'latest_log': latest_log,
+        'latest_bmi': latest_bmi,
+        'first_bmi': first_bmi,
+        'all_bmi_records': all_bmi_records,
+        'weight_change': round(weight_change, 1) if weight_change is not None else None,
+        'weight_change_abs': round(abs(weight_change), 1) if weight_change is not None else None,
+        'bmi_change': round(bmi_change, 1) if bmi_change is not None else None,
+        'bmi_change_abs': round(abs(bmi_change), 1) if bmi_change is not None else None,
+        'exercise_rate': exercise_rate,
+        'meal_rate': meal_rate,
+        'water_today_glasses': water_today_glasses,
+        'recent_logs': recent_logs,
+        'weight_chart_points': weight_chart_points,
+        'weight_polyline': weight_polyline,
+        'weight_area_path': weight_area_path,
+        'weight_y_labels': weight_y_labels,
+        'chart_start_weight': chart_start_weight,
+        'chart_current_weight': chart_current_weight,
+        'chart_weight_change': chart_weight_change,
+        'chart_weight_change_abs': chart_weight_change_abs,
+        'total_logs': total_logs,
+        'today': date.today(),
+        'water_goal_rate': water_goal_rate,
+        'calories_logged_rate': calories_logged_rate,
+        'ai_feedback': ai_feedback,
+        'week_log_count': week_log_count,
+    })
+
+
+def chatbot(request):
+    if 'user_id' not in request.session:
+        return redirect('login')
+    return render(request, 'DietMate_chatbot.html')
+
+def medical_specialist(request):
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+
+    try:
+        profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        return redirect('dashboard')
+
+    from .agents import medical_specialist_agent, parse_gemini_json
+
+    # Get search filters from form
+    search_location = request.GET.get('location', profile.location or '')
+    search_specialty = request.GET.get('specialty', '')
+
+    # Build user profile for AI agent
+    user_profile = {
+        "age": profile.age,
+        "gender": profile.gender,
+        "height": profile.height,
+        "weight": profile.weight,
+        "health_goal": profile.health_goal,
+        "health_condition": profile.health_condition,
+        "activity_level": profile.activity_level,
+        "food_preferences": profile.food_preferences,
+        "avoid_foods": profile.avoid_foods,
+        "location": search_location or profile.location,
+    }
+
+    # Call AI Medical Specialist Agent
+    ai_response = medical_specialist_agent(user_profile)
+
+    recommended_specialists = []
+    summary = ""
+    error_message = None
+
+    try:
+        data = parse_gemini_json(ai_response)
+
+        if data is None:
+            error_message = "Unable to fetch AI recommendations."
+
         else:
-            return f"Error: {response.status_code} - {response.text}"
+            summary = data.get("summary", "")
+            recommended_specialists = data.get("recommended_specialists", [])
+
     except Exception as e:
-        return f"Error: {str(e)}"
+        error_message = "Unable to fetch AI recommendations."
+        print(f"Medical Specialist Agent Error: {e}")
 
+    return render(request, 'DietMate_dietitian.html', {
+        'user': user,
+        'profile': profile,
+        'recommended_specialists': recommended_specialists,
+        'summary': summary,
+        'error_message': error_message,
+        'search_location': search_location,
+        'search_specialty': search_specialty,
+    })
+def regenerate_plan(request):
+    if request.method != "POST":
+        return redirect("diet_plan")
 
-# ════════════════════════════════════════
-# 🧠 AGENT 1 — NUTRITION & DIET AGENT
-# ════════════════════════════════════════
+    if 'user_id' not in request.session:
+        return redirect('login')
 
-def nutrition_agent(user_profile):
+    user = User.objects.get(id=request.session['user_id'])
 
-    print("Nutrition Agent Started")
-    # Calculate nutrition targets
+    from .models import DietPlan, DietPlanMeal
 
+    active_plan = DietPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    if active_plan:
+        DietPlanMeal.objects.filter(plan=active_plan).delete()
+        active_plan.delete()
+
+    return redirect('diet_plan')
+
+def download_plan(request):
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user = User.objects.get(id=request.session['user_id'])
+    profile = UserProfile.objects.get(user=user)
+
+    from .models import DietPlan, DietPlanMeal
+
+    active_plan = DietPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    if not active_plan:
+        return HttpResponse("No active diet plan found.")
+
+    # Calculate calorie target
     bmr = calculate_bmr(
-        float(user_profile.get("weight")),
-        float(user_profile.get("height")),
-        int(user_profile.get("age")),
-        user_profile.get("gender")
+        float(profile.weight),
+        float(profile.height),
+        int(profile.age),
+        profile.gender
     )
-    print("BMR =", bmr)
 
     tdee = calculate_tdee(
         bmr,
-        user_profile.get("activity_level")
+        profile.activity_level
     )
-    print("TDEE =", tdee)
-    daily_calories = calculate_daily_calories(
-                    tdee,
-                    user_profile.get("health_goal")
+
+    daily_calorie_target = calculate_daily_calories(
+        tdee,
+        profile.health_goal
     )
-    print("Calories =", daily_calories)
-   
-    protein_goal = calculate_protein_goal(
-                float(user_profile.get("weight")),
-                user_profile.get("health_goal")
-    )
-    print("Protein =", protein_goal)
-    print("===== Nutrition Calculation =====")
-    print("BMR:", bmr)
-    print("TDEE:", tdee)
-    print("Daily Calories:", daily_calories)
-    print("Protein Goal:", protein_goal)
-    print("===============================")
-    prompt = f"""
-You are a professional nutritionist creating a 15-day diet plan for a Bangladeshi user.
-
-User Details:
-- Age: {user_profile.get('age')} years
-- Weight: {user_profile.get('weight')} kg
-- Height: {user_profile.get('height')} cm
-- Gender: {user_profile.get('gender')}
-- Health Goal: {user_profile.get('health_goal')}
-Nutrition Targets:
-- Estimated BMR: {bmr} kcal/day
-- Estimated TDEE: {tdee} kcal/day
-- Daily Calorie Target: {daily_calories} kcal/day
-- Daily Protein Target: {protein_goal} g
-
-- Health Condition: {user_profile.get('health_condition')}
-- Weekly Budget: ৳{user_profile.get('weekly_budget')} BDT
-- Preferred Foods: {user_profile.get('food_preferences')}
-- Foods to Avoid: {user_profile.get('avoid_foods')}
-
-IMPORTANT RULES:
-1. Use preferred foods as BASE ingredients
-2. Add other healthy local Bangladeshi foods for nutrition balance
-3. NEVER use foods from the avoid list
-4. Every day must have Breakfast, Lunch, Dinner and Snack
-5. All foods must be locally available in Bangladesh
-6. Total daily cost must stay within daily budget (weekly budget / 7)
-7. Adjust meals for health condition:
-   - Diabetes: low sugar, low refined carbs, high fiber
-   - High Blood Pressure: low sodium, high potassium
-   - High Cholesterol: low saturated fat, high omega-3
-   - None: balanced healthy meals
-8. Bangladeshi people commonly enjoy chai (tea) with breakfast or as a snack, and roti as a staple — include chai for breakfast/snack time where appropriate, and use roti as a regular option across meals, unless it conflicts with the user's health condition or avoid list
-9. The total calories from Breakfast, Lunch, Snack and Dinner for each day should be approximately equal to the Daily Calorie Target (within ±50 kcal).
-
-10. The total daily protein should be close to the Daily Protein Target.
-
-11. Distribute calories approximately as:
-- Breakfast: 25%
-- Lunch: 35%
-- Snack: 10%
-- Dinner: 30%
-
-12. Do not exceed the user's daily budget while meeting the calorie and protein targets.
-CRITICAL: You MUST respond with ONLY a valid JSON array. No other text before or after.
-The JSON must follow this exact format:
-
-[
-  {{
-    "day": 1,
-    "meals": [
-      {{
-        "meal_type": "Breakfast",
-        "meal_name": "Boiled Eggs with Roti",
-        "ingredients": "2 boiled eggs, 2 roti, 1 cup tea",
-        "calories": 320,
-        "protein": 14,
-        "carbs": 35,
-        "fats": 10,
-        "cost_bdt": 45
-      }},
-      {{
-        "meal_type": "Lunch",
-        "meal_name": "Rice with Dal and Shak",
-        "ingredients": "1 cup rice, 1 bowl dal, mixed shak",
-        "calories": 480,
-        "protein": 18,
-        "carbs": 75,
-        "fats": 8,
-        "cost_bdt": 70
-      }},
-      {{
-        "meal_type": "Snack",
-        "meal_name": "Banana with Peanuts",
-        "ingredients": "1 banana, handful peanuts",
-        "calories": 180,
-        "protein": 5,
-        "carbs": 28,
-        "fats": 6,
-        "cost_bdt": 25
-      }},
-      {{
-        "meal_type": "Dinner",
-        "meal_name": "Fish Curry with Rice",
-        "ingredients": "1 piece fish, 1 cup rice, vegetables",
-        "calories": 500,
-        "protein": 28,
-        "carbs": 65,
-        "fats": 12,
-        "cost_bdt": 80
-      }}
-    ]
-  }}
-]
-
-IMPORTANT: Generate ALL 15 days. Start from day 1 to day 15.
-Each day must have exactly 4 meals: Breakfast, Lunch, Snack, Dinner.
-Do not stop before day 15. Generate the complete JSON array now.
-"""
-    # Call twice if needed - first get days 1-8, then 9-15
-    response1 = call_gemini(prompt + "\nGenerate days 1 to 8 only.")
-    response2 = call_gemini(prompt + "\nGenerate days 9 to 15 only. Start the JSON array from day 9.")
-
-    # Try to combine both responses
-    try:
-        clean1 = response1.strip()
-        if clean1.startswith('```'):
-            clean1 = clean1.split('```')[1]
-            if clean1.startswith('json'):
-                clean1 = clean1[4:]
-        clean1 = clean1.strip().rstrip(',').rstrip(']')
-
-        clean2 = response2.strip()
-        if clean2.startswith('```'):
-            clean2 = clean2.split('```')[1]
-            if clean2.startswith('json'):
-                clean2 = clean2[4:]
-        clean2 = clean2.strip().lstrip('[')
-
-        combined = clean1 + ',' + clean2
-        return combined
-    except:
-        return response1
-
-
-# ════════════════════════════════════════
-# 🏃 AGENT 2 — FITNESS AGENT
-# ════════════════════════════════════════
-def fitness_agent(user_profile):
-    """
-
-    This agent generates a personalized 15-day fitness plan
-    based on the user's fitness level and workout location!
-    """
-    prompt = f"""
-You are a professional fitness trainer creating a 15-day workout plan for a Bangladeshi user.
-
-User Details:
-- Age: {user_profile.get('age')} years
-- Weight: {user_profile.get('weight')} kg
-- Health Goal: {user_profile.get('health_goal')}
-- Fitness Level: {user_profile.get('activity_level')}
-- Workout Location: {user_profile.get('workout_location')}
-- Health Condition: {user_profile.get('health_condition')}
-
-IMPORTANT RULES:
-1. Create a 15-day workout plan
-2. Match exercises to fitness level:
-   - Beginner: light walks, bodyweight exercises, stretching (30-35 mins)
-   - Intermediate: HIIT, jogging, weights (40-45 mins)
-   - Advanced: intense cardio, strength training (55-60 mins)
-3. If workout location is Home: no gym equipment needed
-4. If workout location is Gym: include equipment exercises
-5. Include rest days (every 3rd day) — mark these with "is_rest_day": true and an empty exercises list
-6. For each exercise show: name, duration in minutes, sets, reps, estimated calories burned
-7. If user has health condition, adjust intensity accordingly
-
-CRITICAL: You MUST respond with ONLY a valid JSON array. No other text before or after.
-The JSON must follow this exact format:
-
-[
-  {{
-    "day": 1,
-    "is_rest_day": false,
-    "exercises": [
-      {{
-        "exercise_name": "Morning Walk",
-        "duration_minutes": 15,
-        "sets": null,
-        "reps": null,
-        "calories_burned": 60
-      }},
-      {{
-        "exercise_name": "Bodyweight Squats",
-        "duration_minutes": 10,
-        "sets": 3,
-        "reps": 10,
-        "calories_burned": 50
-      }}
-    ]
-  }},
-  {{
-    "day": 3,
-    "is_rest_day": true,
-    "exercises": []
-  }}
-]
-
-IMPORTANT: Generate ALL 15 days. Start from day 1 to day 15.
-Do not stop before day 15. Generate the complete JSON array now.
-"""
-    response1 = call_gemini(prompt + "\nGenerate days 1 to 8 only.")
-    response2 = call_gemini(prompt + "\nGenerate days 9 to 15 only. Start the JSON array from day 9.")
-
-    try:
-        clean1 = response1.strip()
-        if clean1.startswith('```'):
-            clean1 = clean1.split('```')[1]
-            if clean1.startswith('json'):
-                clean1 = clean1[4:]
-        clean1 = clean1.strip().rstrip(',').rstrip(']')
-
-        clean2 = response2.strip()
-        if clean2.startswith('```'):
-            clean2 = clean2.split('```')[1]
-            if clean2.startswith('json'):
-                clean2 = clean2[4:]
-        clean2 = clean2.strip().lstrip('[')
-
-        combined = clean1 + ',' + clean2
-        return combined
-    except:
-        return response1
-# ════════════════════════════════════════
-# 📊 AGENT 3 — HEALTH TRACKING AGENT
-# ════════════════════════════════════════
-def health_tracking_agent(user_data, logs):
-    """
-    
-    This agent analyzes the user's daily logs and generates
-    progress reports with AI feedback!
-    """
-    prompt = f"""
-You are a health tracking expert analyzing a Bangladeshi user's progress.
-
-User Details:
-- Starting Weight: {user_data.get('starting_weight')} kg
-- Current Weight: {user_data.get('current_weight')} kg
-- Height: {user_data.get('height')} cm
-- Health Goal: {user_data.get('health_goal')}
-- Health Condition: {user_data.get('health_condition')}
-
-Progress Logs (last 7 days):
-- Days meal plan followed: {logs.get('meal_follow_days')} out of 7
-- Days exercise completed: {logs.get('exercise_days')} out of 7
-- Average water intake: {logs.get('avg_water')} glasses per day
-- Weight change: {logs.get('weight_change')} kg
-
-Please provide:
-1. BMI calculation and category
-2. Analysis of their progress
-3. What they did well
-4. What needs improvement
-5. Specific recommendations for next cycle
-6. Motivational message
-7. Keep it friendly, encouraging and specific to Bangladeshi context
-
-Generate the progress report now.
-"""
-    return call_gemini(prompt)
-
-
-# ════════════════════════════════════════
-# 💬 AGENT 4 — MOTIVATIONAL CHATBOT AGENT
-# ════════════════════════════════════════
-def chatbot_agent(user_name, user_message, user_progress):
-    """
-
-    This agent responds to user messages with personalized
-    motivation, health tips, and encouragement!
-    """
-    prompt = f"""
-You are NutriBot, a friendly and motivational AI health assistant for a Bangladeshi diet and fitness app.
-
-User Name: {user_name}
-User's Message: {user_message}
-
-User's Current Progress:
-- Current Day: Day {user_progress.get('current_day')} of 15
-- Weight Lost/Gained: {user_progress.get('weight_change')} kg
-- Meal Plan Follow Rate: {user_progress.get('meal_rate')}%
-- Exercise Completion Rate: {user_progress.get('exercise_rate')}%
-
-IMPORTANT RULES:
-1. Be friendly, warm and encouraging
-2. Keep responses short and motivating (2-4 sentences)
-3. Reference their actual progress in your response
-4. Give practical tips related to Bangladeshi lifestyle
-5. If they missed a workout or meal — be understanding, not harsh
-6. Celebrate their achievements enthusiastically
-7. Always end with an encouraging statement
-8. Never give medical advice — suggest consulting a doctor for medical issues
-
-Respond to the user's message now.
-"""
-    return call_gemini(prompt)
-
-# ════════════════════════════════════════
-# 🏥 AGENT 5 — DIETITIAN RECOMMENDER AGENT
-# ════════════════════════════════════════
-def medical_specialist_agent(user_profile):
-    """
-    AI Agent:
-    Analyzes the user's health profile and recommends
-    appropriate healthcare specialists.
-
-    This agent DOES NOT recommend individual doctors.
-    It only recommends specialist types with reasons.
-    """
-
-    prompt = f"""
-You are the Medical Recommendation AI Agent for DietMate BD.
-
-Your responsibility is to analyze the user's health profile and recommend the most appropriate healthcare specialists.
-
-=================================
-USER PROFILE
-=================================
-
-Age: {user_profile.get("age")}
-Gender: {user_profile.get("gender")}
-Height: {user_profile.get("height")} cm
-Weight: {user_profile.get("weight")} kg
-Health Goal: {user_profile.get("health_goal")}
-Health Condition: {user_profile.get("health_condition")}
-Activity Level: {user_profile.get("activity_level")}
-Food Preferences: {user_profile.get("food_preferences")}
-Foods to Avoid: {user_profile.get("avoid_foods")}
-Location: {user_profile.get("location")}
-
-=================================
-YOUR TASK
-=================================
-
-Analyze the user's profile carefully and recommend the most appropriate healthcare specialists.
-
-Possible specialists include:
-
-- Dietitian
-- Nutritionist
-- Fitness Trainer
-- General Physician
-- Endocrinologist
-- Cardiologist
-- Neurologist
-- Gastroenterologist
-- Nephrologist
-- Orthopedic Specialist
-- Physiotherapist
-
-Rules:
-
-1. Recommend only specialists that are medically relevant to the user's health condition, health goal, and overall profile.
-
-2. Typically recommend between 1 and 5 specialists.
-
-3. Avoid unnecessary or duplicate recommendations.
-
-4. If the user's health condition is "None", recommend preventive healthcare specialists such as:
-   - Dietitian
-   - Nutritionist
-   - Fitness Trainer
-
-   Explain that these specialists can help the user maintain a healthy lifestyle, improve nutrition, build healthy exercise habits, and prevent future health problems.
-
-5. Do NOT recommend individual doctors.
-
-6. Do NOT recommend hospitals.
-
-7. Do NOT mention consultation fees.
-
-8. Do NOT mention appointments.
-
-9. Return ONLY valid JSON.
-
-10. Do NOT include markdown, code blocks, or any explanation outside the JSON response.
-
-=================================
-RECOMMENDATION GUIDELINES
-=================================
-
-Use these as examples only.
-
-• Diabetes → Dietitian, Endocrinologist
-• High Blood Pressure → Cardiologist, Dietitian
-• High Cholesterol → Dietitian, Cardiologist
-• Obesity → Dietitian, Fitness Trainer
-• Underweight → Dietitian, Nutritionist
-• Thyroid Disorder → Endocrinologist, Dietitian
-• Kidney Disease → Nephrologist, Dietitian
-• Heart Disease → Cardiologist, Dietitian
-• Digestive Problems → Gastroenterologist, Dietitian
-• Food Allergy → Dietitian, General Physician
-• PCOS → Gynecologist, Dietitian
-• None → Dietitian, Nutritionist, Fitness Trainer
-
-=================================
-OUTPUT FORMAT
-=================================
-
-{{
-    "summary": "A short personalized summary explaining why these specialists are recommended.",
-
-    "recommended_specialists": [
-        {{
-            "type": "Dietitian",
-            "reason": "Helps create a personalized meal plan based on the user's health profile."
-        }}
-    ]
-}}
-
-IMPORTANT:
-
-- Your response MUST begin with '{{'
-- Your response MUST end with '}}'
-- Do NOT use ```json
-- Do NOT use markdown
-- Do NOT write any text before or after the JSON
-- Output ONLY valid JSON
-"""
-
-    return call_gemini(prompt)
-
-def parse_gemini_json(ai_response):
-    """
-    Cleans and parses Gemini JSON responses.
-    Returns a Python dictionary/list if successful,
-    otherwise returns None.
-    """
-
-    if not ai_response:
-        return None
-
-    try:
-        # Remove markdown code blocks
-        clean = ai_response.strip()
-
-        clean = re.sub(r"^```json", "", clean, flags=re.IGNORECASE)
-        clean = re.sub(r"^```", "", clean)
-        clean = re.sub(r"```$", "", clean)
-
-        clean = clean.strip()
-
-        return json.loads(clean)
-
-    except Exception as e:
-        print("Gemini JSON Error:", e)
-        return None
+
+    # Create PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="DietMate_DietPlan.pdf"'
+
+    p = canvas.Canvas(response)
+
+    # =============================
+    # Title
+    # =============================
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(180, 810, "DietMate")
+
+    p.setFont("Helvetica", 13)
+    p.drawString(130, 790, "Personalized 15-Day Diet Plan")
+
+    # =============================
+    # User Information
+    # =============================
+    y = 760
+
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(40, y, "User Information")
+
+    y -= 20
+    p.setFont("Helvetica", 11)
+    p.drawString(40, y, f"Name: {user.full_name}")
+
+    y -= 18
+    p.drawString(40, y, f"Health Goal: {profile.health_goal}")
+
+    y -= 18
+    p.drawString(40, y, f"Weekly Budget: BDT {profile.weekly_budget}")
+
+    y -= 18
+    p.drawString(40, y, f"Daily Calorie Target: {daily_calorie_target} kcal")
+
+    y -= 30
+
+    # =============================
+    # Meal Plan
+    # =============================
+    for day in range(1, 16):
+
+        meals = DietPlanMeal.objects.filter(
+            plan=active_plan,
+            day_number=day
+        )
+
+        # Start a new page if needed
+        if y < 120:
+            p.showPage()
+            y = 800
+
+        p.setFont("Helvetica-Bold", 13)
+        p.drawString(40, y, f"Day {day}")
+
+        y -= 20
+
+        p.setFont("Helvetica", 11)
+
+        for meal in meals:
+
+            p.drawString(
+                50,
+                y,
+                f"{meal.meal_type}: {meal.meal_name}"
+            )
+
+            y -= 15
+
+            p.drawString(
+                70,
+                y,
+                f"Calories: {meal.calories} kcal   "
+                f"Protein: {meal.protein} g   "
+                f"Cost: BDT {meal.estimated_cost_bdt}"
+            )
+
+            y -= 20
+
+        y -= 10 
+
+    p.save()
+
+    return response
