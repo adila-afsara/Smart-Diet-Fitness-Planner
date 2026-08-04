@@ -212,19 +212,83 @@ class ChatbotConversation(models.Model):
 
 
 # ── TABLE 11: Dietitians ──
-class Dietitian(models.Model):
+class MedicalSpecialist(models.Model):
     full_name = models.CharField(max_length=100)
-    specialty = models.CharField(max_length=100, null=True, blank=True)
-    hospital_clinic = models.CharField(max_length=255, null=True, blank=True)
-    location = models.CharField(max_length=100, null=True, blank=True)
-    consultation_fee_bdt = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    contact_number = models.CharField(max_length=20, null=True, blank=True)
-    email = models.EmailField(null=True, blank=True)
-    available_days = models.CharField(max_length=100, null=True, blank=True)
-    rating = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
+
+    title = models.CharField(
+        max_length=150,
+        null=True,
+        blank=True
+    )
+
+    specialty = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    hospital_clinic = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    location = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    consultation_fee_bdt = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    website = models.URLField(
+        null=True,
+        blank=True
+    )
+
+    contact_number = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True
+    )
+
+    email = models.EmailField(
+        null=True,
+        blank=True
+    )
+
+    available_days = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    notes = models.TextField(
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
 
     def __str__(self):
         return self.full_name
 
     class Meta:
-        db_table = 'dietitians'
+        db_table = "medical_specialists"
+
+
+ 
