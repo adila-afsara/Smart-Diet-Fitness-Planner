@@ -132,6 +132,18 @@
     .external-btn { flex: 1; background: transparent; color: var(--orange); border: 2px solid var(--orange); border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; text-align: center; display: inline-block; white-space: nowrap; }
     .external-btn:hover { background: var(--orange); color: white; }
 
+    /* DOCTOR'S NOTE */
+    .doctor-notes{
+    margin-top:15px;
+    padding:10px;
+    background:#FFF8CC;
+    border-left:4px solid #F5C518;
+    border-radius:8px;
+    font-size:13px;
+    color:#555;
+    line-height:1.5;
+   }
+
     /* ── PAGINATION ── */
     .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
     .page-btn { width: 36px; height: 36px; border-radius: 8px; border: 2px solid var(--offwhite); background: var(--white); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: var(--muted); }
@@ -187,7 +199,7 @@
       <div class="ai-banner">
         <div class="ai-banner-icon">🤖</div>
         <div class="ai-banner-text">
-          <strong>AI Recommendation:</strong>  {{ summary }}<strong>
+          <strong>AI Recommendation:</strong> <strong>{{ summary }}</strong>
         </div>
       </div>
 
@@ -324,8 +336,31 @@
               {% endif %}
           </span>
       </div>  
+      <div class="detail-item">
+           ✉️
+           <span class="detail-value">
+            {% if specialist.email %}
+             {{ specialist.email }}
+            {% else %}
+               Not Available
+            {% endif %}
+          </span>
+      </div>
 
-    </div>
+      {% if specialist.notes %}
+      <div class="doctor-notes">
+        <strong>Notes:</strong>
+        {{ specialist.notes }}
+      </div>
+      {% endif %}
+      </div>
+
+      <div class="detail-item">
+          🤖
+         <span class="detail-value">
+           {{ specialist.source }}
+        </span>
+      </div>
 
     <div class="doctor-footer">
 
