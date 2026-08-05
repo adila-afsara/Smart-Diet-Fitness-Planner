@@ -314,6 +314,16 @@
 
             </span>
         </div>
+      <div class="detail-item">
+           🗓️
+          <span class="detail-value">
+             {% if specialist.available_days %}
+               {{ specialist.available_days }}
+               {% else %}
+                  Not Available
+              {% endif %}
+          </span>
+      </div>  
 
     </div>
 
