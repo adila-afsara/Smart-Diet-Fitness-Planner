@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+import traceback
+from django.db.models import Q
 from django.contrib import messages
-from .models import User, UserProfile, DietPlan, MedicalSpecialist
 from .models import User, UserProfile, DietPlan, MedicalSpecialist
 from .agents import nutrition_agent, medical_specialist_agent, parse_gemini_json
 from django.http import HttpResponse
@@ -626,7 +627,6 @@ def chatbot(request):
     if 'user_id' not in request.session:
         return redirect('login')
     return render(request, 'DietMate_chatbot.html')
-
 def medical_specialist(request):
     if 'user_id' not in request.session:
         return redirect('login')
@@ -639,9 +639,11 @@ def medical_specialist(request):
     except UserProfile.DoesNotExist:
         return redirect('dashboard')
 
-    # Get search filters
-    search_location = request.GET.get('location', profile.location or '')
-    search_specialty = request.GET.get('specialty', '')
+    # Get search and filter parameters from GET request
+    search_query = request.GET.get('search', '').strip()
+    search_location = request.GET.get('location', '').strip()
+    search_specialty = request.GET.get('specialty', '').strip()
+    type_filter = request.GET.get('type', '').strip()
 
     # Build user profile for AI
     user_profile = {
@@ -654,81 +656,129 @@ def medical_specialist(request):
         "activity_level": profile.activity_level,
         "food_preferences": profile.food_preferences,
         "avoid_foods": profile.avoid_foods,
-        "location": search_location or profile.location,
+        "location": search_location or profile.location or "",
+        "search_query": search_query,
+        "specialty_query": search_specialty,
     }
 
-    # Call Gemini AI
-    ai_response = medical_specialist_agent(user_profile)
-
-    print("\n========== GEMINI RESPONSE ==========")
-    print(ai_response)
-    print("=====================================\n")
-
-    recommended_specialists = []
-    summary = ""
+    # Set a default summary so the yellow banner is NEVER empty
+    summary = "Recommended specialists tailored to your health profile and query."
     error_message = None
 
-    try:
-        data = parse_gemini_json(ai_response)
+    # Check if we already have saved specialists for this user
+    existing_specialists_count = MedicalSpecialist.objects.filter(user=user).count()
 
-        if data is None:
+    # Call Gemini AI ONLY if user clicked search OR if no records exist yet
+    should_fetch_ai = bool(search_query or search_location or search_specialty or existing_specialists_count == 0)
+
+    if should_fetch_ai:
+        try:
+            # Call Gemini AI
+            ai_response = medical_specialist_agent(user_profile)
+
+            print("\n========== GEMINI RESPONSE ==========")
+            print(ai_response)
+            print("=====================================\n")
+
+            data = parse_gemini_json(ai_response)
+
+            if data is None:
+                error_message = "Unable to fetch AI recommendations."
+            else:
+                # Use AI summary if present, otherwise fallback
+                summary = data.get("summary") or "AI-recommended specialists tailored to your health profile."
+                print("SUMMARY FROM GEMINI:", summary)
+                recommended_specialists = data.get("recommended_specialists", [])
+
+
+                print("Number of specialists received:", len(recommended_specialists))
+
+                # Remove previous AI recommendations for this user
+                MedicalSpecialist.objects.filter(user=user).delete()
+
+                # Save new recommendations
+                for specialist in recommended_specialists:
+                    print("Saving:", specialist.get("full_name"))
+
+                    MedicalSpecialist.objects.create(
+                        user=user,
+                        full_name=specialist.get("full_name"),
+                        title=specialist.get("title"),
+                        specialist_type=specialist.get("specialist_type"),
+                        specialty=specialist.get("specialty"),
+                        hospital_clinic=specialist.get("hospital_clinic"),
+                        location=specialist.get("location"),
+                        consultation_fee_bdt=specialist.get("consultation_fee_bdt"),
+                        website=specialist.get("website"),
+                        contact_number=specialist.get("contact_number"),
+                        email=specialist.get("email"),
+                        available_days=specialist.get("available_days"),
+                        rating=specialist.get("rating"),
+                        notes=specialist.get("notes"),
+                        source=specialist.get("source", "Gemini AI")
+                    )
+
+                print("================================")
+                print("Saved specialists:", MedicalSpecialist.objects.filter(user=user).count())
+                print("================================")
+
+        except Exception:
             error_message = "Unable to fetch AI recommendations."
+            print("\n========== ERROR ==========")
+            traceback.print_exc()
+            print("===========================\n")
 
-        else:
-            summary = data.get("summary", "")
-            recommended_specialists = data.get("recommended_specialists", [])
-
-            print("Number of specialists received:", len(recommended_specialists))
-
-            # Remove previous AI recommendations
-            MedicalSpecialist.objects.filter(user=user).delete()
-
-            # Save new recommendations
-            for specialist in recommended_specialists:
-
-                print("Saving:", specialist.get("full_name"))
-
-                MedicalSpecialist.objects.create(
-                    user=user,
-                    full_name=specialist.get("full_name"),
-                    title=specialist.get("title"),
-                    specialist_type=specialist.get("specialist_type"),
-                    specialty=specialist.get("specialty"),
-                    hospital_clinic=specialist.get("hospital_clinic"),
-                    location=specialist.get("location"),
-                    consultation_fee_bdt=specialist.get("consultation_fee_bdt"),
-                    website=specialist.get("website"),
-                    contact_number=specialist.get("contact_number"),
-                    email=specialist.get("email"),
-                    available_days=specialist.get("available_days"),
-                    rating=specialist.get("rating"),
-                    notes=specialist.get("notes"),
-                    source=specialist.get("source", "Gemini AI")
-                )
-
-            print("================================")
-            print("Saved specialists:", MedicalSpecialist.objects.count())
-            print("================================")
-
-    except Exception:
-        import traceback
-
-        error_message = "Unable to fetch AI recommendations."
-
-        print("\n========== ERROR ==========")
-        traceback.print_exc()
-        print("===========================\n")
+    # Fetch database specialists for the logged-in user
     specialists = MedicalSpecialist.objects.filter(user_id=user_id)
+
+    # Apply database-level filters based on user selection
+    if search_query:
+        specialists = specialists.filter(
+            Q(full_name__icontains=search_query) |
+            Q(specialty__icontains=search_query) |
+            Q(hospital_clinic__icontains=search_query) |
+            Q(notes__icontains=search_query)
+        )
+
+    if search_location:
+        specialists = specialists.filter(location__icontains=search_location)
+
+    if search_specialty:
+        specialists = specialists.filter(specialty__icontains=search_specialty)
+
+    if type_filter:
+        specialists = specialists.filter(specialist_type__iexact=type_filter)
+
     return render(
-    request,
-    "DietMate_medical_specialist.html",
-    {
-        "specialists": specialists,
-        "summary": summary,
-        "error_message": error_message,
-    }
+        request,
+        "DietMate_medical_specialist.html",
+        {
+            "specialists": specialists,
+            "summary": summary,
+            "error_message": error_message,
+            "user": user,
+            "profile": profile,
+        }
+    )
+def medical_specialist_detail(request, specialist_id):
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user = User.objects.get(id=request.session['user_id'])
+
+    specialist = get_object_or_404(
+        MedicalSpecialist,
+        id=specialist_id,
+        user=user
     )
 
+    return render(
+        request,
+        "medical_specialist_detail.html",
+        {
+            "specialist": specialist
+        }
+    )
 def regenerate_plan(request):
     if request.method != "POST":
         return redirect("diet_plan")
