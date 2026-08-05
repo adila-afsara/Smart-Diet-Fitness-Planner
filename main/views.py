@@ -718,13 +718,14 @@ def medical_specialist(request):
         print("\n========== ERROR ==========")
         traceback.print_exc()
         print("===========================\n")
-    specialists = MedicalSpecialist.objects.filter(user=request.user)
+    specialists = MedicalSpecialist.objects.filter(user_id=user_id)
     return render(
     request,
-    "medical_specialist.html",
+    "DietMate_medical_specialist.html",
     {
         "specialists": specialists,
-        "summary": ai_response.get("summary", "")
+        "summary": summary,
+        "error_message": error_message,
     }
     )
 
