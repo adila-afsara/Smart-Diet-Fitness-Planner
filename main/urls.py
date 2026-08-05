@@ -13,6 +13,11 @@ urlpatterns = [
     path('progress/', views.progress, name='progress'),
     path('chatbot/', views.chatbot, name='chatbot'),
     path('medical-specialist/', views.medical_specialist, name='medical_specialist'),
+    path(
+    "medical-specialist/<int:specialist_id>/",
+    views.medical_specialist_detail,
+    name="medical_specialist_detail"
+    ),
     path('regenerate-plan/', views.regenerate_plan, name='regenerate_plan'),
     path('download-plan/', views.download_plan, name='download_plan'),
-]
+    ] 
