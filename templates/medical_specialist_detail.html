@@ -40,18 +40,42 @@
             color:#D62828;
         }
 
+        .actions{
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
         a.button{
             display:inline-block;
-            margin-top:25px;
             padding:12px 20px;
             background:#2E8B57;
             color:white;
             text-decoration:none;
             border-radius:8px;
+            font-weight: 500;
         }
 
         a.button:hover{
             background:#216640;
+        }
+
+        a.btn-back{
+            display:inline-block;
+            padding:12px 20px;
+            background:transparent;
+            color:#F77F00;
+            border: 2px solid #F77F00;
+            text-decoration:none;
+            border-radius:8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        a.btn-back:hover{
+            background:#F77F00;
+            color:white;
         }
 
     </style>
@@ -121,11 +145,17 @@
         {{ specialist.notes }}
     </div>
 
-    {% if specialist.website %}
-        <a href="{{ specialist.website }}" target="_blank" class="button">
-            Visit Official Website
+    <div class="actions">
+        <a href="{% url 'medical_specialist' %}" class="btn-back">
+            ← Back to Specialists List
         </a>
-    {% endif %}
+
+        {% if specialist.website %}
+            <a href="{{ specialist.website }}" target="_blank" class="button">
+                Visit Official Website
+            </a>
+        {% endif %}
+    </div>
 
 </div>
 
