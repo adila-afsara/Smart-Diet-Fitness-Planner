@@ -131,6 +131,12 @@
     
     .external-btn { flex: 1; background: transparent; color: var(--orange); border: 2px solid var(--orange); border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; text-align: center; display: inline-block; white-space: nowrap; }
     .external-btn:hover { background: var(--orange); color: white; }
+    /* SOURCE */
+    .doctor-source{
+    margin-top:10px;
+    font-size:12px;
+    color:#777;
+    }
 
     /* DOCTOR'S NOTE */
     .doctor-notes{
@@ -237,7 +243,7 @@
 
       <!-- Results Info -->
       <div class="results-info">
-        <div class="results-count">Showing <span>{{ specialists|length }} specialists</span> matching your condition in <span>Dhaka</span></div>
+        <div class="results-count">Showing <span>{{ specialists|length }} specialists</span> matching your condition in <span>{{ profile.location }}</span></div>
         <select class="sort-select">
           <option>Sort by: AI Recommended</option>
           <option>Sort by: Rating</option>
@@ -245,8 +251,8 @@
         </select>
       </div>
 
-      <!-- Doctors Grid -->
-      <div class="doctors-grid">
+        <!-- Doctors Grid -->
+      
         <div class="doctors-grid">
 
            {% for specialist in specialists %}
@@ -290,7 +296,11 @@
         <div class="detail-item">
             🏥
             <span class="detail-value">
-                {{ specialist.hospital_clinic }}
+                {% if specialist.hospital_clinic %}
+                  {{ specialist.hospital_clinic }}
+                {% else %}
+                   Not Available
+                {% endif %}
             </span>
         </div>
 
@@ -347,6 +357,9 @@
           </span>
       </div>
 
+      <div class="doctor-source">
+      🤖 Source: {{ specialist.source }}
+      </div>
       {% if specialist.notes %}
       <div class="doctor-notes">
         <strong>Notes:</strong>
@@ -354,40 +367,33 @@
       </div>
       {% endif %}
       </div>
+  
+      <div class="doctor-footer">
 
-      <div class="detail-item">
-          🤖
-         <span class="detail-value">
-           {{ specialist.source }}
-        </span>
-      </div>
+         <a href="{% url 'medical_specialist_detail' specialist.id %}"
+           class="view-btn">
+           View Profile
+         </a>
 
-    <div class="doctor-footer">
-
-        {% if specialist.website %}
-
-        <a href="{{ specialist.website }}"
-           target="_blank"
-           class="external-btn">
-           Official Website ↗
-        </a>
-
-        {% endif %}
+      {% if specialist.website %}
+       <a href="{{ specialist.website }}"
+target="_blank"
+class="external-btn">
+Official Website ↗
+       </a>
+      {% endif %}
 
     </div>
-
-     </div>
-
       {% empty %}
 
     <h3>No specialists found.</h3>
 
             {% endfor %}
 
-          </div>
-
-
   </div>
+
+
+  
           
 
         
