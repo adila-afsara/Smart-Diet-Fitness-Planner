@@ -1,1 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ specialist.full_name }}</title>
 
+    <style>
+
+        body{
+            font-family: Arial, sans-serif;
+            background:#f5f5f5;
+            padding:40px;
+        }
+
+        .card{
+            max-width:800px;
+            margin:auto;
+            background:white;
+            border-radius:12px;
+            padding:30px;
+            box-shadow:0 5px 20px rgba(0,0,0,.15);
+        }
+
+        h1{
+            color:#2E8B57;
+            margin-bottom:5px;
+        }
+
+        h3{
+            color:#777;
+            margin-bottom:25px;
+        }
+
+        .row{
+            margin:12px 0;
+        }
+
+        strong{
+            color:#D62828;
+        }
+
+        a.button{
+            display:inline-block;
+            margin-top:25px;
+            padding:12px 20px;
+            background:#2E8B57;
+            color:white;
+            text-decoration:none;
+            border-radius:8px;
+        }
+
+        a.button:hover{
+            background:#216640;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>{{ specialist.full_name }}</h1>
+
+    <h3>{{ specialist.title }}</h3>
+
+    <div class="row">
+        <strong>Specialist Type:</strong>
+        {{ specialist.specialist_type }}
+    </div>
+
+    <div class="row">
+        <strong>Specialty:</strong>
+        {{ specialist.specialty }}
+    </div>
+
+    <div class="row">
+        <strong>Hospital / Clinic:</strong>
+        {{ specialist.hospital_clinic }}
+    </div>
+
+    <div class="row">
+        <strong>Location:</strong>
+        {{ specialist.location }}
+    </div>
+
+    <div class="row">
+        <strong>Consultation Fee:</strong>
+
+        {% if specialist.consultation_fee_bdt %}
+            ৳{{ specialist.consultation_fee_bdt }}
+        {% else %}
+            Not Available
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <strong>Available Days:</strong>
+        {{ specialist.available_days }}
+    </div>
+
+    <div class="row">
+        <strong>Phone:</strong>
+        {{ specialist.contact_number }}
+    </div>
+
+    <div class="row">
+        <strong>Email:</strong>
+        {{ specialist.email }}
+    </div>
+
+    <div class="row">
+        <strong>Rating:</strong>
+        {{ specialist.rating }}
+    </div>
+
+    <div class="row">
+        <strong>Notes:</strong><br><br>
+        {{ specialist.notes }}
+    </div>
+
+    {% if specialist.website %}
+        <a href="{{ specialist.website }}" target="_blank" class="button">
+            Visit Official Website
+        </a>
+    {% endif %}
+
+</div>
+
+</body>
+</html>
