@@ -4,23 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Find Dietitian — Smart Diet & Fitness Planner</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      --white:        #FFFFFF;
-      --offwhite:     #FFFDF5;
-      --yellow:       #F5C518;
-      --yellow-light: #FFF8CC;
-      --red:          #D62828;
-      --red-light:    #FDEAEA;
-      --orange:       #F77F00;
-      --orange-light: #FFF0DC;
-      --green:        #2E8B57;
-      --green-light:  #E8F5EE;
-      --green-hover:  #216640;
-      --text:         #1A1A1A;
-      --muted:        #666666;
-      --sidebar-w:    240px;
+      --white:         #FFFFFF;
+      --offwhite:      #FFFDF5;
+      --yellow:        #F5C518;
+      --yellow-light:  #FEF9E7;
+      --yellow-border: #F3C649;
+      --red:           #D62828;
+      --red-light:     #FDEAEA;
+      --orange:        #F77F00;
+      --orange-light:  #FFF0DC;
+      --green:         #2E8B57;
+      --green-light:   #E8F5EE;
+      --green-hover:   #216640;
+      --text:          #1A1A1A;
+      --muted:         #666666;
+      --sidebar-w:     240px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -51,15 +52,35 @@
     .topbar { background: var(--white); border-bottom: 3px solid var(--green); padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     .topbar-left h2 { font-family: 'Playfair Display', serif; font-size: 20px; }
     .topbar-left p { font-size: 13px; color: var(--muted); margin-top: 1px; }
-    .cycle-badge { background: var(--red-light); border: 1px solid var(--red); color: var(--red); font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
 
     /* ── CONTENT ── */
     .content { padding: 28px 32px; flex: 1; }
 
-    /* ── AI BANNER ── */
-    .ai-banner { background: var(--yellow-light); border: 2px solid var(--yellow); border-radius: 12px; padding: 16px 22px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 14px; }
-    .ai-banner-icon { font-size: 28px; flex-shrink: 0; line-height: 1; }
-    .ai-banner-text { font-size: 13px; color: #8B1A1A; line-height: 1.6; }
+    /* ── AI BANNER (FIXED INLINE LAYOUT) ── */
+    .ai-banner { 
+      background: var(--yellow-light); 
+      border: 1px solid var(--yellow-border); 
+      border-radius: 12px; 
+      padding: 16px 20px; 
+      margin-bottom: 24px; 
+      display: flex; 
+      align-items: flex-start; 
+      gap: 12px; 
+    }
+    .ai-banner-icon { 
+      font-size: 24px; 
+      flex-shrink: 0; 
+      line-height: 1; 
+    }
+    .ai-banner-text { 
+      font-size: 14.5px; 
+      color: #9A3B18; 
+      line-height: 1.6; 
+    }
+    .ai-banner-text strong { 
+      color: #9A3B18; 
+      font-weight: 700; 
+    }
 
     /* ── SEARCH & FILTERS ── */
     .search-filter-bar { background: var(--white); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; border: 2px solid var(--offwhite); }
@@ -69,13 +90,16 @@
     .search-input { width: 100%; padding: 10px 12px 10px 38px; border: 2px solid var(--offwhite); border-radius: 8px; font-size: 14px; font-family: 'Inter', sans-serif; background: var(--offwhite); outline: none; transition: border-color 0.2s; }
     .search-input:focus { border-color: var(--orange); background: var(--white); }
     
-    .search-btn { background: var(--green); color: white; border: none; border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+    .search-btn { background: var(--green); color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
     .search-btn:hover { background: var(--green-hover); }
+
+    .reset-btn { background: transparent; color: var(--orange); border: 2px solid var(--orange); border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; white-space: nowrap; }
+    .reset-btn:hover { background: var(--orange); color: white; }
 
     .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .filter-label { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
     .filter-select { padding: 7px 12px; border: 2px solid var(--offwhite); border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; background: var(--offwhite); cursor: pointer; outline: none; }
-    .filter-chip { padding: 7px 14px; border: 2px solid var(--offwhite); border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; background: var(--white); color: var(--muted); transition: all 0.2s; white-space: nowrap; }
+    .filter-chip { padding: 7px 14px; border: 2px solid var(--offwhite); border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; background: var(--white); color: var(--muted); transition: all 0.2s; white-space: nowrap; text-decoration: none; }
     .filter-chip:hover { border-color: var(--orange); color: var(--orange); }
     .filter-chip.active { background: var(--orange); color: white; border-color: var(--orange); }
 
@@ -83,9 +107,8 @@
     .results-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .results-count { font-size: 14px; color: var(--muted); }
     .results-count span { color: var(--text); font-weight: 600; }
-    .sort-select { padding: 6px 12px; border: 2px solid var(--offwhite); border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; background: var(--white); cursor: pointer; outline: none; }
 
-    /* ── DOCTORS GRID (2 COLUMNS) ── */
+    /* ── DOCTORS GRID ── */
     .doctors-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px; }
 
     @media (max-width: 1024px) {
@@ -147,7 +170,6 @@
       line-height: 1.5;
       color: #665000;
     }
-    .doctor-notes strong { color: #4A3A00; }
 
     .doctor-footer { display: flex; gap: 10px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--offwhite); }
     
@@ -156,11 +178,6 @@
     
     .external-btn { flex: 1; background: transparent; color: var(--orange); border: 2px solid var(--orange); border-radius: 8px; padding: 9px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; text-align: center; display: inline-block; white-space: nowrap; }
     .external-btn:hover { background: var(--orange); color: white; }
-
-    .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
-    .page-btn { width: 36px; height: 36px; border-radius: 8px; border: 2px solid var(--offwhite); background: var(--white); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: var(--muted); }
-    .page-btn:hover { border-color: var(--orange); color: var(--orange); }
-    .page-btn.active { background: var(--green); color: white; border-color: var(--green); }
   </style>
 </head>
 <body>
@@ -174,23 +191,29 @@
     <div class="folk-strip"></div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Main</div>
-      <a class="nav-item" href="#"><span class="nav-icon">🏠</span> Dashboard</a>
-      <a class="nav-item" href="#"><span class="nav-icon">🍱</span> My Diet Plan</a>
-      <a class="nav-item" href="#"><span class="nav-icon">🏃</span> Fitness Plan</a>
-      <a class="nav-item" href="#"><span class="nav-icon">📊</span> Progress & BMI</a>
+      <a class="nav-item" href="{% url 'dashboard' %}"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="{% url 'diet_plan' %}"><span class="nav-icon">🍱</span> My Diet Plan</a>
+      <a class="nav-item" href="{% url 'fitness_plan' %}"><span class="nav-icon">🏃</span> Fitness Plan</a>
+      <a class="nav-item" href="{% url 'progress' %}"><span class="nav-icon">📊</span> Progress & BMI</a>
       <div class="nav-section-label">Tools</div>
-      <a class="nav-item" href="#"><span class="nav-icon">💬</span> Chatbot</a>
-      <a class="nav-item active" href="#"><span class="nav-icon">🏥</span> Find Dietitian</a>
-      <a class="nav-item" href="#"><span class="nav-icon">📅</span> Daily Log</a>
+      <a class="nav-item" href="{% url 'chatbot' %}"><span class="nav-icon">💬</span> Chatbot</a>
+      <a class="nav-item active" href="{% url 'medical_specialist' %}"><span class="nav-icon">🏥</span> Find Dietitian</a>
       <div class="nav-section-label">Account</div>
-      <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> Settings</a>
-      <a class="nav-item" href="#"><span class="nav-icon">🚪</span> Logout</a>
+      <a class="nav-item" href="{% url 'logout' %}"><span class="nav-icon">🚪</span> Logout</a>
     </nav>
     <div class="sidebar-user">
-      <div class="user-avatar">👩</div>
+      <div class="user-avatar">
+        {% if profile.gender == "Female" %}
+            👩
+        {% elif profile.gender == "Male" %}
+            👨
+        {% else %}
+            🧑
+        {% endif %}
+      </div>
       <div>
-        <div class="user-name">Adila Afsara</div>
-        <div class="user-goal">Goal: Lose Weight</div>
+        <div class="user-name">{{ user.full_name }}</div>
+        <div class="user-goal">Goal: {{ profile.health_goal }}</div>
       </div>
     </div>
   </aside>
@@ -202,59 +225,68 @@
         <h2>🏥 Find a Dietitian or Doctor</h2>
         <p>AI-recommended professionals based on your health condition</p>
       </div>
-      <div class="cycle-badge">🔄 Day 8 of 15</div>
     </div>
 
     <div class="content">
 
-      <!-- AI Banner -->
+      <!-- AI Banner (Fixed Layout) -->
+      {% if summary %}
       <div class="ai-banner">
         <div class="ai-banner-icon">🤖</div>
         <div class="ai-banner-text">
           <strong>AI Recommendation:</strong> {{ summary }}
         </div>
       </div>
+      {% endif %}
 
-      <!-- Search & Filters -->
-      <div class="search-filter-bar">
+      <!-- Search & Filters Form -->
+      <form method="GET" action="{% url 'medical_specialist' %}" class="search-filter-bar">
         <div class="search-row">
           <div class="search-input-wrap">
             <span class="search-icon">🔍</span>
-            <input class="search-input" type="text" placeholder="Search by name, specialty, hospital..."/>
+            <input
+               class="search-input"
+               type="text"
+               name="search"
+               value="{{ request.GET.search }}"
+               placeholder="Search by name, specialty, hospital..."
+            >
           </div>
-          <button class="search-btn">🔍 Search</button>
+          <button type="submit" class="search-btn">🔍 Search</button>
+          <a href="{% url 'medical_specialist' %}" class="reset-btn">Reset</a>
         </div>
+
         <div class="filter-row">
           <span class="filter-label">Filter by:</span>
-          <select class="filter-select">
-            <option>📍 All Locations</option>
-            <option selected>📍 Dhaka</option>
-            <option>📍 Chittagong</option>
-            <option>📍 Sylhet</option>
-            <option>📍 Rajshahi</option>
+          
+          <select class="filter-select" name="location" onchange="this.form.submit()">
+            <option value="">📍 All Locations</option>
+            <option value="Dhaka" {% if request.GET.location == "Dhaka" %}selected{% endif %}>📍 Dhaka</option>
+            <option value="Chittagong" {% if request.GET.location == "Chittagong" %}selected{% endif %}>📍 Chittagong</option>
+            <option value="Sylhet" {% if request.GET.location == "Sylhet" %}selected{% endif %}>📍 Sylhet</option>
+            <option value="Rajshahi" {% if request.GET.location == "Rajshahi" %}selected{% endif %}>📍 Rajshahi</option>
           </select>
-          <select class="filter-select">
-            <option>🩺 All Specialties</option>
-            <option selected>🩺 Diabetes</option>
-            <option>🩺 Weight Management</option>
-            <option>🩺 Heart Health</option>
-            <option>🩺 General Nutrition</option>
+
+          <select class="filter-select" name="specialty" onchange="this.form.submit()">
+            <option value="">🩺 All Specialties</option>
+            <option value="Clinical Nutrition" {% if request.GET.specialty == "Clinical Nutrition" %}selected{% endif %}>🩺 Clinical Nutrition</option>
+            <option value="Endocrinology" {% if request.GET.specialty == "Endocrinology" %}selected{% endif %}>🩺 Endocrinology</option>
+            <option value="Weight Loss & Metabolic Health" {% if request.GET.specialty == "Weight Loss & Metabolic Health" %}selected{% endif %}>🩺 Weight Loss</option>
+            <option value="Cardiology & Preventive Nutrition" {% if request.GET.specialty == "Cardiology & Preventive Nutrition" %}selected{% endif %}>🩺 Cardiology</option>
           </select>
-          <div class="filter-chip active">⭐ AI Recommended</div>
-          <div class="filter-chip">🏥 Hospital</div>
-          <div class="filter-chip">🏠 Chamber</div>
-          <div class="filter-chip">💻 Online</div>
+
+          <a href="{% url 'medical_specialist' %}" class="filter-chip {% if not request.GET.type %}active{% endif %}">⭐ All</a>
+          <a href="?type=Dietitian{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}" class="filter-chip {% if request.GET.type == 'Dietitian' %}active{% endif %}">🥗 Dietitians</a>
+          <a href="?type=Doctor{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.location %}&location={{ request.GET.location }}{% endif %}" class="filter-chip {% if request.GET.type == 'Doctor' %}active{% endif %}">🏥 Doctors</a>
         </div>
-      </div>
+      </form>
 
       <!-- Results Info -->
       <div class="results-info">
-        <div class="results-count">Showing <span>{{ specialists|length }} specialists</span> matching your condition in <span>{{ request.GET.location|default:"your area" }}</span></div>
-        <select class="sort-select">
-          <option>Sort by: AI Recommended</option>
-          <option>Sort by: Rating</option>
-          <option>Sort by: Experience</option>
-        </select>
+        <div class="results-count">
+          Showing <span>{{ specialists|length }} specialists</span> 
+          {% if request.GET.location %}in <span>{{ request.GET.location }}</span>{% endif %}
+        </div>
       </div>
 
       <!-- Doctors Grid -->
@@ -282,13 +314,7 @@
             <div class="doctor-details">
               <div class="detail-item">
                 <span class="detail-icon">🏥</span>
-                <span class="detail-value">
-                  {% if specialist.hospital_clinic %}
-                    {{ specialist.hospital_clinic }}
-                  {% else %}
-                    Not Available
-                  {% endif %}
-                </span>
+                <span class="detail-value">{{ specialist.hospital_clinic|default:"Not Available" }}</span>
               </div>
 
               <div class="detail-item">
@@ -309,35 +335,17 @@
 
               <div class="detail-item">
                 <span class="detail-icon">📞</span>
-                <span class="detail-value">
-                  {% if specialist.contact_number %}
-                    {{ specialist.contact_number }}
-                  {% else %}
-                    Not Available
-                  {% endif %}
-                </span>
+                <span class="detail-value">{{ specialist.contact_number|default:"Not Available" }}</span>
               </div>
 
               <div class="detail-item">
                 <span class="detail-icon">🗓️</span>
-                <span class="detail-value">
-                  {% if specialist.available_days %}
-                    {{ specialist.available_days }}
-                  {% else %}
-                    Not Available
-                  {% endif %}
-                </span>
+                <span class="detail-value">{{ specialist.available_days|default:"Not Available" }}</span>
               </div>
 
               <div class="detail-item">
                 <span class="detail-icon">✉️</span>
-                <span class="detail-value">
-                  {% if specialist.email %}
-                    {{ specialist.email }}
-                  {% else %}
-                    Not Available
-                  {% endif %}
-                </span>
+                <span class="detail-value">{{ specialist.email|default:"Not Available" }}</span>
               </div>
             </div>
 
@@ -358,16 +366,8 @@
           </div>
         </div>
         {% empty %}
-          <h3>No specialists found.</h3>
+          <h3>No specialists found matching your search.</h3>
         {% endfor %}
-      </div>
-
-      <!-- Pagination -->
-      <div class="pagination">
-        <div class="page-btn">←</div>
-        <div class="page-btn active">1</div>
-        <div class="page-btn">2</div>
-        <div class="page-btn">→</div>
       </div>
 
     </div>
