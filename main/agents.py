@@ -13,6 +13,7 @@ from .nutrition_calculator import (
 load_dotenv(override=True)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+
 # Fallback — read directly from .env if os.getenv fails
 if not GEMINI_API_KEY:
     with open('.env', 'r') as f:
@@ -376,9 +377,11 @@ Respond to the user's message now.
 """
     return call_gemini(prompt)
 
+
 # ════════════════════════════════════════
 # 🏥 AGENT 5 — DIETITIAN/Medical Specialist RECOMMENDER AGENT
 # ════════════════════════════════════════
+
 def medical_specialist_agent(user_profile):
     """
     AI Agent:
@@ -400,6 +403,9 @@ Always prioritize evidence-based healthcare recommendations.
 If possible, recommend professionals whose information is available on official hospital websites. If an official website cannot be identified, return null instead of inventing one.
 
 When appropriate, try to recommend professionals from different categories rather than multiple professionals from the same category, unless the user's condition specifically requires otherwise.
+
+Never make up medical specialists by your own if they don't exist in real life.
+
 
 =================================
 USER PROFILE
@@ -474,6 +480,7 @@ RULES
 
 15. Do NOT write any explanation before or after the JSON.
 
+
 =================================
 RECOMMENDATION GUIDELINES
 =================================
@@ -494,11 +501,40 @@ Examples only:
 • None → Dietitian + Nutritionist + Fitness Trainer
 
 =================================
+SUMMARY REQUIREMENTS
+=================================
+
+Generate a personalized summary before listing the recommended specialists.
+
+The summary should:
+
+1. Be 3–5 complete sentences (around 60–100 words).
+
+2. Be written in a warm, professional, and supportive tone.
+
+3. Mention the user's:
+   - health condition
+   - health goal
+   - lifestyle (if relevant)
+
+4. Explain WHY these specialist categories were recommended.
+
+5. Mention that nearby professionals are prioritized whenever possible.
+
+6. Encourage the user to consult a licensed healthcare professional.
+
+7. Do NOT mention the doctors' names.
+
+8. Do NOT simply say "based on your profile."
+
+Write the summary naturally as if speaking directly to the user inside the DietMate BD application.
+
+=================================
 OUTPUT FORMAT
 =================================
 
 {{
-  "summary": "A short personalized explanation of why these professionals were recommended.",
+  "summary": "A personalized 3–5 sentence recommendation following the Summary Requirements above.",
 
   "recommended_specialists": [
     {{
@@ -539,7 +575,7 @@ IMPORTANT
 - Your response MUST end with '}}'
 - Output ONLY valid JSON
 """
-
+    # Pass enable_search=True specifically for doctor lookup
     return call_gemini(prompt)
 
 def parse_gemini_json(ai_response):
