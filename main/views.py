@@ -126,6 +126,7 @@ def diet_plan(request):
     ).first()
 
     print("Active Plan =", active_plan)
+    plan_completed = False
 
     # Generate AI plan only if no active plan exists
     if not active_plan:
@@ -166,7 +167,7 @@ def diet_plan(request):
             active_plan = DietPlan.objects.create(
                 user=user,
                 plan_start_date=today,
-                plan_end_date=today + timedelta(days=15),
+                plan_end_date=today + timedelta(days=14),
                 plan_status='Active'
             )
 
@@ -205,6 +206,7 @@ def diet_plan(request):
         if day_number > 15:
             active_plan.plan_status = "Completed"
             active_plan.save()
+            plan_completed = True
             day_number = 15
 
         todays_meals = DietPlanMeal.objects.filter(
@@ -255,6 +257,7 @@ def diet_plan(request):
             'todays_meals': todays_meals,
             'all_meals': all_meals,
             'day_number': day_number,
+            'plan_completed': plan_completed,
             'day_range': range(1, 16),
             'total_calories': total_calories,
             'total_cost': total_cost,
@@ -795,9 +798,12 @@ def regenerate_plan(request):
         plan_status='Active'
     ).first()
 
+    plan_completed = False
+
+    
     if active_plan:
-        DietPlanMeal.objects.filter(plan=active_plan).delete()
-        active_plan.delete()
+       active_plan.plan_status = "Completed"
+       active_plan.save()
 
     return redirect('diet_plan')
 
