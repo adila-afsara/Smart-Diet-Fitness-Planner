@@ -250,6 +250,33 @@
     .summary-label { font-size: 12px; color: var(--muted); }
     .summary-value { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 2px; }
 
+    .completion-alert {
+      background: var(--green-light);
+      border: 2px solid var(--green);
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .completion-alert-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .completion-alert-text {
+      font-size: 13px;
+      color: var(--green);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .completion-alert-text strong {
+      color: var(--green);
+    }
+
     /* ── DISEASE ALERT ── */
     .disease-alert {
       background: var(--green-light); border: 2px solid var(--green);
@@ -391,6 +418,17 @@
         <div style="background:var(--offwhite); border-radius:8px; padding:20px; font-size:14px; line-height:1.8; color:var(--text); white-space:pre-wrap;">
           {{ ai_diet_plan }}
         </div>
+      </div>
+      {% endif %}
+
+      {% if plan_completed %}
+      <div class="completion-alert">
+           <div class="completion-alert-icon">🎉</div>
+           <div class="completion-alert-text">
+               <strong>Congratulations!</strong>
+              You have completed your 15-day diet plan.
+              Click <strong>🔄 Regenerate Plan</strong> to start a new personalized 15-day cycle.
+            </div>
       </div>
       {% endif %}
 
