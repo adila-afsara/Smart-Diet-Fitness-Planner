@@ -922,9 +922,7 @@
 
     <div class="sidebar-user">
 
-      <div class="user-avatar">
-        👩
-      </div>
+      <div class="sidebar-user"> <div class="user-avatar"> {% if profile.gender == "Female" %} 👩 {% elif profile.gender == "Male" %} 👨 {% else %} why here my page not recieving name and goal ? 🧑 {% endif %} </div>
 
       <div>
         <div class="user-name">
@@ -1182,13 +1180,13 @@
 
       <div class="week-tabs">
 
-        <div class="week-tab active">
+        <div class="week-tab active" id="week1Tab" onclick="showWeek(1)">
           📅 Week 1 (Days 1–7)
         </div>
 
-        <div class="week-tab">
-          📅 Week 2 (Days 8–15)
-        </div>
+         <div class="week-tab" id="week2Tab" onclick="showWeek(2)">
+           📅 Week 2 (Days 8–15)
+         </div>
 
       </div>
 
@@ -1625,6 +1623,44 @@
     </div>
 
   </main>
+  <script>
+  function showWeek(week) {
 
+    const daySections = document.querySelectorAll('.day-section');
+
+    const week1Tab = document.getElementById('week1Tab');
+    const week2Tab = document.getElementById('week2Tab');
+
+    daySections.forEach(section => {
+
+        const dayPill = section.querySelector('.day-pill');
+
+        if (!dayPill) return;
+
+        const dayNumber = parseInt(
+            dayPill.textContent.replace('Day', '').trim()
+        );
+
+        if (week === 1) {
+            section.style.display =
+                (dayNumber >= 1 && dayNumber <= 7)
+                ? 'block'
+                : 'none';
+
+            week1Tab.classList.add('active');
+            week2Tab.classList.remove('active');
+
+        } else {
+            section.style.display =
+                (dayNumber >= 8 && dayNumber <= 15)
+                ? 'block'
+                : 'none';
+
+            week1Tab.classList.remove('active');
+            week2Tab.classList.add('active');
+        }
+    });
+}
+</script>
 </body>
 </html>
