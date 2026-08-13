@@ -20,4 +20,5 @@ urlpatterns = [
     ),
     path('regenerate-plan/', views.regenerate_plan, name='regenerate_plan'),
     path('download-plan/', views.download_plan, name='download_plan'),
+    path('toggle-exercise/<int:exercise_id>/', views.toggle_exercise_completion, name='toggle_exercise'),
     ] 
