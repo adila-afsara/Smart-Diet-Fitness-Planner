@@ -232,6 +232,7 @@ User Details:
 - Weight: {user_profile.get('weight')} kg
 - Health Goal: {user_profile.get('health_goal')}
 - Fitness Level: {user_profile.get('activity_level')}
+- Training Strategy: {strategy}
 - Workout Location: {user_profile.get('workout_location')}
 - Health Condition: {user_profile.get('health_condition')}
 
