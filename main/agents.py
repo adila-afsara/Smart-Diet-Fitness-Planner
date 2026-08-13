@@ -239,10 +239,7 @@ User Details:
 
 IMPORTANT RULES:
 1. Create a 15-day workout plan
-2. Match exercises to fitness level:
-   - Beginner: light walks, bodyweight exercises, stretching (30-35 mins)
-   - Intermediate: HIIT, jogging, weights (40-45 mins)
-   - Advanced: intense cardio, strength training (55-60 mins)
+2. Follow the selected training strategy and its strategy rules exactly.
 3. If workout location is Home: no gym equipment needed
 4. If workout location is Gym: include equipment exercises
 5. Include rest days (every 3rd day) — mark these with "is_rest_day": true and an empty exercises list
