@@ -979,9 +979,13 @@
           </div>
         {% endif %}
 
-        <button class="btn-secondary" type="button">
+        <a
+           href="{% url 'download_fitness_plan' %}"
+           class="btn-secondary"
+           style="text-decoration: none; display: inline-block;"
+        >
           📥 Download Plan
-        </button>
+       </a>
 
         <form method="POST" action="{% url 'regenerate_fitness_plan' %}">
               {% csrf_token %}
