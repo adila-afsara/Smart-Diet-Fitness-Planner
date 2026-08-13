@@ -309,7 +309,7 @@ def fitness_plan(request):
     ).first()
 
     if not active_plan:
-        from .agents import fitness_agent
+        from .fitness_strategies import get_fitness_strategy
 
         user_profile = {
             'age': profile.age,
@@ -320,8 +320,9 @@ def fitness_plan(request):
             'health_condition': profile.health_condition,
         }
 
-        ai_response = fitness_agent(user_profile)
+        strategy = get_fitness_strategy(profile.activity_level)
 
+        ai_response = strategy.generate_plan(user_profile)
         try:
             clean = ai_response.strip()
             if clean.startswith('```'):
