@@ -797,6 +797,33 @@ def toggle_exercise_completion(
 
     return redirect('fitness_plan')
 
+def regenerate_fitness_plan(request):
+    if request.method != "POST":
+        return redirect("fitness_plan")
+
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user = User.objects.get(id=request.session['user_id'])
+
+    from .models import FitnessPlan
+
+    active_plan = FitnessPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    # Mark the current plan as completed.
+    # We DO NOT delete it because we want to keep it
+    # as previous cycle history.
+    if active_plan:
+        active_plan.plan_status = "Completed"
+        active_plan.save()
+
+    # Redirect to fitness_plan.
+    # Since there is now no Active plan, fitness_plan()
+    # will automatically generate a new 15-day plan.
+    return redirect("fitness_plan")
 def progress(request):
     if 'user_id' not in request.session:
         return redirect('login')
