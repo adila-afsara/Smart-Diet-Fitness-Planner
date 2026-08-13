@@ -218,7 +218,7 @@ Do not stop before day 15. Generate the complete JSON array now.
 # ════════════════════════════════════════
 # 🏃 AGENT 2 — FITNESS AGENT
 # ════════════════════════════════════════
-def fitness_agent(user_profile):
+def fitness_agent(user_profile, strategy):
     """
 
     This agent generates a personalized 15-day fitness plan
