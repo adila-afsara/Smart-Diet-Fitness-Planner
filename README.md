@@ -75,7 +75,7 @@ MySQL database with 11 tables:
 - fitness_plans, fitness_plan_exercises
 - daily_logs, bmi_records
 - weekly_reports, chatbot_conversations
-- dietitians
+- medical_specialists
 
 ---
 
