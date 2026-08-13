@@ -41,7 +41,7 @@ it analyzes the user's progress and generates a smarter updated plan.
 
 ## AI Agents
 
-The system is powered by **4 specialized AI agents** using Claude API:
+The system is powered by **5 specialized AI agents** using Claude API:
 
 -  **Nutrition & Diet Agent** — Meal planning, budget optimization, disease-aware adjustments
 -  **Fitness Agent** — Workout plan generation and adaptive updates
