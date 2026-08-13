@@ -390,6 +390,13 @@ def fitness_plan(request):
         total_plan_duration = sum(
             e.duration_minutes or 0 for e in all_exercises
         )
+        todays_exercises = FitnessPlanExercise.objects.filter(
+            fitness_plan=active_plan,
+            day_number=day_number
+        )
+        completed_exercises = todays_exercises.filter(
+                is_completed=True
+        ).count()
 
         is_rest_day = not todays_exercises.exists()
         total_duration = sum(e.duration_minutes or 0 for e in todays_exercises)
@@ -410,6 +417,7 @@ def fitness_plan(request):
             'total_plan_calories': total_plan_calories,
             'total_plan_duration': total_plan_duration,
             'daily_tip': daily_tip,
+            'completed_exercises': completed_exercises,
         })
 
     return render(request, 'DietMate_fitnessplan.html', {
