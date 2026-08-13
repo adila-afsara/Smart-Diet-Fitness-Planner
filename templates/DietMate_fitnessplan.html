@@ -1406,14 +1406,14 @@
 
               <div class="comp-label">
                 <span>Cardio</span>
-                <span>{{ cardio_completion|default:"0" }}%</span>
+                <span>{{ cardio_percentage }}%</span>
               </div>
 
               <div class="comp-bar">
 
                 <div
                   class="comp-fill fill-red"
-                  style="width:{{ cardio_completion|default:0 }}%"
+                  style="width:{{ cardio_completion|default:0 }}%""
                 ></div>
 
               </div>
@@ -1425,14 +1425,14 @@
 
               <div class="comp-label">
                 <span>Strength</span>
-                <span>{{ strength_completion|default:"0" }}%</span>
+                <span>{{ strength_percentage }}%</span>
               </div>
 
               <div class="comp-bar">
 
                 <div
                   class="comp-fill fill-orange"
-                  style="width:{{ strength_completion|default:0 }}%"
+                  style="width:{{ strength_percentage|default:0 }}%"
                 ></div>
 
               </div>
@@ -1444,14 +1444,14 @@
 
               <div class="comp-label">
                 <span>Stretching</span>
-                <span>{{ stretching_completion|default:"0" }}%</span>
+                <span>{{ stretching_percentage }}%</span>
               </div>
 
               <div class="comp-bar">
 
                 <div
                   class="comp-fill fill-green"
-                  style="width:{{ stretching_completion|default:0 }}%"
+                  style="width:{{ stretching_percentage|default:0 }}%"
                 ></div>
 
               </div>
