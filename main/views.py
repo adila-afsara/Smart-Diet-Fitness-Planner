@@ -418,6 +418,23 @@ def fitness_plan(request):
         'plan': None,
     })
 
+def toggle_exercise_completion(request, exercise_id):
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    from .models import FitnessPlanExercise
+
+    exercise = get_object_or_404(
+        FitnessPlanExercise,
+        id=exercise_id,
+        fitness_plan__user_id=request.session['user_id']
+    )
+
+    exercise.is_completed = not exercise.is_completed
+    exercise.save()
+
+    return redirect('fitness_plan')
+
 
 def progress(request):
     if 'user_id' not in request.session:
