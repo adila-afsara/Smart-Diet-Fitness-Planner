@@ -379,6 +379,18 @@ def fitness_plan(request):
             day_number=day_number
         )
 
+        all_exercises = FitnessPlanExercise.objects.filter(
+            fitness_plan=active_plan
+        )
+
+        total_plan_calories = sum(
+            e.calories_burned or 0 for e in all_exercises
+        )
+
+        total_plan_duration = sum(
+            e.duration_minutes or 0 for e in all_exercises
+        )
+
         is_rest_day = not todays_exercises.exists()
         total_duration = sum(e.duration_minutes or 0 for e in todays_exercises)
         total_calories = sum(e.calories_burned or 0 for e in todays_exercises)
@@ -395,6 +407,8 @@ def fitness_plan(request):
             'day_range': range(1, 16),
             'total_duration': total_duration,
             'total_calories': total_calories,
+            'total_plan_calories': total_plan_calories,
+            'total_plan_duration': total_plan_duration,
             'daily_tip': daily_tip,
         })
 
