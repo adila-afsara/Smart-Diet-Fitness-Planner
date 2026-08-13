@@ -1202,168 +1202,116 @@
 
         <!-- EXERCISE LIST -->
 
-        <div class="exercise-list-card">
+       <div class="exercise-list-card">
 
-          <div class="card-header">
+    {% for day in plan_days %}
 
-            <div class="card-title">
-              🏃 Today's Exercises
-            </div>
+        <div class="day-section">
 
-            {% if is_rest_day %}
-
-              <span class="card-badge badge-green">
-                Rest Day
-              </span>
-
-            {% else %}
-
-              <span class="card-badge badge-orange">
-                In Progress
-              </span>
-
-            {% endif %}
-
-          </div>
-
-
-          <!-- DAY -->
-
-          <div class="day-section">
-
+            <!-- Day Header -->
             <div class="day-label-row">
 
-              <div class="day-pill {% if is_rest_day %}rest{% endif %}">
-                Day {{ day_number }}
-              </div>
+                <div class="day-pill {% if day.is_rest_day %}rest{% endif %}">
+                    Day {{ day.day_number }}
+                </div>
 
-              <div class="day-date">
-                Today
-              </div>
+                {% if day.day_number == day_number %}
+                    <div class="day-date">Today</div>
+                {% else %}
+                    <div class="day-date"></div>
+                {% endif %}
 
-              <div class="day-line"></div>
+                <div class="day-line"></div>
 
-              {% if is_rest_day %}
-
-                <span class="card-badge badge-green">
-                  Rest Day
-                </span>
-
-              {% else %}
-
-                <span class="card-badge badge-orange">
-                  In Progress
-                </span>
-
-              {% endif %}
+                {% if day.is_rest_day %}
+                    <span class="card-badge badge-green">
+                        Rest Day
+                    </span>
+                {% elif day.day_number == day_number %}
+                    <span class="card-badge badge-orange">
+                        In Progress
+                    </span>
+                {% else %}
+                    <span class="card-badge badge-orange">
+                        Upcoming
+                    </span>
+                {% endif %}
 
             </div>
 
 
-            <!-- REST DAY -->
-
-            {% if is_rest_day %}
-
-              <div class="rest-day-card">
-
-                <p>
-                  🌿 Rest Day — Let your muscles recover.
-                  Light walking or yoga is optional.
-                </p>
-
-              </div>
-
-
-            <!-- EXERCISES -->
-
-            {% else %}
-
-              {% for exercise in todays_exercises %}
-
-                <a
-                  href="{% url 'toggle_exercise' exercise.id %}"
-                  class="exercise-item {% if exercise.is_completed %}done{% endif %}"
-                >
-
-                  <div
-                    class="ex-number {% if exercise.is_completed %}done-num{% endif %}"
-                  >
-                    {{ forloop.counter }}
-                  </div>
-
-
-                  <div class="ex-icon">
-
-                    {% if exercise.is_completed %}
-                      ✅
-                    {% else %}
-                      🏃
-                    {% endif %}
-
-                  </div>
-
-
-                  <div class="ex-details">
-
-                    <div class="ex-name">
-                      {{ exercise.exercise_name }}
-                    </div>
-
-                    <div class="ex-meta">
-
-                      {% if exercise.sets %}
-                        {{ exercise.sets }}
-                        sets ×
-                        {{ exercise.reps }}
-                        reps
-                      {% else %}
-                        Duration-based
-                      {% endif %}
-
-                    </div>
-
-                  </div>
-
-
-                  <div class="ex-badges">
-
-                    <span class="ex-badge duration">
-                      {{ exercise.duration_minutes }} min
-                    </span>
-
-                    <span class="ex-badge calories">
-                      {{ exercise.calories_burned }} kcal
-                    </span>
-
-                    {% if exercise.is_completed %}
-
-                      <span class="ex-badge done-badge">
-                        ✓ Done
-                      </span>
-
-                    {% endif %}
-
-                  </div>
-
-                </a>
-
-              {% empty %}
+            <!-- Rest Day -->
+            {% if day.is_rest_day %}
 
                 <div class="rest-day-card">
-                  <p>
-                    No exercises found for today.
-                  </p>
+                    <p>
+                        🌿 Rest Day — Let your muscles recover.
+                        Light walking or yoga is optional.
+                    </p>
                 </div>
 
-              {% endfor %}
+
+            <!-- Exercises -->
+            {% else %}
+
+                {% for exercise in day.exercises %}
+
+                    <a href="{% url 'toggle_exercise' exercise.id %}"
+                       class="exercise-item {% if exercise.is_completed %}done{% endif %}">
+
+                        <div class="ex-number">
+                            {{ forloop.counter }}
+                        </div>
+
+                        <div class="ex-icon">
+                            🏃
+                        </div>
+
+                        <div class="ex-details">
+
+                            <div class="ex-name">
+                                {{ exercise.exercise_name }}
+                            </div>
+
+                            <div class="ex-meta">
+                                {% if exercise.sets %}
+                                    {{ exercise.sets }} sets × {{ exercise.reps }} reps
+                                {% else %}
+                                    Duration-based
+                                {% endif %}
+                            </div>
+
+                        </div>
+
+                        <div class="ex-badges">
+
+                            <span class="ex-badge duration">
+                                {{ exercise.duration_minutes }} min
+                            </span>
+
+                            <span class="ex-badge calories">
+                                {{ exercise.calories_burned }} kcal
+                            </span>
+
+                            {% if exercise.is_completed %}
+                                <span class="ex-badge done-badge">
+                                    ✓ Done
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                    </a>
+
+                {% endfor %}
 
             {% endif %}
-
-          </div>
 
         </div>
 
+    {% endfor %}
 
+</div>
         <!-- ═══════════════════════════════════════
              SIDE PANEL
         ═══════════════════════════════════════ -->
