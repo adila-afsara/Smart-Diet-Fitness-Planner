@@ -26,4 +26,9 @@ urlpatterns = [
     views.regenerate_fitness_plan,
     name='regenerate_fitness_plan'
     ),
+     path(
+    'download-fitness-plan/',
+    views.download_fitness_plan,
+    name='download_fitness_plan'
+    ),
     ] 
