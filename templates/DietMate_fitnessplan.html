@@ -983,9 +983,12 @@
           📥 Download Plan
         </button>
 
-        <button class="btn-primary" type="button">
-          🔄 Regenerate Plan
-        </button>
+        <form method="POST" action="{% url 'regenerate_fitness_plan' %}">
+              {% csrf_token %}
+               <button class="btn-primary" type="submit">
+                  🔄 Regenerate Plan
+               </button>
+        </form>
 
       </div>
 
