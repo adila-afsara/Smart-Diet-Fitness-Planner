@@ -303,12 +303,21 @@ def fitness_plan(request):
     from datetime import date, timedelta
     import json
 
+    # =========================================================
+    # FIND ACTIVE FITNESS PLAN
+    # =========================================================
+
     active_plan = FitnessPlan.objects.filter(
         user=user,
         plan_status='Active'
     ).first()
 
+    # =========================================================
+    # GENERATE NEW PLAN IF NO ACTIVE PLAN EXISTS
+    # =========================================================
+
     if not active_plan:
+
         from .fitness_strategies import get_fitness_strategy
 
         user_profile = {
@@ -320,117 +329,454 @@ def fitness_plan(request):
             'health_condition': profile.health_condition,
         }
 
-        strategy = get_fitness_strategy(profile.activity_level)
+        # Strategy Pattern
+        strategy = get_fitness_strategy(
+            profile.activity_level
+        )
 
-        ai_response = strategy.generate_plan(user_profile)
+        ai_response = strategy.generate_plan(
+            user_profile
+        )
+
         try:
             clean = ai_response.strip()
+
+            # Remove Markdown code block if Gemini returns one
             if clean.startswith('```'):
                 clean = clean.split('```')[1]
+
                 if clean.startswith('json'):
                     clean = clean[4:]
+
             clean = clean.strip()
 
             plan_data = json.loads(clean)
 
+            # Make sure all 15 days were generated
             if len(plan_data) < 15:
-                print(f"Incomplete fitness plan generated — only {len(plan_data)} days. Not saving.")
-                raise ValueError("Incomplete fitness plan")
 
+                print(
+                    f"Incomplete fitness plan generated — "
+                    f"only {len(plan_data)} days. Not saving."
+                )
+
+                raise ValueError(
+                    "Incomplete fitness plan"
+                )
+
+            # Create 15-day plan
             today = date.today()
+
             active_plan = FitnessPlan.objects.create(
                 user=user,
                 plan_start_date=today,
-                plan_end_date=today + timedelta(days=15),
+                plan_end_date=today + timedelta(days=14),
                 fitness_level=profile.activity_level,
                 workout_location=profile.workout_location,
                 plan_status='Active'
             )
 
+            # Save exercises
             for day_data in plan_data:
+
                 day_num = day_data.get('day')
+
+                # Skip rest days
                 if day_data.get('is_rest_day'):
                     continue
-                for ex in day_data.get('exercises', []):
+
+                for ex in day_data.get(
+                    'exercises',
+                    []
+                ):
+
                     FitnessPlanExercise.objects.create(
                         fitness_plan=active_plan,
                         day_number=day_num,
-                        exercise_name=ex.get('exercise_name'),
-                        duration_minutes=ex.get('duration_minutes'),
+                        exercise_name=ex.get(
+                            'exercise_name'
+                        ),
+                        duration_minutes=ex.get(
+                            'duration_minutes'
+                        ),
                         sets=ex.get('sets'),
                         reps=ex.get('reps'),
-                        calories_burned=ex.get('calories_burned')
+                        calories_burned=ex.get(
+                            'calories_burned'
+                        )
                     )
 
         except Exception as e:
-            print(f"Error parsing AI fitness response: {e}")
-            print(f"AI Response was: {ai_response}")
+
+            print(
+                f"Error parsing AI fitness response: {e}"
+            )
+
+            print(
+                f"AI Response was: {ai_response}"
+            )
+
+    # =========================================================
+    # DISPLAY ACTIVE PLAN
+    # =========================================================
 
     if active_plan:
+
         today = date.today()
-        day_number = (today - active_plan.plan_start_date).days + 1
+
+        # Calculate current day
+        day_number = (
+            today - active_plan.plan_start_date
+        ).days + 1
+
         if day_number < 1:
             day_number = 1
+
         if day_number > 15:
             day_number = 15
 
+        # =====================================================
+        # TODAY'S EXERCISES
+        # =====================================================
+
         todays_exercises = FitnessPlanExercise.objects.filter(
             fitness_plan=active_plan,
             day_number=day_number
         )
+
+        # =====================================================
+        # ALL EXERCISES
+        # =====================================================
 
         all_exercises = FitnessPlanExercise.objects.filter(
             fitness_plan=active_plan
+        ).order_by(
+            'day_number',
+            'id'
         )
 
-        total_plan_calories = sum(
-            e.calories_burned or 0 for e in all_exercises
-        )
+        # =====================================================
+        # TODAY'S COMPLETED EXERCISES
+        # =====================================================
 
-        total_plan_duration = sum(
-            e.duration_minutes or 0 for e in all_exercises
-        )
-        todays_exercises = FitnessPlanExercise.objects.filter(
-            fitness_plan=active_plan,
-            day_number=day_number
-        )
-        all_exercises = FitnessPlanExercise.objects.filter(
-           fitness_plan=active_plan
-        ).order_by('day_number', 'id')
         completed_exercises = todays_exercises.filter(
-                is_completed=True
+            is_completed=True
         ).count()
 
+        # =====================================================
+        # TODAY'S TOTAL DURATION
+        # =====================================================
+
+        total_duration = sum(
+            exercise.duration_minutes or 0
+            for exercise in todays_exercises
+        )
+
+        # =====================================================
+        # TODAY'S TOTAL CALORIES
+        # =====================================================
+
+        total_calories = sum(
+            exercise.calories_burned or 0
+            for exercise in todays_exercises
+        )
+
+        # =====================================================
+        # TOTAL PLAN CALORIES
+        # =====================================================
+
+        total_plan_calories = sum(
+            exercise.calories_burned or 0
+            for exercise in all_exercises
+        )
+
+        # =====================================================
+        # TOTAL PLAN DURATION
+        # =====================================================
+
+        total_plan_duration = sum(
+            exercise.duration_minutes or 0
+            for exercise in all_exercises
+        )
+
+        # =====================================================
+        # WEEK 1 EXERCISES
+        # =====================================================
+
+        week1_exercises = all_exercises.filter(
+            day_number__range=(1, 7)
+        )
+
+        # =====================================================
+        # WEEK 1 COMPLETED DAYS
+        # =====================================================
+
+        completed_days = 0
+
+        for day in range(1, 8):
+
+            day_exercises = all_exercises.filter(
+                day_number=day
+            )
+
+            # Rest day
+            if not day_exercises.exists():
+
+                completed_days += 1
+
+            # Workout day
+            elif not day_exercises.filter(
+                is_completed=False
+            ).exists():
+
+                completed_days += 1
+
+        week1_percentage = round(
+            (completed_days / 7) * 100
+        )
+
+        # =====================================================
+        # EXERCISE CATEGORIES
+        # =====================================================
+
+        cardio_keywords = [
+            'walk',
+            'jog',
+            'run',
+            'treadmill',
+            'cycling',
+            'bike',
+            'rowing',
+            'stair',
+            'hiit',
+            'jump',
+            'cardio'
+        ]
+
+        strength_keywords = [
+            'squat',
+            'press',
+            'pull',
+            'push',
+            'curl',
+            'row',
+            'lunge',
+            'deadlift',
+            'barbell',
+            'dumbbell',
+            'plank',
+            'strength'
+        ]
+
+        stretching_keywords = [
+            'stretch',
+            'yoga',
+            'mobility',
+            'flexibility'
+        ]
+
+        # =====================================================
+        # CATEGORY FUNCTION
+        # =====================================================
+
+        def get_category(exercise_name):
+
+            name = (
+                exercise_name or ''
+            ).lower()
+
+            if any(
+                keyword in name
+                for keyword in cardio_keywords
+            ):
+                return 'cardio'
+
+            if any(
+                keyword in name
+                for keyword in stretching_keywords
+            ):
+                return 'stretching'
+
+            if any(
+                keyword in name
+                for keyword in strength_keywords
+            ):
+                return 'strength'
+
+            return 'strength'
+
+        # =====================================================
+        # CATEGORY COUNTERS
+        # =====================================================
+
+        cardio_total = 0
+        cardio_completed = 0
+
+        strength_total = 0
+        strength_completed = 0
+
+        stretching_total = 0
+        stretching_completed = 0
+
+        for exercise in week1_exercises:
+
+            category = get_category(
+                exercise.exercise_name
+            )
+
+            if category == 'cardio':
+
+                cardio_total += 1
+
+                if exercise.is_completed:
+                    cardio_completed += 1
+
+            elif category == 'strength':
+
+                strength_total += 1
+
+                if exercise.is_completed:
+                    strength_completed += 1
+
+            elif category == 'stretching':
+
+                stretching_total += 1
+
+                if exercise.is_completed:
+                    stretching_completed += 1
+
+        # =====================================================
+        # CATEGORY PERCENTAGES
+        # =====================================================
+
+        cardio_percentage = (
+            round(
+                (cardio_completed / cardio_total) * 100
+            )
+            if cardio_total
+            else 0
+        )
+
+        strength_percentage = (
+            round(
+                (strength_completed / strength_total) * 100
+            )
+            if strength_total
+            else 0
+        )
+
+        stretching_percentage = (
+            round(
+                (stretching_completed / stretching_total) * 100
+            )
+            if stretching_total
+            else 0
+        )
+
+        # =====================================================
+        # CREATE ALL 15 DAYS
+        # =====================================================
+
+        plan_days = []
+
+        for day in range(1, 16):
+
+            exercises = all_exercises.filter(
+                day_number=day
+            )
+
+            plan_days.append({
+                'day_number': day,
+                'exercises': exercises,
+                'is_rest_day': not exercises.exists(),
+            })
+
+        # =====================================================
+        # TODAY REST DAY?
+        # =====================================================
+
         is_rest_day = not todays_exercises.exists()
-        total_duration = sum(e.duration_minutes or 0 for e in todays_exercises)
-        total_calories = sum(e.calories_burned or 0 for e in todays_exercises)
 
-        daily_tip = FITNESS_TIPS[(day_number - 1) % len(FITNESS_TIPS)]
+        # =====================================================
+        # DAILY TIP
+        # =====================================================
 
-        return render(request, 'DietMate_fitnessplan.html', {
+        daily_tip = FITNESS_TIPS[
+            (day_number - 1)
+            % len(FITNESS_TIPS)
+        ]
+
+        # =====================================================
+        # SEND EVERYTHING TO TEMPLATE
+        # =====================================================
+
+        return render(
+            request,
+            'DietMate_fitnessplan.html',
+            {
+                'user': user,
+                'profile': profile,
+                'plan': active_plan,
+
+                # Exercises
+                'todays_exercises': todays_exercises,
+                'all_exercises': all_exercises,
+                'plan_days': plan_days,
+
+                # Current day
+                'is_rest_day': is_rest_day,
+                'day_number': day_number,
+                'day_range': range(1, 16),
+
+                # Today's statistics
+                'total_duration': total_duration,
+                'total_calories': total_calories,
+
+                # Whole plan statistics
+                'total_plan_calories': total_plan_calories,
+                'total_plan_duration': total_plan_duration,
+
+                # Tips
+                'daily_tip': daily_tip,
+
+                # Completion
+                'completed_exercises': completed_exercises,
+
+                # Week 1
+                'completed_days': completed_days,
+                'week1_percentage': week1_percentage,
+
+                # Categories
+                'cardio_percentage': cardio_percentage,
+                'strength_percentage': strength_percentage,
+                'stretching_percentage': stretching_percentage,
+            }
+        )
+
+    # =========================================================
+    # NO PLAN
+    # =========================================================
+
+    return render(
+        request,
+        'DietMate_fitnessplan.html',
+        {
             'user': user,
             'profile': profile,
-            'plan': active_plan,
-            'todays_exercises': todays_exercises,
-            'all_exercises': all_exercises,
-            'is_rest_day': is_rest_day,
-            'day_number': day_number,
-            'day_range': range(1, 16),
-            'total_duration': total_duration,
-            'total_calories': total_calories,
-            'total_plan_calories': total_plan_calories,
-            'total_plan_duration': total_plan_duration,
-            'daily_tip': daily_tip,
-            'completed_exercises': completed_exercises,
-        })
+            'plan': None,
+        }
+    )
 
-    return render(request, 'DietMate_fitnessplan.html', {
-        'user': user,
-        'profile': profile,
-        'plan': None,
-    })
 
-def toggle_exercise_completion(request, exercise_id):
+# =============================================================
+# TOGGLE EXERCISE COMPLETION
+# =============================================================
+
+def toggle_exercise_completion(
+    request,
+    exercise_id
+):
+
     if 'user_id' not in request.session:
         return redirect('login')
 
@@ -442,11 +788,14 @@ def toggle_exercise_completion(request, exercise_id):
         fitness_plan__user_id=request.session['user_id']
     )
 
-    exercise.is_completed = not exercise.is_completed
+    # Toggle completion
+    exercise.is_completed = (
+        not exercise.is_completed
+    )
+
     exercise.save()
 
     return redirect('fitness_plan')
-
 
 def progress(request):
     if 'user_id' not in request.session:
