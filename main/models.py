@@ -128,6 +128,7 @@ class FitnessPlanExercise(models.Model):
     reps = models.IntegerField(null=True, blank=True)
     calories_burned = models.IntegerField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
+    is_completed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Day {self.day_number} - {self.exercise_name}"
