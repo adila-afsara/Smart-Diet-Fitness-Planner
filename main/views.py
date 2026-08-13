@@ -394,6 +394,9 @@ def fitness_plan(request):
             fitness_plan=active_plan,
             day_number=day_number
         )
+        all_exercises = FitnessPlanExercise.objects.filter(
+           fitness_plan=active_plan
+        ).order_by('day_number', 'id')
         completed_exercises = todays_exercises.filter(
                 is_completed=True
         ).count()
@@ -409,6 +412,7 @@ def fitness_plan(request):
             'profile': profile,
             'plan': active_plan,
             'todays_exercises': todays_exercises,
+            'all_exercises': all_exercises,
             'is_rest_day': is_rest_day,
             'day_number': day_number,
             'day_range': range(1, 16),
