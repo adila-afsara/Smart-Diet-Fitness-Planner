@@ -13,7 +13,7 @@ class BeginnerStrategy(FitnessStrategy):
     def generate_plan(self, user_profile):
         from .agents import fitness_agent
 
-        return fitness_agent(user_profile)
+        return fitness_agent(user_profile, "Beginner")
 
 
 class IntermediateStrategy(FitnessStrategy):
@@ -21,7 +21,7 @@ class IntermediateStrategy(FitnessStrategy):
     def generate_plan(self, user_profile):
         from .agents import fitness_agent
 
-        return fitness_agent(user_profile)
+        return fitness_agent(user_profile, "Intermediate")
 
 
 class AdvancedStrategy(FitnessStrategy):
@@ -29,7 +29,7 @@ class AdvancedStrategy(FitnessStrategy):
     def generate_plan(self, user_profile):
         from .agents import fitness_agent
 
-        return fitness_agent(user_profile)
+        return fitness_agent(user_profile, "Advanced")
 
 def get_fitness_strategy(activity_level):
     if activity_level == "Beginner":
@@ -41,4 +41,4 @@ def get_fitness_strategy(activity_level):
     elif activity_level == "Advanced":
         return AdvancedStrategy()
 
-    return BeginnerStrategy()
+    return BeginnerStrategy()    
