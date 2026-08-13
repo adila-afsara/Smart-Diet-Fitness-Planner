@@ -30,3 +30,15 @@ class AdvancedStrategy(FitnessStrategy):
         from .agents import fitness_agent
 
         return fitness_agent(user_profile)
+
+def get_fitness_strategy(activity_level):
+    if activity_level == "Beginner":
+        return BeginnerStrategy()
+
+    elif activity_level == "Intermediate":
+        return IntermediateStrategy()
+
+    elif activity_level == "Advanced":
+        return AdvancedStrategy()
+
+    return BeginnerStrategy()
