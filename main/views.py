@@ -1347,3 +1347,212 @@ def download_plan(request):
     p.save()
 
     return response
+
+def download_fitness_plan(request):
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user = User.objects.get(id=request.session['user_id'])
+    profile = UserProfile.objects.get(user=user)
+
+    from .models import FitnessPlan, FitnessPlanExercise
+
+    active_plan = FitnessPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    if not active_plan:
+        return HttpResponse("No active fitness plan found.")
+
+    # =============================
+    # Create PDF
+    # =============================
+
+    response = HttpResponse(
+        content_type='application/pdf'
+    )
+
+    response['Content-Disposition'] = (
+        'attachment; filename="DietMate_FitnessPlan.pdf"'
+    )
+
+    p = canvas.Canvas(response)
+
+    # =============================
+    # Title
+    # =============================
+
+    p.setFont("Helvetica-Bold", 18)
+    p.drawString(180, 810, "DietMate")
+
+    p.setFont("Helvetica", 13)
+    p.drawString(130, 790, "Personalized 15-Day Fitness Plan")
+
+    # =============================
+    # User Information
+    # =============================
+
+    y = 760
+
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(40, y, "User Information")
+
+    y -= 20
+
+    p.setFont("Helvetica", 11)
+    p.drawString(
+        40,
+        y,
+        f"Name: {user.full_name}"
+    )
+
+    y -= 18
+
+    p.drawString(
+        40,
+        y,
+        f"Health Goal: {profile.health_goal}"
+    )
+
+    y -= 18
+
+    p.drawString(
+        40,
+        y,
+        f"Fitness Level: {profile.activity_level}"
+    )
+
+    y -= 18
+
+    p.drawString(
+        40,
+        y,
+        f"Workout Location: {profile.workout_location}"
+    )
+
+    y -= 30
+
+    # =============================
+    # Fitness Plan
+    # =============================
+
+    for day in range(1, 16):
+
+        exercises = FitnessPlanExercise.objects.filter(
+            fitness_plan=active_plan,
+            day_number=day
+        )
+
+        # Start a new page if needed
+        if y < 120:
+            p.showPage()
+            y = 800
+
+        # Day heading
+        p.setFont("Helvetica-Bold", 13)
+        p.drawString(
+            40,
+            y,
+            f"Day {day}"
+        )
+
+        y -= 20
+
+        # Rest day
+        if not exercises.exists():
+
+            p.setFont("Helvetica", 11)
+
+            p.drawString(
+                50,
+                y,
+                "Rest Day — Let your muscles recover."
+            )
+
+            y -= 20
+
+            p.drawString(
+                50,
+                y,
+                "Light walking or yoga is optional."
+            )
+
+            y -= 30
+
+            continue
+
+        # Exercises
+        for exercise in exercises:
+
+            # Check page space before each exercise
+            if y < 100:
+                p.showPage()
+                y = 800
+
+                p.setFont("Helvetica-Bold", 13)
+                p.drawString(
+                    40,
+                    y,
+                    f"Day {day} (continued)"
+                )
+
+                y -= 25
+
+            p.setFont("Helvetica-Bold", 11)
+
+            p.drawString(
+                50,
+                y,
+                f"Exercise: {exercise.exercise_name}"
+            )
+
+            y -= 16
+
+            p.setFont("Helvetica", 10)
+
+            p.drawString(
+                70,
+                y,
+                f"Duration: {exercise.duration_minutes} minutes"
+            )
+
+            y -= 15
+
+            if exercise.sets and exercise.reps:
+
+                p.drawString(
+                    70,
+                    y,
+                    f"Sets: {exercise.sets}    "
+                    f"Reps: {exercise.reps}"
+                )
+
+            else:
+
+                p.drawString(
+                    70,
+                    y,
+                    "Duration-based exercise"
+                )
+
+            y -= 15
+
+            p.drawString(
+                70,
+                y,
+                f"Estimated Calories Burned: "
+                f"{exercise.calories_burned} kcal"
+            )
+
+            y -= 22
+
+        y -= 10
+
+    # =============================
+    # Save PDF
+    # =============================
+
+    p.save()
+
+    return response
