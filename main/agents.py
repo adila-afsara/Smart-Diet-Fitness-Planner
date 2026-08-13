@@ -218,7 +218,7 @@ Do not stop before day 15. Generate the complete JSON array now.
 # ════════════════════════════════════════
 # 🏃 AGENT 2 — FITNESS AGENT
 # ════════════════════════════════════════
-def fitness_agent(user_profile, strategy):
+def fitness_agent(user_profile, strategy, strategy_rules):
     """
 
     This agent generates a personalized 15-day fitness plan
@@ -235,6 +235,7 @@ User Details:
 - Workout Location: {user_profile.get('workout_location')}
 - Health Condition: {user_profile.get('health_condition')}
 - Training Strategy: {strategy}
+- Strategy Rules: {strategy_rules}
 
 IMPORTANT RULES:
 1. Create a 15-day workout plan
