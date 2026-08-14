@@ -828,6 +828,9 @@ def regenerate_fitness_plan(request):
 def progress(request):
     if 'user_id' not in request.session:
         return redirect('login')
+    from .models import DailyLog, BMIRecord, DietPlan
+    from datetime import date, timedelta
+    from decimal import Decimal 
 
     user_id = request.session['user_id']
     user = User.objects.get(id=user_id)
@@ -837,9 +840,46 @@ def progress(request):
     except UserProfile.DoesNotExist:
         return redirect('dashboard')
 
-    from .models import DailyLog, BMIRecord
     from datetime import date
-    from decimal import Decimal
+
+    today = date.today()
+
+    # Find the user's active 15-day diet plan
+    from .models import DietPlan
+
+    active_plan = DietPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    cycle_day = None
+
+    if active_plan:
+        cycle_day = (today - active_plan.plan_start_date).days + 1
+        print("CYCLE DAY =", cycle_day)
+    if cycle_day == 7:
+       print("DAY 7 REACHED — WEEKLY REPORT SHOULD BE GENERATED")   
+    if cycle_day == 2:
+    # Get the first 7 days of this cycle
+       week_logs = DailyLog.objects.filter(
+           user=user,
+           log_date__gte=active_plan.plan_start_date,
+           log_date__lte=active_plan.plan_start_date + timedelta(days=6)
+        ).order_by('log_date') 
+
+    print("WEEKLY LOG COUNT =", week_logs.count())  
+    starting_weight = week_logs.first().current_weight if week_logs.exists() else None
+    ending_weight = week_logs.last().current_weight if week_logs.exists() else None
+
+    weight_change = None
+
+    if starting_weight is not None and ending_weight is not None:
+       weight_change = ending_weight - starting_weight
+
+    print("STARTING WEIGHT =", starting_weight)
+    print("ENDING WEIGHT =", ending_weight)
+    print("WEIGHT CHANGE =", weight_change)  
+
 
     if request.method == 'POST':
         current_weight = request.POST.get('current_weight')
@@ -929,18 +969,128 @@ def progress(request):
     meal_done_count = week_logs.filter(meal_followed=True).count()
     exercise_rate = round((exercise_done_count / week_log_count) * 100) if week_log_count else 0
     meal_rate = round((meal_done_count / week_log_count) * 100) if week_log_count else 0
+    
     # Water intake today, in glasses (stored in liters, so convert back)
     water_today_glasses = None
     if latest_log and latest_log.water_intake_liters:
         water_today_glasses = round(float(latest_log.water_intake_liters) / 0.25)
-    
-   # Water goal rate — days this week where at least 2L (8 glasses) was logged
+
+    # Water goal rate — days this week where at least 2L (8 glasses) was logged
     water_goal_days = week_logs.filter(water_intake_liters__gte=2.0).count()
     water_goal_rate = round((water_goal_days / week_log_count) * 100) if week_log_count else 0
+
+    # ── DAY 7 PROGRESS REPORT ──
+    # Check whether the user is currently on Day 7 of their 15-day plan
+    active_plan = DietPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).first()
+
+    if active_plan:
+        current_day = (date.today() - active_plan.plan_start_date).days + 1
+
+        if current_day == 7:
+
+            # Get Day 1–7 logs
+            cycle_logs = DailyLog.objects.filter(
+                user=user,
+                log_date__gte=active_plan.plan_start_date,
+                log_date__lte=active_plan.plan_start_date + timedelta(days=6)
+            ).order_by('log_date')
+
+            # Get BMI records from Day 1–7
+            cycle_bmis = BMIRecord.objects.filter(
+                user=user,
+                recorded_at__date__gte=active_plan.plan_start_date,
+                recorded_at__date__lte=active_plan.plan_start_date + timedelta(days=6)
+            ).order_by('recorded_at')
+
+            if cycle_logs.exists():
+
+                first_cycle_log = cycle_logs.first()
+                last_cycle_log = cycle_logs.last()
+
+                starting_weight = first_cycle_log.current_weight
+                ending_weight = last_cycle_log.current_weight
+
+                weight_change = (
+                    ending_weight - starting_weight
+                    if starting_weight is not None and ending_weight is not None
+                    else None
+                )
+
+                starting_bmi = cycle_bmis.first().bmi_value if cycle_bmis.exists() else None
+                ending_bmi = cycle_bmis.last().bmi_value if cycle_bmis.exists() else None
+
+                # Prepare data for Health Tracking Agent
+                user_data = {
+                    'starting_weight': starting_weight,
+                    'current_weight': ending_weight,
+                    'height': profile.height,
+                    'health_goal': profile.health_goal,
+                    'health_condition': profile.health_condition,
+                }
+
+                agent_logs = {
+                    'meal_follow_days': cycle_logs.filter(
+                        meal_followed=True
+                    ).count(),
+
+                    'exercise_days': cycle_logs.filter(
+                        exercise_completed=True
+                    ).count(),
+
+                    'avg_water': round(
+                        sum(
+                            float(log.water_intake_liters or 0)
+                            for log in cycle_logs
+                        ) / 7,
+                        2
+                    ),
+
+                    'weight_change': round(
+                        float(weight_change),
+                        2
+                    ) if weight_change is not None else 0,
+                }
+
+                # Generate AI progress report
+                ai_report = health_tracking_agent(
+                    user_data,
+                    agent_logs
+                )
+
+                # Save report in database
+                WeeklyReport.objects.update_or_create(
+                    user=user,
+                    week_start_date=active_plan.plan_start_date,
+                    week_end_date=active_plan.plan_start_date + timedelta(days=6),
+                    defaults={
+                        'starting_weight': starting_weight,
+                        'ending_weight': ending_weight,
+                        'weight_change': weight_change,
+                        'starting_bmi': starting_bmi,
+                        'ending_bmi': ending_bmi,
+                        'meal_follow_rate': round(
+                            (cycle_logs.filter(
+                                meal_followed=True
+                            ).count() / 7) * 100
+                        ),
+                        'exercise_completion_rate': round(
+                            (cycle_logs.filter(
+                                exercise_completed=True
+                            ).count() / 7) * 100
+                        ),
+                        'ai_feedback': ai_report,
+                    }
+                )
+
+                print("Day 7 progress report generated successfully.")
 
     # Calories logged rate — days this week where calories_consumed was actually filled in
     calories_logged_days = week_logs.exclude(calories_consumed__isnull=True).count()
     calories_logged_rate = round((calories_logged_days / week_log_count) * 100) if week_log_count else 0
+
     # Simple rule-based feedback message based on the weakest area
     rates = {'meal plan': meal_rate, 'exercise': exercise_rate, 'water intake': water_goal_rate}
     weakest_area = min(rates, key=rates.get)
@@ -954,6 +1104,7 @@ def progress(request):
     # Recent logs for the history table (most recent 8)
     recent_logs = list(all_logs[:8])
     recent_logs.reverse()  # show oldest to newest, left to right feel
+
     # Attach each log's matching same-day BMI value, since BMI lives in a separate table
     for log in recent_logs:
         matching_bmi = BMIRecord.objects.filter(user=user, recorded_at__date=log.log_date).first()
@@ -1046,8 +1197,6 @@ def progress(request):
         'ai_feedback': ai_feedback,
         'week_log_count': week_log_count,
     })
-
-
 def chatbot(request):
     if 'user_id' not in request.session:
         return redirect('login')
