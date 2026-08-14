@@ -152,6 +152,21 @@
     .report-text p { font-size: 13px; color: var(--muted); line-height: 1.5; }
     .report-btn { margin-left: auto; flex-shrink: 0; background: var(--orange); color: white; border: none; border-radius: 6px; padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .report-btn:hover { background: var(--hover); }
+  
+    /* ── +LOG TODAY BUTTON ── */
+    .btn-primary {
+    display: inline-block;
+    text-decoration: none;
+    background: var(--red);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    }
 
     /* ── LOG FORM ── */
     .log-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -199,7 +214,7 @@
             🧑
         {% endif %}
       </div>
-    <div>
+      <div>
         <div class="user-name">{{ user.full_name }}</div>
         <div class="user-goal">Goal: {{ profile.health_goal }}</div>
       </div>
@@ -216,7 +231,7 @@
       <div class="topbar-right">
         <div class="cycle-badge">📅 {{ today }}</div>
         <button class="btn-secondary">📥 Export Report</button>
-        <button class="btn-primary">+ Log Today</button>
+        <a href="#log-today" class="btn-primary">+ Log Today</a>
       </div>
     </div>
 
@@ -396,7 +411,7 @@
       <div class="main-grid">
 
         <!-- Weekly Progress Bars -->
-        <div class="card">
+        <div class="card" id="log-today">
           <div class="card-header">
             <div class="card-title">📈 Weekly Progress</div>
             <span class="card-badge badge-orange">This Week</span>
