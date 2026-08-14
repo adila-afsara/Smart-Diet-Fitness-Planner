@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from .models import DailyLog, BMIRecord, WeeklyReport, DietPlan
 import traceback
 from django.db.models import Q
 from django.contrib import messages
