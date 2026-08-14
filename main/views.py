@@ -970,6 +970,7 @@ def progress(request):
     chart_start_weight = None
     chart_current_weight = None
     chart_weight_change = None
+    chart_weight_change_abs = None
 
     if chart_logs:
         weights = [float(l.current_weight) for l in chart_logs]
