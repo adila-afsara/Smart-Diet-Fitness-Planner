@@ -1,1 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weekly Progress Report</title>
+</head>
 
+<body>
+
+    <h1>Weekly Progress Report</h1>
+
+    <h2>{{ user.full_name }}</h2>
+
+    <hr>
+
+    <h3>Report Period</h3>
+    <p>
+        {{ report.week_start_date }}
+        to
+        {{ report.week_end_date }}
+    </p>
+
+    <h3>Weight Progress</h3>
+    <p>Starting Weight: {{ report.starting_weight }} kg</p>
+    <p>Ending Weight: {{ report.ending_weight }} kg</p>
+    <p>Weight Change: {{ report.weight_change }} kg</p>
+
+    <h3>BMI Progress</h3>
+    <p>Starting BMI: {{ report.starting_bmi }}</p>
+    <p>Ending BMI: {{ report.ending_bmi }}</p>
+
+    <h3>Consistency</h3>
+    <p>Meal Plan Followed: {{ report.meal_follow_rate }}%</p>
+    <p>Exercise Completed: {{ report.exercise_completion_rate }}%</p>
+
+    <hr>
+
+    <h2>AI Progress Feedback</h2>
+
+    <div>
+        {{ report.ai_feedback|linebreaks }}
+    </div>
+
+</body>
+</html>
