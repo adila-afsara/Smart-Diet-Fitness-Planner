@@ -26,9 +26,10 @@ urlpatterns = [
     views.regenerate_fitness_plan,
     name='regenerate_fitness_plan'
     ),
-     path(
+    path(
     'download-fitness-plan/',
     views.download_fitness_plan,
     name='download_fitness_plan'
     ),
+    path('weekly-report/<int:report_id>/', views.weekly_report, name='weekly_report'),
     ] 
