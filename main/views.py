@@ -825,12 +825,17 @@ def regenerate_fitness_plan(request):
     # Since there is now no Active plan, fitness_plan()
     # will automatically generate a new 15-day plan.
     return redirect("fitness_plan")
+
+from datetime import date, timedelta
+from decimal import Decimal
+from django.shortcuts import redirect, render
+
+from .models import BMIRecord, DailyLog, DietPlan
+
+
 def progress(request):
     if 'user_id' not in request.session:
         return redirect('login')
-    from .models import DailyLog, BMIRecord, DietPlan
-    from datetime import date, timedelta
-    from decimal import Decimal 
 
     user_id = request.session['user_id']
     user = User.objects.get(id=user_id)
@@ -840,15 +845,11 @@ def progress(request):
     except UserProfile.DoesNotExist:
         return redirect('dashboard')
 
-    from datetime import date
-
     today = date.today()
 
     # Find the user's active 15-day diet plan
-    from .models import DietPlan
-
     active_plan = DietPlan.objects.filter(
-        user=user,
+        user=user, 
         plan_status='Active'
     ).first()
 
@@ -857,29 +858,95 @@ def progress(request):
     if active_plan:
         cycle_day = (today - active_plan.plan_start_date).days + 1
         print("CYCLE DAY =", cycle_day)
-    if cycle_day == 7:
-       print("DAY 7 REACHED — WEEKLY REPORT SHOULD BE GENERATED")   
-    if cycle_day == 2:
-    # Get the first 7 days of this cycle
-       week_logs = DailyLog.objects.filter(
-           user=user,
-           log_date__gte=active_plan.plan_start_date,
-           log_date__lte=active_plan.plan_start_date + timedelta(days=6)
-        ).order_by('log_date') 
 
-    print("WEEKLY LOG COUNT =", week_logs.count())  
-    starting_weight = week_logs.first().current_weight if week_logs.exists() else None
-    ending_weight = week_logs.last().current_weight if week_logs.exists() else None
+    if cycle_day == 3:
+        print("DAY 7 REACHED — WEEKLY REPORT SHOULD BE GENERATED")
+        
+    
+    #if cycle_day == 2:
+        #  Get the first 7 days of this cycle
+        ##=week_logs = DailyLog.objects.filter(
+        #    user=user,
+         #   log_date__gte=active_plan.plan_start_date,
+         #   log_date__lte=active_plan.plan_start_date + timedelta(days=6)
+       # ).order_by('log_date')
 
-    weight_change = None
+       # print("WEEKLY LOG COUNT =", week_logs.count())
+        #starting_weight = week_logs.first().current_weight if week_logs.exists() else None
+        #ending_weight = week_logs.last().current_weight if week_logs.exists() else None
 
-    if starting_weight is not None and ending_weight is not None:
-       weight_change = ending_weight - starting_weight
+       # weight_change = None
+        #if starting_weight is not None and ending_weight is not None:
+          #  weight_change = ending_weight - starting_weight
 
-    print("STARTING WEIGHT =", starting_weight)
-    print("ENDING WEIGHT =", ending_weight)
-    print("WEIGHT CHANGE =", weight_change)  
+       # print("STARTING WEIGHT =", starting_weight)
+       # print("ENDING WEIGHT =", ending_weight)
+       # print("WEIGHT CHANGE =", weight_change)
 
+    # Generate weekly report on Day 7
+    #if cycle_day == 7:
+        #print("DAY 7 REACHED — GENERATING WEEKLY REPORT")
+
+        # Prevent duplicate report generation
+       # existing_report = WeeklyReport.objects.filter(
+       #     user=user,
+       #     week_start_date=cycle_start_date,
+       #     week_end_date=cycle_start_date + timedelta(days=6)
+       # ).first()
+
+       # if not existing_report:
+       #     print("No existing report found — calling health tracking agent")
+
+        #    user_data = {
+        #        'starting_weight': starting_weight,
+        #        'current_weight': ending_weight,
+        #        'height': profile.height,
+         #       'health_goal': profile.health_goal,
+         #       'health_condition': profile.health_condition,
+           # }
+
+           # logs_data = {
+             #   'meal_follow_days': week_logs.filter(
+            #        meal_followed=True
+            #    ).count(),
+
+           #     'exercise_days': week_logs.filter(
+           #         exercise_completed=True
+           #     ).count(),
+
+           #     'avg_water': round(
+           #         sum(
+           #             float(log.water_intake_liters or 0)
+           #             for log in week_logs
+           #         ) / weekly_log_count,
+            #        2
+           #     ) if weekly_log_count else 0,
+
+           #     'weight_change': weight_change,
+           # }
+
+           # ai_feedback = health_tracking_agent(
+           #     user_data,
+           #     logs_data
+           # )
+
+          #  WeeklyReport.objects.create(
+           #     user=user,
+           #     week_start_date=cycle_start_date,
+           #     week_end_date=cycle_start_date + timedelta(days=6),
+          #      starting_weight=starting_weight,
+           #     ending_weight=ending_weight,
+           #     weight_change=weight_change,
+          #      meal_follow_rate=round(
+           #         (logs_data['meal_follow_days'] / 7) * 100
+           #     ),
+           #     #exercise_completion_rate=round(
+           #         (logs_data['exercise_days'] / 7) * 100
+               # ),
+                #ai_feedback=ai_feedback
+            #)
+
+           # print("WEEKLY REPORT SAVED")
 
     if request.method == 'POST':
         current_weight = request.POST.get('current_weight')
@@ -958,7 +1025,6 @@ def progress(request):
 
     # Exercise completion rate over logged days
     # Look only at the last 7 days for the Weekly Progress percentages
-    from datetime import timedelta
     week_start = date.today() - timedelta(days=6)  # today + 6 previous days = 7 total
     week_logs = all_logs.filter(log_date__gte=week_start)
 
@@ -969,7 +1035,7 @@ def progress(request):
     meal_done_count = week_logs.filter(meal_followed=True).count()
     exercise_rate = round((exercise_done_count / week_log_count) * 100) if week_log_count else 0
     meal_rate = round((meal_done_count / week_log_count) * 100) if week_log_count else 0
-    
+
     # Water intake today, in glasses (stored in liters, so convert back)
     water_today_glasses = None
     if latest_log and latest_log.water_intake_liters:
@@ -1059,6 +1125,8 @@ def progress(request):
                     user_data,
                     agent_logs
                 )
+                print("HEALTH AGENT RESPONSE =")
+                print(ai_report)
 
                 # Save report in database
                 WeeklyReport.objects.update_or_create(
@@ -1197,6 +1265,8 @@ def progress(request):
         'ai_feedback': ai_feedback,
         'week_log_count': week_log_count,
     })
+
+
 def chatbot(request):
     if 'user_id' not in request.session:
         return redirect('login')
