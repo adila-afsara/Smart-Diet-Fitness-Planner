@@ -190,8 +190,16 @@
       <a class="nav-item" href="#"><span class="nav-icon">🚪</span> Logout</a>
     </nav>
     <div class="sidebar-user">
-      <div class="user-avatar">👩</div>
-      <div>
+      <div class="user-avatar">
+        {% if profile.gender == "Female" %}
+            👩
+        {% elif profile.gender == "Male" %}
+            👨
+        {% else %}
+            🧑
+        {% endif %}
+      </div>
+    <div>
         <div class="user-name">{{ user.full_name }}</div>
         <div class="user-goal">Goal: {{ profile.health_goal }}</div>
       </div>
