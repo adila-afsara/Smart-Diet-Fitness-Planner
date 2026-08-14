@@ -839,11 +839,16 @@ def progress(request):
 
     user_id = request.session['user_id']
     user = User.objects.get(id=user_id)
+    
 
     try:
         profile = UserProfile.objects.get(user=user)
     except UserProfile.DoesNotExist:
         return redirect('dashboard')
+    from .models import WeeklyReport
+    weekly_reports = WeeklyReport.objects.filter(
+    user=user
+    ).order_by('-week_start_date')
 
     today = date.today()
 
@@ -1264,7 +1269,29 @@ def progress(request):
         'calories_logged_rate': calories_logged_rate,
         'ai_feedback': ai_feedback,
         'week_log_count': week_log_count,
+        'weekly_reports': weekly_reports,
     })
+def weekly_report(request, report_id):
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+
+    report = get_object_or_404(
+        WeeklyReport,
+        id=report_id,
+        user=user
+    )
+
+    return render(
+        request,
+        'DietMate_weekly_report.html',
+        {
+            'user': user,
+            'report': report,
+        }
+    )
 
 
 def chatbot(request):
