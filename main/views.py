@@ -100,12 +100,893 @@ def logout_view(request):
     request.session.flush()
     return redirect('landing')
 
+    )
 def dashboard(request):
+
+    # ==========================================================
+    # LOGIN CHECK
+    # ==========================================================
+
     if 'user_id' not in request.session:
         return redirect('login')
+
     user_id = request.session['user_id']
-    user = User.objects.get(id=user_id)
-    return render(request, 'DietMate_dashboard_v2.html', {'user': user})
+
+    user = get_object_or_404(
+        User,
+        id=user_id
+    )
+
+
+    # ==========================================================
+    # IMPORT DASHBOARD MODELS
+    # ==========================================================
+
+    from .models import (
+        UserProfile,
+        DietPlan,
+        DietPlanMeal,
+        FitnessPlan,
+        FitnessPlanExercise,
+        DailyLog,
+        BMIRecord,
+        WeeklyReport,
+    )
+
+    from datetime import timedelta
+    from decimal import Decimal
+    from django.utils import timezone
+
+
+    # ==========================================================
+    # USER PROFILE
+    # ==========================================================
+
+    profile = UserProfile.objects.filter(
+        user=user
+    ).first()
+
+
+    # ==========================================================
+    # TODAY
+    # ==========================================================
+
+    today = timezone.localdate()
+
+    now = timezone.localtime()
+
+    current_hour = now.hour
+
+
+    # Greeting
+    if current_hour < 12:
+        greeting = "Good Morning"
+
+    elif current_hour < 17:
+        greeting = "Good Afternoon"
+
+    else:
+        greeting = "Good Evening"
+
+
+    formatted_date = today.strftime(
+        "%A, %B %d, %Y"
+    )
+
+
+    # ==========================================================
+    # ACTIVE DIET PLAN
+    # ==========================================================
+
+    active_diet_plan = DietPlan.objects.filter(
+        user=user,
+        plan_status='Active'
+    ).order_by('-created_at').first()
+
+
+    # Default
+    current_day = 1
+
+
+    if active_diet_plan:
+
+        calculated_day = (
+            today
+            - active_diet_plan.plan_start_date
+        ).days + 1
+
+
+        # Keep dashboard cycle between Day 1 and Day 15
+        current_day = max(
+            1,
+            min(calculated_day, 15)
+        )
+
+
+    days_done = current_day
+
+    days_left = max(
+        15 - current_day,
+        0
+    )
+
+
+    # Cycle week
+    if current_day <= 7:
+        cycle_week = 1
+
+    elif current_day <= 14:
+        cycle_week = 2
+
+    else:
+        cycle_week = 3
+
+
+    # ==========================================================
+    # TODAY'S MEALS
+    # ==========================================================
+
+    todays_meals = []
+
+
+    if active_diet_plan:
+
+        todays_meals = list(
+            DietPlanMeal.objects.filter(
+                plan=active_diet_plan,
+                day_number=current_day
+            )
+        )
+
+
+        # Keep meals in a logical order
+        meal_order = {
+            "Breakfast": 1,
+            "Lunch": 2,
+            "Snack": 3,
+            "Dinner": 4,
+        }
+
+
+        todays_meals.sort(
+            key=lambda meal: meal_order.get(
+                meal.meal_type,
+                99
+            )
+        )
+
+
+    # ==========================================================
+    # TODAY'S MEAL COST
+    # ==========================================================
+
+    todays_meal_cost = Decimal("0.00")
+
+
+    for meal in todays_meals:
+
+        if meal.estimated_cost_bdt:
+
+            todays_meal_cost += (
+                meal.estimated_cost_bdt
+            )
+
+
+    # ==========================================================
+    # DAILY BUDGET
+    # ==========================================================
+
+    daily_budget = None
+
+    budget_difference = None
+
+    budget_status = "Budget not set"
+
+
+    if (
+        profile
+        and profile.weekly_budget
+    ):
+
+        daily_budget = (
+            profile.weekly_budget
+            / Decimal("7")
+        )
+
+
+        budget_difference = (
+            daily_budget
+            - todays_meal_cost
+        )
+
+
+        if budget_difference >= 0:
+
+            budget_status = (
+                f"৳ {budget_difference:.0f} "
+                f"under daily budget"
+            )
+
+        else:
+
+            budget_status = (
+                f"৳ {abs(budget_difference):.0f} "
+                f"over daily budget"
+            )
+
+
+    # ==========================================================
+    # DAILY LOGS
+    # ==========================================================
+
+    all_logs = DailyLog.objects.filter(
+        user=user
+    ).order_by('log_date')
+
+
+    today_log = DailyLog.objects.filter(
+        user=user,
+        log_date=today
+    ).first()
+
+
+    latest_weight_log = (
+        DailyLog.objects.filter(
+            user=user,
+            current_weight__isnull=False
+        )
+        .order_by('-log_date')
+        .first()
+    )
+
+
+    first_weight_log = (
+        DailyLog.objects.filter(
+            user=user,
+            current_weight__isnull=False
+        )
+        .order_by('log_date')
+        .first()
+    )
+
+
+    # ==========================================================
+    # CURRENT WEIGHT
+    # ==========================================================
+
+    current_weight = None
+
+
+    if latest_weight_log:
+
+        current_weight = (
+            latest_weight_log.current_weight
+        )
+
+    elif profile:
+
+        current_weight = profile.weight
+
+
+    # ==========================================================
+    # WEIGHT CHANGE
+    # ==========================================================
+
+    weight_change = Decimal("0.00")
+
+    weight_change_text = "No change recorded yet"
+
+
+    if (
+        first_weight_log
+        and current_weight is not None
+    ):
+
+        weight_change = (
+            current_weight
+            - first_weight_log.current_weight
+        )
+
+
+        if weight_change < 0:
+
+            weight_change_text = (
+                f"↓ {abs(weight_change):.1f}kg "
+                f"from start"
+            )
+
+        elif weight_change > 0:
+
+            weight_change_text = (
+                f"↑ {weight_change:.1f}kg "
+                f"from start"
+            )
+
+        else:
+
+            weight_change_text = (
+                "No weight change from start"
+            )
+
+
+    # ==========================================================
+    # BMI
+    # ==========================================================
+
+    latest_bmi = BMIRecord.objects.filter(
+        user=user
+    ).order_by(
+        '-recorded_at'
+    ).first()
+
+
+    bmi_value = None
+
+    bmi_category = "Not Available"
+
+
+    if latest_bmi:
+
+        bmi_value = latest_bmi.bmi_value
+
+        bmi_category = (
+            latest_bmi.bmi_category
+            or "Not Available"
+        )
+
+
+    # If no BMI record exists yet,
+    # calculate it for display only.
+    elif (
+        current_weight is not None
+        and profile
+        and profile.height
+    ):
+
+        height_m = (
+            float(profile.height)
+            / 100
+        )
+
+
+        if height_m > 0:
+
+            bmi_value = round(
+                float(current_weight)
+                / (height_m ** 2),
+                2
+            )
+
+
+            if bmi_value < 18.5:
+
+                bmi_category = "Underweight"
+
+            elif bmi_value < 25:
+
+                bmi_category = "Normal Weight"
+
+            elif bmi_value < 30:
+
+                bmi_category = "Overweight"
+
+            else:
+
+                bmi_category = "Obese"
+
+
+    # BMI message
+    if bmi_category == "Normal Weight":
+
+        bmi_message = (
+            "You're in the normal BMI range."
+        )
+
+        bmi_badge_class = "badge-green"
+
+
+    elif bmi_category == "Underweight":
+
+        bmi_message = (
+            "Your BMI is in the underweight range."
+        )
+
+        bmi_badge_class = "badge-orange"
+
+
+    elif bmi_category == "Overweight":
+
+        bmi_message = (
+            "Your BMI is in the overweight range."
+        )
+
+        bmi_badge_class = "badge-orange"
+
+
+    elif bmi_category == "Obese":
+
+        bmi_message = (
+            "Your BMI is in the obesity range."
+        )
+
+        bmi_badge_class = "badge-red"
+
+
+    else:
+
+        bmi_message = (
+            "Add a daily log to calculate your BMI."
+        )
+
+        bmi_badge_class = "badge-yellow"
+
+
+    # ==========================================================
+    # CALORIE TARGET
+    # ==========================================================
+
+    calorie_target = 0
+
+
+    if (
+        active_diet_plan
+        and active_diet_plan.total_daily_calories
+    ):
+
+        calorie_target = (
+            active_diet_plan.total_daily_calories
+        )
+
+
+    calories_consumed = 0
+
+
+    if (
+        today_log
+        and today_log.calories_consumed
+    ):
+
+        calories_consumed = (
+            today_log.calories_consumed
+        )
+
+
+    if calorie_target:
+
+        if calories_consumed == 0:
+
+            calorie_status = (
+                "Daily calorie goal"
+            )
+
+        elif calories_consumed <= calorie_target:
+
+            calorie_status = (
+                "On track today"
+            )
+
+        else:
+
+            calorie_status = (
+                "Above today's target"
+            )
+
+    else:
+
+        calorie_status = (
+            "No active calorie target"
+        )
+
+
+    # ==========================================================
+    # WATER INTAKE
+    # ==========================================================
+
+    water_liters = 0.0
+
+
+    if (
+        today_log
+        and today_log.water_intake_liters
+    ):
+
+        water_liters = float(
+            today_log.water_intake_liters
+        )
+
+
+    # Your Progress page already treats
+    # one glass as approximately 0.25L.
+    water_target_liters = 2.0
+
+    total_water_glasses = 8
+
+
+    filled_water_glasses = min(
+        int(
+            water_liters / 0.25
+        ),
+        total_water_glasses
+    )
+
+
+    water_percentage = min(
+        round(
+            (
+                water_liters
+                / water_target_liters
+            ) * 100
+        ),
+        100
+    )
+
+
+    # List for 8 glass icons in template
+    water_glasses = []
+
+
+    for glass_number in range(
+        1,
+        total_water_glasses + 1
+    ):
+
+        water_glasses.append(
+            {
+                "number": glass_number,
+
+                "filled": (
+                    glass_number
+                    <= filled_water_glasses
+                )
+            }
+        )
+
+
+    # ==========================================================
+    # ACTIVE FITNESS PLAN
+    # ==========================================================
+
+    active_fitness_plan = (
+        FitnessPlan.objects.filter(
+            user=user,
+            plan_status='Active'
+        )
+        .order_by('-created_at')
+        .first()
+    )
+
+
+    todays_exercises = []
+
+
+    if active_fitness_plan:
+
+        todays_exercises = list(
+            FitnessPlanExercise.objects.filter(
+                fitness_plan=active_fitness_plan,
+                day_number=current_day
+            )
+        )
+
+
+    exercise_total = len(
+        todays_exercises
+    )
+
+
+    exercise_done = sum(
+        1
+        for exercise in todays_exercises
+        if exercise.is_completed
+    )
+
+
+    # ==========================================================
+    # THIS WEEK'S PROGRESS
+    # ==========================================================
+
+    week_start = (
+        today
+        - timedelta(
+            days=today.weekday()
+        )
+    )
+
+
+    week_end = (
+        week_start
+        + timedelta(days=6)
+    )
+
+
+    weekly_logs = DailyLog.objects.filter(
+        user=user,
+        log_date__gte=week_start,
+        log_date__lte=week_end
+    )
+
+
+    meal_days = weekly_logs.filter(
+        meal_followed=True
+    ).count()
+
+
+    exercise_days = weekly_logs.filter(
+        exercise_completed=True
+    ).count()
+
+
+    water_goal_days = weekly_logs.filter(
+        water_intake_liters__gte=Decimal("2.00")
+    ).count()
+
+
+    logged_days = weekly_logs.count()
+
+
+    meal_percentage = round(
+        (meal_days / 7) * 100
+    )
+
+
+    exercise_percentage = round(
+        (exercise_days / 7) * 100
+    )
+
+
+    water_week_percentage = round(
+        (water_goal_days / 7) * 100
+    )
+
+
+    log_percentage = round(
+        (logged_days / 7) * 100
+    )
+
+
+    # ==========================================================
+    # CYCLE TIMELINE
+    # ==========================================================
+
+    marker_days = sorted(
+        set(
+            [
+                1,
+                3,
+                5,
+                7,
+                current_day,
+                10,
+                13,
+                15
+            ]
+        )
+    )
+
+
+    cycle_markers = []
+
+
+    for index, day_number in enumerate(
+        marker_days
+    ):
+
+        if day_number < current_day:
+
+            status = "done"
+
+        elif day_number == current_day:
+
+            status = "today"
+
+        elif day_number == 15:
+
+            status = "end"
+
+        else:
+
+            status = "mid"
+
+
+        if day_number == current_day:
+
+            label = "Today"
+
+        elif day_number in [7, 15]:
+
+            label = "Report"
+
+        else:
+
+            label = f"Day {day_number}"
+
+
+        cycle_markers.append(
+            {
+                "day": day_number,
+
+                "status": status,
+
+                "label": label,
+
+                "show_line": (
+                    index
+                    < len(marker_days) - 1
+                ),
+
+                "line_done": (
+                    day_number
+                    < current_day
+                ),
+            }
+        )
+
+
+    # ==========================================================
+    # LATEST WEEKLY REPORT
+    # ==========================================================
+
+    latest_report = WeeklyReport.objects.filter(
+        user=user
+    ).order_by(
+        '-week_start_date'
+    ).first()
+
+
+    # ==========================================================
+    # MOTIVATION BANNER
+    # ==========================================================
+
+    motivation_title = (
+        "Keep going! You're making progress! 🎉"
+    )
+
+
+    if current_day >= 7 and latest_report:
+
+        motivation_text = (
+            f"You are on Day {current_day} "
+            f"of your 15-day plan. "
+            f"Your latest progress report "
+            f"is available."
+        )
+
+
+    elif weight_change < 0:
+
+        motivation_text = (
+            f"You are on Day {current_day} "
+            f"of your plan and your recorded "
+            f"weight has decreased by "
+            f"{abs(weight_change):.1f} kg "
+            f"from your first log."
+        )
+
+
+    elif weight_change > 0:
+
+        motivation_text = (
+            f"You are on Day {current_day} "
+            f"of your plan. Your recorded "
+            f"weight has changed by "
+            f"{weight_change:.1f} kg "
+            f"from your first log."
+        )
+
+
+    else:
+
+        motivation_text = (
+            f"You are currently on Day "
+            f"{current_day} of your "
+            f"15-day plan. Keep logging "
+            f"your meals, activity and "
+            f"progress consistently."
+        )
+
+
+    # ==========================================================
+    # SEND EVERYTHING TO DASHBOARD
+    # ==========================================================
+
+    context = {
+
+        # User
+        "user": user,
+        "profile": profile,
+
+
+        # Header
+        "greeting": greeting,
+        "formatted_date": formatted_date,
+
+
+        # Cycle
+        "current_day": current_day,
+        "days_done": days_done,
+        "days_left": days_left,
+        "cycle_week": cycle_week,
+        "cycle_markers": cycle_markers,
+
+
+        # Plans
+        "active_diet_plan": active_diet_plan,
+        "active_fitness_plan": active_fitness_plan,
+
+
+        # Weight
+        "current_weight": current_weight,
+        "weight_change": weight_change,
+        "weight_change_text": weight_change_text,
+
+
+        # BMI
+        "bmi_value": bmi_value,
+        "bmi_category": bmi_category,
+        "bmi_message": bmi_message,
+        "bmi_badge_class": bmi_badge_class,
+
+
+        # Calories
+        "calorie_target": calorie_target,
+        "calories_consumed": calories_consumed,
+        "calorie_status": calorie_status,
+
+
+        # Meals
+        "todays_meals": todays_meals,
+        "todays_meal_cost": todays_meal_cost,
+        "daily_budget": daily_budget,
+        "budget_difference": budget_difference,
+        "budget_status": budget_status,
+
+
+        # Today's log
+        "today_log": today_log,
+
+
+        # Water
+        "water_liters": water_liters,
+        "water_target_liters": water_target_liters,
+        "filled_water_glasses": filled_water_glasses,
+        "total_water_glasses": total_water_glasses,
+        "water_percentage": water_percentage,
+        "water_glasses": water_glasses,
+
+
+        # Exercise
+        "todays_exercises": todays_exercises,
+        "exercise_total": exercise_total,
+        "exercise_done": exercise_done,
+
+
+        # Weekly progress
+        "meal_days": meal_days,
+        "exercise_days": exercise_days,
+        "water_goal_days": water_goal_days,
+        "logged_days": logged_days,
+
+        "meal_percentage": meal_percentage,
+        "exercise_percentage": exercise_percentage,
+        "water_week_percentage": water_week_percentage,
+        "log_percentage": log_percentage,
+
+
+        # Weekly report
+        "latest_report": latest_report,
+
+
+        # Motivation
+        "motivation_title": motivation_title,
+        "motivation_text": motivation_text,
+    }
+
+
+    return render(
+        request,
+        'DietMate_dashboard_v2.html',
+        context
+    )
 
 def diet_plan(request):
     
