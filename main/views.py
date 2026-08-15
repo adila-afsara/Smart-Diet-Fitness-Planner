@@ -1328,10 +1328,19 @@ def chatbot(request):
     user_id = request.session['user_id']
     user = get_object_or_404(User, id=user_id)
 
+    # Get user's profile
+    profile = UserProfile.objects.get(user=user)
+
+    # Get all daily logs
     logs = DailyLog.objects.filter(user=user).order_by('log_date')
 
+    # --------------------------------------------------
+    # PROGRESS DATA
+    # --------------------------------------------------
+
     if logs.exists():
-        # Current day
+
+        # Number of logged days
         current_day = logs.values('log_date').distinct().count()
 
         # Weight change
@@ -1343,19 +1352,132 @@ def chatbot(request):
         else:
             weight_change = 0
 
-        # Meal follow rate
+        # Meal completion rate
         total_logs = logs.count()
         meals_followed = logs.filter(meal_followed=True).count()
-        meal_rate = round((meals_followed / total_logs) * 100)
+
+        meal_rate = round(
+            (meals_followed / total_logs) * 100
+        ) if total_logs else 0
 
         # Exercise completion rate
-        exercises_completed = logs.filter(exercise_completed=True).count()
-        exercise_rate = round((exercises_completed / total_logs) * 100)
+        exercises_completed = logs.filter(
+            exercise_completed=True
+        ).count()
+
+        exercise_rate = round(
+            (exercises_completed / total_logs) * 100
+        ) if total_logs else 0
+
     else:
         current_day = 0
         weight_change = 0
         meal_rate = 0
         exercise_rate = 0
+
+    # --------------------------------------------------
+    # STREAK
+    # --------------------------------------------------
+
+    streak = 0
+
+    if logs.exists():
+
+        logged_dates = set(
+            logs.values_list('log_date', flat=True)
+        )
+
+        today = date.today()
+
+        check_date = today
+
+        while check_date in logged_dates:
+            streak += 1
+            check_date -= timedelta(days=1)
+
+    # --------------------------------------------------
+    # MILESTONES
+    # --------------------------------------------------
+
+    milestones = [
+        {
+            'icon': '🏆',
+            'name': 'First 7 Days Done!',
+            'completed': current_day >= 7,
+            'status': (
+                f'Unlocked on Day 7 🎉'
+                if current_day >= 7
+                else f'{7 - current_day} days remaining'
+            )
+        },
+        {
+            'icon': '⚖️',
+            'name': 'Lost 0.5kg',
+            'completed': weight_change >= 0.5,
+            'status': (
+                'Unlocked 🎉'
+                if weight_change >= 0.5
+                else f'{round(0.5 - weight_change, 1)}kg more to go!'
+            )
+        },
+        {
+            'icon': '🏅',
+            'name': 'Lost 1kg Total',
+            'completed': weight_change >= 1,
+            'status': (
+                'Unlocked 🎉'
+                if weight_change >= 1
+                else f'{round(1 - weight_change, 1)}kg more to go!'
+            )
+        },
+        {
+            'icon': '🎯',
+            'name': 'Complete Full Cycle',
+            'completed': current_day >= 15,
+            'status': (
+                'Unlocked 🎉'
+                if current_day >= 15
+                else f'{15 - current_day} days remaining'
+            )
+        }
+    ]
+
+    # --------------------------------------------------
+    # QUOTE
+    # --------------------------------------------------
+
+    quotes = [
+        {
+            'text': "Take care of your body. It's the only place you have to live.",
+            'author': 'Jim Rohn'
+        },
+        {
+            'text': "Success is the sum of small efforts, repeated day in and day out.",
+            'author': 'Robert Collier'
+        },
+        {
+            'text': "The secret of getting ahead is getting started.",
+            'author': 'Mark Twain'
+        },
+        {
+            'text': "Your body deserves the best.",
+            'author': 'DietMate BD'
+        }
+    ]
+
+    quote = quotes[current_day % len(quotes)]
+
+    # --------------------------------------------------
+    # CHAT HISTORY
+    # --------------------------------------------------
+
+    conversations = ChatbotConversation.objects.filter(
+        user=user
+    ).order_by('sent_at')
+
+    # --------------------------------------------------
+    # USER PROGRESS FOR AI
+    # --------------------------------------------------
 
     user_progress = {
         'current_day': current_day,
@@ -1364,43 +1486,74 @@ def chatbot(request):
         'exercise_rate': exercise_rate,
     }
 
+    # --------------------------------------------------
+    # HANDLE CHAT MESSAGE
+    # --------------------------------------------------
+
     if request.method == 'POST':
-        user_message = request.POST.get('message', '').strip()
+
+        user_message = request.POST.get(
+            'message',
+            ''
+        ).strip()
 
         if user_message:
+
             print("USER:", user.full_name)
             print("MESSAGE:", user_message)
             print("PROGRESS:", user_progress)
+
+            # Save user message
             ChatbotConversation.objects.create(
                 user=user,
                 message=user_message,
                 sender='User'
             )
 
+            # Generate bot response
             bot_response = chatbot_agent(
                 user.full_name,
                 user_message,
                 user_progress
             )
+
+            print("BOT RESPONSE:", bot_response)
+
+            # Save bot response
             ChatbotConversation.objects.create(
                 user=user,
                 message=bot_response,
                 sender='Bot'
             )
 
-            print("BOT RESPONSE:", bot_response)
+        return redirect('chatbot')
 
-    chat_history = ChatbotConversation.objects.filter(
-        user=user
-    ).order_by('sent_at')
+    # --------------------------------------------------
+    # RENDER PAGE
+    # --------------------------------------------------
+
+    context = {
+        'user': user,
+        'profile': profile,
+
+        'current_day': current_day,
+        'weight_change': weight_change,
+        'meal_rate': meal_rate,
+        'exercise_rate': exercise_rate,
+
+        'streak': streak,
+
+        'milestones': milestones,
+
+        'quote': quote,
+
+        'conversations': conversations,
+    }
 
     return render(
         request,
         'DietMate_chatbot.html',
-        {
-            'chat_history': chat_history,
-            'user_progress': user_progress,
-        }
+        context
     )
     
 def medical_specialist(request):
