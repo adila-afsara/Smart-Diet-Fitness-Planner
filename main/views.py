@@ -1324,17 +1324,26 @@ def weekly_report(request, report_id):
     )
     
 def chatbot(request):
+
+    # --------------------------------------------------
+    # LOGIN CHECK
+    # --------------------------------------------------
+
     if 'user_id' not in request.session:
         return redirect('login')
 
     user_id = request.session['user_id']
     user = get_object_or_404(User, id=user_id)
 
-    # Get user's profile
     profile = UserProfile.objects.get(user=user)
 
-    # Get all daily logs
-    logs = DailyLog.objects.filter(user=user).order_by('log_date')
+    # Get all daily logs in chronological order
+    logs = DailyLog.objects.filter(
+        user=user
+    ).order_by('log_date')
+
+    today = date.today()
+
 
     # --------------------------------------------------
     # PROGRESS DATA
@@ -1342,27 +1351,52 @@ def chatbot(request):
 
     if logs.exists():
 
-        # Number of logged days
-        current_day = logs.values('log_date').distinct().count()
+        # Number of different logged days
+        current_day = logs.values(
+            'log_date'
+        ).distinct().count()
 
-        # Weight change
+        # DietMate cycle is maximum 15 days
+        current_day = min(current_day, 15)
+
+
+        # -------------------------------
+        # WEIGHT CHANGE
+        # -------------------------------
+
         first_weight = logs.first().current_weight
         latest_weight = logs.last().current_weight
 
         if first_weight is not None and latest_weight is not None:
-            weight_change = float(first_weight - latest_weight)
+
+            # Positive number means weight lost
+            weight_change = float(
+                first_weight - latest_weight
+            )
+
         else:
             weight_change = 0
 
-        # Meal completion rate
+
+        # -------------------------------
+        # MEAL FOLLOW RATE
+        # -------------------------------
+
         total_logs = logs.count()
-        meals_followed = logs.filter(meal_followed=True).count()
+
+        meals_followed = logs.filter(
+            meal_followed=True
+        ).count()
 
         meal_rate = round(
             (meals_followed / total_logs) * 100
         ) if total_logs else 0
 
-        # Exercise completion rate
+
+        # -------------------------------
+        # EXERCISE COMPLETION RATE
+        # -------------------------------
+
         exercises_completed = logs.filter(
             exercise_completed=True
         ).count()
@@ -1371,11 +1405,26 @@ def chatbot(request):
             (exercises_completed / total_logs) * 100
         ) if total_logs else 0
 
+
     else:
+
         current_day = 0
         weight_change = 0
         meal_rate = 0
         exercise_rate = 0
+
+
+    # --------------------------------------------------
+    # LOGGED DATES
+    # --------------------------------------------------
+
+    logged_dates = set(
+        logs.values_list(
+            'log_date',
+            flat=True
+        )
+    )
+
 
     # --------------------------------------------------
     # STREAK
@@ -1383,97 +1432,368 @@ def chatbot(request):
 
     streak = 0
 
-    if logs.exists():
+    # If today's Daily Log already exists,
+    # start counting the streak from today.
+    #
+    # If today's log has NOT been submitted yet,
+    # start from yesterday so the user's existing
+    # streak does not disappear during the day.
 
-        logged_dates = set(
-            logs.values_list('log_date', flat=True)
-        )
-
-        today = date.today()
+    if today in logged_dates:
 
         check_date = today
 
-        while check_date in logged_dates:
-            streak += 1
-            check_date -= timedelta(days=1)
+    else:
+
+        check_date = today - timedelta(days=1)
+
+
+    # Count consecutive logged days backwards
+    while check_date in logged_dates:
+
+        streak += 1
+
+        check_date -= timedelta(days=1)
+
+
+    # --------------------------------------------------
+    # WEEKLY STREAK DISPLAY
+    # --------------------------------------------------
+
+    # Get Monday of current week
+    week_start = today - timedelta(
+        days=today.weekday()
+    )
+
+    day_labels = [
+        'M',
+        'T',
+        'W',
+        'T',
+        'F',
+        'S',
+        'S'
+    ]
+
+    streak_days = []
+
+
+    for i in range(7):
+
+        day_date = week_start + timedelta(
+            days=i
+        )
+
+
+        # Today always gets the yellow highlight
+        if day_date == today:
+
+            css_class = 's-today'
+
+
+        # Previous day that has a Daily Log
+        elif day_date < today and day_date in logged_dates:
+
+            css_class = 's-done'
+
+
+        # Previous missed day or future day
+        else:
+
+            css_class = 's-miss'
+
+
+        streak_days.append({
+
+            'label': day_labels[i],
+
+            'date': day_date,
+
+            'css_class': css_class,
+
+            'logged': day_date in logged_dates,
+        })
+
 
     # --------------------------------------------------
     # MILESTONES
     # --------------------------------------------------
 
     milestones = [
+
         {
             'icon': '🏆',
+
             'name': 'First 7 Days Done!',
+
             'completed': current_day >= 7,
+
             'status': (
-                f'Unlocked on Day 7 🎉'
+                'Unlocked on Day 7 🎉'
+
                 if current_day >= 7
+
                 else f'{7 - current_day} days remaining'
             )
         },
+
+
         {
             'icon': '⚖️',
+
             'name': 'Lost 0.5kg',
+
             'completed': weight_change >= 0.5,
+
             'status': (
                 'Unlocked 🎉'
+
                 if weight_change >= 0.5
-                else f'{round(0.5 - weight_change, 1)}kg more to go!'
+
+                else
+                f'{round(max(0.5 - weight_change, 0), 1)}kg more to go!'
             )
         },
+
+
         {
             'icon': '🏅',
+
             'name': 'Lost 1kg Total',
+
             'completed': weight_change >= 1,
+
             'status': (
                 'Unlocked 🎉'
+
                 if weight_change >= 1
-                else f'{round(1 - weight_change, 1)}kg more to go!'
+
+                else
+                f'{round(max(1 - weight_change, 0), 1)}kg more to go!'
             )
         },
+
+
         {
             'icon': '🎯',
+
             'name': 'Complete Full Cycle',
+
             'completed': current_day >= 15,
+
             'status': (
                 'Unlocked 🎉'
+
                 if current_day >= 15
-                else f'{15 - current_day} days remaining'
+
+                else
+                f'{15 - current_day} days remaining'
             )
         }
     ]
 
+
     # --------------------------------------------------
-    # AI-GENERATED QUOTE (Cached 24 Hours)
+    # MOOD TRACKER
     # --------------------------------------------------
 
-    quote = cache.get('daily_quote_bangladesh')
-    print("QUOTE FROM CACHE:", quote)
+    mood_options = [
+
+        {
+            'value': 'Amazing',
+            'label': 'Amazing',
+            'emoji': '😄'
+        },
+
+        {
+            'value': 'Good',
+            'label': 'Good',
+            'emoji': '😊'
+        },
+
+        {
+            'value': 'Okay',
+            'label': 'Okay',
+            'emoji': '😐'
+        },
+
+        {
+            'value': 'Tired',
+            'label': 'Tired',
+            'emoji': '😔'
+        },
+
+        {
+            'value': 'Stressed',
+            'label': 'Stressed',
+            'emoji': '😤'
+        },
+    ]
+
+
+    valid_moods = {
+
+        item['value']: item
+
+        for item in mood_options
+    }
+
+
+    current_mood = request.session.get(
+        'chatbot_mood',
+        'Good'
+    )
+
+
+    if current_mood not in valid_moods:
+
+        current_mood = 'Good'
+
+
+    # --------------------------------------------------
+    # POST ACTIONS
+    # --------------------------------------------------
+
+    if request.method == 'POST':
+
+        action = request.POST.get(
+            'action',
+            'send_message'
+        )
+
+
+        # -------------------------------
+        # CLEAR CHAT
+        # -------------------------------
+
+        if action == 'clear_chat':
+
+            ChatbotConversation.objects.filter(
+                user=user
+            ).delete()
+
+            return redirect('chatbot')
+
+
+        # -------------------------------
+        # SAVE MOOD
+        # -------------------------------
+
+        if action == 'set_mood':
+
+            selected_mood = request.POST.get(
+                'mood',
+                ''
+            )
+
+
+            if selected_mood in valid_moods:
+
+                request.session[
+                    'chatbot_mood'
+                ] = selected_mood
+
+
+            return redirect('chatbot')
+
+
+    # --------------------------------------------------
+    # CURRENT MOOD DATA
+    # --------------------------------------------------
+
+    current_mood = request.session.get(
+        'chatbot_mood',
+        current_mood
+    )
+
+
+    current_mood_data = valid_moods.get(
+        current_mood,
+        valid_moods['Good']
+    )
+
+
+    # --------------------------------------------------
+    # AI-GENERATED QUOTE
+    # CACHED FOR 24 HOURS
+    # --------------------------------------------------
+
+    quote = cache.get(
+        'daily_quote_bangladesh'
+    )
+
 
     if not quote:
+
         try:
-            print("CALLING QUOTE AGENT...")
+
             raw_ai = quote_agent()
-            print("RAW AI QUOTE RESPONSE:", raw_ai)
+
             clean = raw_ai.strip()
+
+
+            # Remove Gemini markdown code block
+            # if Gemini returns one
             if clean.startswith("```"):
+
                 clean = clean.split("```")[1]
+
+
                 if clean.startswith("json"):
+
                     clean = clean[4:]
-            
-            quote = json.loads(clean.strip())
-            print("PARSED AI QUOTE:", quote)
-            # Cache the generated quote for 24 hours (86400 seconds)
-            cache.set('daily_quote_bangladesh', quote, timeout=86400)
+
+
+            clean = clean.strip()
+
+
+            # Convert Gemini JSON into Python dictionary
+            quote = json.loads(clean)
+
+
+            # Make sure quote exists
+            if not quote.get('quote'):
+
+                raise ValueError(
+                    "Quote missing from AI response"
+                )
+
+
+            # Default author if Gemini did not provide one
+            if not quote.get('author'):
+
+                quote['author'] = (
+                    'DietMate Health Tip'
+                )
+
+
+            # Cache quote for 24 hours
+            cache.set(
+                'daily_quote_bangladesh',
+                quote,
+                timeout=86400
+            )
+
+
         except Exception as e:
 
-            print("QUOTE AGENT ERROR:", e)
-            # Fallback quote if API call fails
+            print(
+                "QUOTE AGENT ERROR:",
+                e
+            )
+
+
+            # Fallback quote
             quote = {
-                'quote': "Take care of your body. It's the only place you have to live.",
+
+                'quote': (
+                    "Take care of your body. "
+                    "It's the only place you have to live."
+                ),
+
                 'author': 'Jim Rohn'
             }
+
 
     # --------------------------------------------------
     # CHAT HISTORY
@@ -1481,82 +1801,163 @@ def chatbot(request):
 
     conversations = ChatbotConversation.objects.filter(
         user=user
-    ).order_by('sent_at')
+    ).order_by(
+        'sent_at'
+    )
+
 
     # --------------------------------------------------
-    # USER PROGRESS FOR AI
+    # USER PROGRESS FOR CHATBOT AI
     # --------------------------------------------------
 
     user_progress = {
+
         'current_day': current_day,
-        'weight_change': weight_change,
+
+        'weight_change': round(
+            weight_change,
+            2
+        ),
+
         'meal_rate': meal_rate,
+
         'exercise_rate': exercise_rate,
     }
 
+
     # --------------------------------------------------
-    # HANDLE CHAT MESSAGE
+    # SEND CHAT MESSAGE
     # --------------------------------------------------
 
     if request.method == 'POST':
 
-        user_message = request.POST.get(
-            'message',
-            ''
-        ).strip()
+        action = request.POST.get(
+            'action',
+            'send_message'
+        )
 
-        if user_message:
 
-            print("USER:", user.full_name)
-            print("MESSAGE:", user_message)
-            print("PROGRESS:", user_progress)
+        if action == 'send_message':
 
-            # Save user message
-            ChatbotConversation.objects.create(
-                user=user,
-                message=user_message,
-                sender='User'
+            user_message = request.POST.get(
+                'message',
+                ''
+            ).strip()
+
+
+            if user_message:
+
+                # Save user message
+                ChatbotConversation.objects.create(
+
+                    user=user,
+
+                    message=user_message,
+
+                    sender='User'
+                )
+
+
+                # Generate Gemini chatbot response
+                bot_response = chatbot_agent(
+
+                    user.full_name,
+
+                    user_message,
+
+                    user_progress
+                )
+
+
+                # Save chatbot response
+                ChatbotConversation.objects.create(
+
+                    user=user,
+
+                    message=bot_response,
+
+                    sender='Bot'
+                )
+
+
+            return redirect(
+                'chatbot'
             )
 
-            # Generate bot response
-            bot_response = chatbot_agent(
-                user.full_name,
-                user_message,
-                user_progress
-            )
 
-            print("BOT RESPONSE:", bot_response)
+    # --------------------------------------------------
+    # QUICK REPLIES
+    # --------------------------------------------------
 
-            # Save bot response
-            ChatbotConversation.objects.create(
-                user=user,
-                message=bot_response,
-                sender='Bot'
-            )
+    # Unicode escape codes are used so Windows/Python
+    # does not convert the emojis into ????.
 
-        return redirect('chatbot')
+    quick_replies = [
+
+        "\U0001F60A I feel great today!",
+
+        "\U0001F4AA Motivate me!",
+
+        "\U0001F371 What's for lunch?",
+
+        "\U0001F4CA Show my progress",
+
+        "\U0001F614 I missed a workout",
+
+        "\U0001F4A7 Water reminder",
+    ]
+
 
     # --------------------------------------------------
     # RENDER PAGE
     # --------------------------------------------------
 
     context = {
+
+        # User
         'user': user,
         'profile': profile,
 
+
+        # Progress
         'current_day': current_day,
         'weight_change': weight_change,
         'meal_rate': meal_rate,
         'exercise_rate': exercise_rate,
 
-        'streak': streak,
 
+        # Streak
+        'streak': streak,
+        'streak_days': streak_days,
+
+
+        # Milestones
         'milestones': milestones,
 
+
+        # Quote
         'quote': quote,
 
+
+        # Mood
+        'mood_options': mood_options,
+        'current_mood': current_mood,
+
+        'current_mood_label':
+            current_mood_data['label'],
+
+        'current_mood_emoji':
+            current_mood_data['emoji'],
+
+
+        # Quick replies
+        'quick_replies': quick_replies,
+
+
+        # Chat history
         'conversations': conversations,
     }
+
 
     return render(
         request,
