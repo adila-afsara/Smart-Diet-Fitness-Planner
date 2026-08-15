@@ -352,10 +352,11 @@
             <div class="quick-chip">😔 I missed a workout</div>
             <div class="quick-chip">💧 Water reminder</div>
           </div>
-          <div class="chat-input-row">
+          <form method="POST" action="{% url 'chatbot' %}" class="chat-input-row">
+            {% csrf_token %}
             <textarea name="message" class="chat-input" rows="1" placeholder="Type a message to NutriBot..."></textarea>
-            <button class="send-btn">➤</button>
-          </div>
+            <button type="submit" class="send-btn">➤</button>
+           </form>
         </div>
       </div>
 
