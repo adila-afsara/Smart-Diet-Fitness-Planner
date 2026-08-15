@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import DailyLog, BMIRecord, WeeklyReport, DietPlan, ChatbotConversation
-from .agents import chatbot_agent
+from .agents import chatbot_agent, quote_agent, json
+from django.core.cache import cache
 from datetime import date, timedelta
 import traceback
 from django.db.models import Q
@@ -1321,7 +1322,7 @@ def weekly_report(request, report_id):
             'ai_feedback_html': ai_feedback_html,
         }
     )
-
+    
 def chatbot(request):
     if 'user_id' not in request.session:
         return redirect('login')
@@ -1444,29 +1445,35 @@ def chatbot(request):
     ]
 
     # --------------------------------------------------
-    # QUOTE
+    # AI-GENERATED QUOTE (Cached 24 Hours)
     # --------------------------------------------------
 
-    quotes = [
-        {
-            'text': "Take care of your body. It's the only place you have to live.",
-            'author': 'Jim Rohn'
-        },
-        {
-            'text': "Success is the sum of small efforts, repeated day in and day out.",
-            'author': 'Robert Collier'
-        },
-        {
-            'text': "The secret of getting ahead is getting started.",
-            'author': 'Mark Twain'
-        },
-        {
-            'text': "Your body deserves the best.",
-            'author': 'DietMate BD'
-        }
-    ]
+    quote = cache.get('daily_quote_bangladesh')
+    print("QUOTE FROM CACHE:", quote)
 
-    quote = quotes[current_day % len(quotes)]
+    if not quote:
+        try:
+            print("CALLING QUOTE AGENT...")
+            raw_ai = quote_agent()
+            print("RAW AI QUOTE RESPONSE:", raw_ai)
+            clean = raw_ai.strip()
+            if clean.startswith("```"):
+                clean = clean.split("```")[1]
+                if clean.startswith("json"):
+                    clean = clean[4:]
+            
+            quote = json.loads(clean.strip())
+            print("PARSED AI QUOTE:", quote)
+            # Cache the generated quote for 24 hours (86400 seconds)
+            cache.set('daily_quote_bangladesh', quote, timeout=86400)
+        except Exception as e:
+
+            print("QUOTE AGENT ERROR:", e)
+            # Fallback quote if API call fails
+            quote = {
+                'quote': "Take care of your body. It's the only place you have to live.",
+                'author': 'Jim Rohn'
+            }
 
     # --------------------------------------------------
     # CHAT HISTORY
@@ -1556,7 +1563,7 @@ def chatbot(request):
         'DietMate_chatbot.html',
         context
     )
-    
+
 def medical_specialist(request):
     if 'user_id' not in request.session:
         return redirect('login')
