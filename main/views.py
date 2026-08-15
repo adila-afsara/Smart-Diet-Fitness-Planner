@@ -1373,6 +1373,14 @@ def chatbot(request):
             print("MESSAGE:", user_message)
             print("PROGRESS:", user_progress)
 
+            bot_response = chatbot_agent(
+                user.full_name,
+                user_message,
+                user_progress
+            )
+
+            print("BOT RESPONSE:", bot_response)
+
     return render(request, 'DietMate_chatbot.html')
     
 def medical_specialist(request):
