@@ -289,9 +289,10 @@ class MedicalSpecialist(models.Model):
         blank=True
     )
 
-    source = models.CharField(
-        max_length=100,
-        default="Gemini AI"
+    source = models.URLField(
+       max_length=500,
+       null=True,
+       blank=True
     )
 
     created_at = models.DateTimeField(
