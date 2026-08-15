@@ -1324,7 +1324,15 @@ def weekly_report(request, report_id):
 def chatbot(request):
     if 'user_id' not in request.session:
         return redirect('login')
+
+    if request.method == 'POST':
+        user_message = request.POST.get('message', '').strip()
+
+        if user_message:
+            print("USER MESSAGE:", user_message)
+
     return render(request, 'DietMate_chatbot.html')
+    
 def medical_specialist(request):
     if 'user_id' not in request.session:
         return redirect('login')
