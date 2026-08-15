@@ -495,10 +495,25 @@
     </nav>
 
     <div class="sidebar-user">
-      <div class="user-avatar">👩</div>
+      <div class="user-avatar">
+        {% if profile.gender == "Female" %}
+          👩
+        {% elif profile.gender == "Male" %}
+          👨
+        {% else %}
+          🧑
+        {% endif %}
+      </div>
       <div class="user-info">
-        <div class="user-name">Adila Afsara</div>
-        <div class="user-goal">Goal: Lose Weight</div>
+        <div class="user-name">{{ user.full_name }}</div>
+        <div class="user-goal">
+          Goal:
+          {% if profile and profile.health_goal %}
+            {{ profile.health_goal }}
+          {% else %}
+            Not set
+          {% endif %}
+        </div>
       </div>
     </div>
   </aside>
@@ -509,11 +524,11 @@
     <!-- Top Bar -->
     <div class="topbar">
       <div class="topbar-left">
-        <h2>Good Morning, Adila! 👋</h2>
-        <p>Thursday, July 3, 2025 — Day 8 of your 15-day cycle</p>
+        <h2>{{ greeting }}, {{ user.full_name }}! 👋</h2>
+        <p>{{ formatted_date }} — Day {{ current_day }} of your 15-day cycle</p>
       </div>
       <div class="topbar-right">
-        <div class="cycle-badge">🔄 Cycle 1 — Day 8 of 15</div>
+        <div class="cycle-badge">🔄 Day {{ current_day }} of 15</div>
         <button class="log-btn">+ Log Today</button>
       </div>
     </div>
@@ -522,41 +537,27 @@
 
       <!-- Motivational Banner -->
       <div class="motivation-banner">
-        <!-- Cute cheering person SVG illustration -->
         <svg class="motivation-illustration" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Body -->
           <ellipse cx="36" cy="52" rx="12" ry="14" fill="#F77F00" opacity="0.9"/>
-          <!-- Head -->
           <circle cx="36" cy="28" r="13" fill="#FDDBB4"/>
-          <!-- Hair -->
           <ellipse cx="36" cy="17" rx="13" ry="7" fill="#3B1F0A"/>
           <ellipse cx="26" cy="22" rx="4" ry="7" fill="#3B1F0A"/>
           <ellipse cx="46" cy="22" rx="4" ry="7" fill="#3B1F0A"/>
-          <!-- Eyes -->
           <ellipse cx="31" cy="28" rx="2" ry="2.2" fill="#3B1F0A"/>
           <ellipse cx="41" cy="28" rx="2" ry="2.2" fill="#3B1F0A"/>
-          <!-- Eye shine -->
           <circle cx="32" cy="27" r="0.7" fill="white"/>
           <circle cx="42" cy="27" r="0.7" fill="white"/>
-          <!-- Rosy cheeks -->
           <ellipse cx="27" cy="32" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.6"/>
           <ellipse cx="45" cy="32" rx="3.5" ry="2" fill="#F4A0A0" opacity="0.6"/>
-          <!-- Big smile -->
           <path d="M29 33 Q36 40 43 33" stroke="#C0392B" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-          <!-- Left arm raised up cheering -->
           <path d="M24 48 Q14 38 10 24" stroke="#FDDBB4" stroke-width="5" stroke-linecap="round"/>
-          <!-- Right arm raised up cheering -->
           <path d="M48 48 Q58 38 62 24" stroke="#FDDBB4" stroke-width="5" stroke-linecap="round"/>
-          <!-- Left hand star -->
           <circle cx="10" cy="22" r="5" fill="#F5C518"/>
           <text x="7" y="26" font-size="7" fill="white">★</text>
-          <!-- Right hand star -->
           <circle cx="62" cy="22" r="5" fill="#F5C518"/>
           <text x="59" y="26" font-size="7" fill="white">★</text>
-          <!-- Legs -->
           <path d="M30 65 Q28 70 26 72" stroke="#3B1F0A" stroke-width="4" stroke-linecap="round"/>
           <path d="M42 65 Q44 70 46 72" stroke="#3B1F0A" stroke-width="4" stroke-linecap="round"/>
-          <!-- Confetti dots -->
           <circle cx="14" cy="10" r="2.5" fill="#D62828"/>
           <circle cx="58" cy="8" r="2" fill="#2E8B57"/>
           <circle cx="8" cy="40" r="1.8" fill="#F77F00"/>
@@ -564,39 +565,64 @@
           <circle cx="20" cy="6" r="1.5" fill="#F5C518"/>
           <circle cx="52" cy="14" r="1.5" fill="#D62828"/>
         </svg>
+
         <div class="motivation-text">
-          <h3>You're doing amazing! Keep it up! 🎉</h3>
-          <p>You've completed 7 days of your plan. Your mid-cycle report is ready — you've lost 0.8kg so far!</p>
+          <h3>{{ motivation_title }}</h3>
+          <p>{{ motivation_text }}</p>
         </div>
-        <button class="motivation-btn">View Report →</button>
+
+        <button class="motivation-btn">View Progress →</button>
       </div>
 
       <!-- Stats Row -->
       <div class="stats-row">
+
+        <!-- Current Weight -->
         <div class="stat-card s1">
           <div class="stat-card-icon">⚖️</div>
-          <div class="stat-card-value">62.2<span style="font-size:16px">kg</span></div>
+          <div class="stat-card-value">
+            {% if current_weight is not None %}
+              {{ current_weight|floatformat:1 }}<span style="font-size:16px">kg</span>
+            {% else %}
+              --<span style="font-size:16px">kg</span>
+            {% endif %}
+          </div>
           <div class="stat-card-label">Current Weight</div>
-          <div class="stat-card-sub">↓ 0.8kg from start</div>
+          <div class="stat-card-sub">{{ weight_change_text }}</div>
         </div>
+
+        <!-- BMI -->
         <div class="stat-card s2">
           <div class="stat-card-icon">📏</div>
-          <div class="stat-card-value">23.4</div>
+          <div class="stat-card-value">
+            {% if bmi_value is not None %}
+              {{ bmi_value|floatformat:1 }}
+            {% else %}
+              --
+            {% endif %}
+          </div>
           <div class="stat-card-label">BMI Score</div>
-          <div class="stat-card-sub">Normal Weight ✅</div>
+          <div class="stat-card-sub">{{ bmi_category }}</div>
         </div>
+
+        <!-- Calories -->
         <div class="stat-card s3">
           <div class="stat-card-icon">🔥</div>
-          <div class="stat-card-value">1,480<span style="font-size:16px">cal</span></div>
+          <div class="stat-card-value">
+            {{ calorie_target }}<span style="font-size:16px"> cal</span>
+          </div>
           <div class="stat-card-label">Today's Target</div>
-          <div class="stat-card-sub">✅ On track today</div>
+          <div class="stat-card-sub">{{ calorie_status }}</div>
         </div>
+
+        <!-- Meal Cost -->
         <div class="stat-card s4">
           <div class="stat-card-icon">💰</div>
-          <div class="stat-card-value">৳ 210</div>
+          <div class="stat-card-value">৳ {{ todays_meal_cost|floatformat:0 }}</div>
           <div class="stat-card-label">Today's Meal Cost</div>
-          <div class="stat-card-sub">৳ 90 under budget</div>
+          <div class="stat-card-sub">{{ budget_status }}</div>
         </div>
+
       </div>
 
       <!-- Middle Row -->
@@ -606,117 +632,202 @@
         <div class="card">
           <div class="card-header">
             <div class="card-title">🍱 Today's Meals</div>
-            <span class="card-badge badge-red">Day 8</span>
+            <span class="card-badge badge-red">Day {{ current_day }}</span>
           </div>
-          <div class="meal-item">
-            <div class="meal-icon breakfast">🍳</div>
-            <div class="meal-info">
-              <div class="meal-name">Egg & Roti + Chai</div>
-              <div class="meal-cal">Breakfast · 320 cal · ৳45</div>
+
+          {% if todays_meals %}
+
+            {% for meal in todays_meals %}
+              <div class="meal-item">
+
+                {% if meal.meal_type == "Breakfast" %}
+                  <div class="meal-icon breakfast">🍳</div>
+                {% elif meal.meal_type == "Lunch" %}
+                  <div class="meal-icon lunch">🍚</div>
+                {% elif meal.meal_type == "Dinner" %}
+                  <div class="meal-icon dinner">🐟</div>
+                {% else %}
+                  <div class="meal-icon snack">🍌</div>
+                {% endif %}
+
+                <div class="meal-info">
+                  <div class="meal-name">
+                    {% if meal.meal_name %}
+                      {{ meal.meal_name }}
+                    {% else %}
+                      {{ meal.meal_type }}
+                    {% endif %}
+                  </div>
+
+                  <div class="meal-cal">
+                    {{ meal.meal_type }}
+                    ·
+                    {% if meal.calories %}
+                      {{ meal.calories }} cal
+                    {% else %}
+                      -- cal
+                    {% endif %}
+                    ·
+                    {% if meal.estimated_cost_bdt %}
+                      ৳{{ meal.estimated_cost_bdt|floatformat:0 }}
+                    {% else %}
+                      Cost N/A
+                    {% endif %}
+                  </div>
+                </div>
+
+                {% if today_log and today_log.meal_followed %}
+                  <div class="meal-check done">✓</div>
+                {% else %}
+                  <div class="meal-check pending">·</div>
+                {% endif %}
+
+              </div>
+            {% endfor %}
+
+          {% else %}
+            <div style="font-size:13px; color:var(--muted); padding:12px 0;">
+              No meals available for Day {{ current_day }}.
             </div>
-            <div class="meal-check done">✓</div>
-          </div>
-          <div class="meal-item">
-            <div class="meal-icon lunch">🍚</div>
-            <div class="meal-info">
-              <div class="meal-name">Rice + Dal + Shak</div>
-              <div class="meal-cal">Lunch · 480 cal · ৳70</div>
-            </div>
-            <div class="meal-check done">✓</div>
-          </div>
-          <div class="meal-item">
-            <div class="meal-icon snack">🍌</div>
-            <div class="meal-info">
-              <div class="meal-name">Banana + Peanuts</div>
-              <div class="meal-cal">Snack · 180 cal · ৳25</div>
-            </div>
-            <div class="meal-check done">✓</div>
-          </div>
-          <div class="meal-item">
-            <div class="meal-icon dinner">🐟</div>
-            <div class="meal-info">
-              <div class="meal-name">Fish Curry + Rice</div>
-              <div class="meal-cal">Dinner · 500 cal · ৳70</div>
-            </div>
-            <div class="meal-check pending">·</div>
-          </div>
+          {% endif %}
         </div>
 
-        <!-- Water Tracker -->
+        <!-- Water Tracker + Exercise -->
         <div class="card">
+
           <div class="card-header">
             <div class="card-title">💧 Water Intake</div>
-            <span class="card-badge badge-orange">5 / 8 glasses</span>
+            <span class="card-badge badge-orange">
+              {{ filled_water_glasses }} / {{ total_water_glasses }} glasses
+            </span>
           </div>
+
           <div class="water-glasses">
-            <div class="glass filled"><div class="glass-fill"></div><span class="glass-icon">💧</span></div>
-            <div class="glass filled"><div class="glass-fill"></div><span class="glass-icon">💧</span></div>
-            <div class="glass filled"><div class="glass-fill"></div><span class="glass-icon">💧</span></div>
-            <div class="glass filled"><div class="glass-fill"></div><span class="glass-icon">💧</span></div>
-            <div class="glass filled"><div class="glass-fill"></div><span class="glass-icon">💧</span></div>
-            <div class="glass empty"><div class="glass-fill"></div><span class="glass-icon">🫙</span></div>
-            <div class="glass empty"><div class="glass-fill"></div><span class="glass-icon">🫙</span></div>
-            <div class="glass empty"><div class="glass-fill"></div><span class="glass-icon">🫙</span></div>
+            {% for glass in water_glasses %}
+              <div class="glass {% if glass.filled %}filled{% else %}empty{% endif %}">
+                <div class="glass-fill"></div>
+                <span class="glass-icon">
+                  {% if glass.filled %}💧{% else %}🫙{% endif %}
+                </span>
+              </div>
+            {% endfor %}
           </div>
-          <div class="water-label">You've had <span>1.25L</span> today. Target: <span>2L</span></div>
+
+          <div class="water-label">
+            You've had <span>{{ water_liters|floatformat:2 }}L</span> today.
+            Target: <span>{{ water_target_liters|floatformat:0 }}L</span>
+          </div>
+
           <div style="margin-top:14px">
             <div class="progress-bar">
-              <div class="progress-fill fill-orange" style="width: 62%"></div>
+              <div class="progress-fill fill-orange" style="width: {{ water_percentage }}%"></div>
             </div>
-            <div style="font-size:11px; color:var(--muted); margin-top:4px">62% of daily water goal</div>
+
+            <div style="font-size:11px; color:var(--muted); margin-top:4px">
+              {{ water_percentage }}% of daily water goal
+            </div>
           </div>
 
           <!-- Today's Exercise quick view -->
           <div style="margin-top:18px">
+
             <div class="card-header" style="margin-bottom:10px">
               <div class="card-title" style="font-size:14px">🏃 Today's Exercise</div>
-              <span class="card-badge badge-green">2 / 3 done</span>
+              <span class="card-badge badge-green">
+                {{ exercise_done }} / {{ exercise_total }} done
+              </span>
             </div>
-            <div class="exercise-item">
-              <div class="ex-dot done"></div>
-              <div class="ex-name">Morning Walk</div>
-              <div class="ex-duration">15 min</div>
-              <div class="ex-status done">Done ✓</div>
-            </div>
-            <div class="exercise-item">
-              <div class="ex-dot done"></div>
-              <div class="ex-name">Bodyweight Squats</div>
-              <div class="ex-duration">10 min</div>
-              <div class="ex-status done">Done ✓</div>
-            </div>
-            <div class="exercise-item">
-              <div class="ex-dot pending"></div>
-              <div class="ex-name">Stretching Routine</div>
-              <div class="ex-duration">10 min</div>
-              <div class="ex-status pending">Pending</div>
-            </div>
+
+            {% if todays_exercises %}
+
+              {% for exercise in todays_exercises %}
+                <div class="exercise-item">
+
+                  <div class="ex-dot {% if exercise.is_completed %}done{% else %}pending{% endif %}"></div>
+
+                  <div class="ex-name">
+                    {% if exercise.exercise_name %}
+                      {{ exercise.exercise_name }}
+                    {% else %}
+                      Exercise
+                    {% endif %}
+                  </div>
+
+                  <div class="ex-duration">
+                    {% if exercise.duration_minutes %}
+                      {{ exercise.duration_minutes }} min
+                    {% else %}
+                      --
+                    {% endif %}
+                  </div>
+
+                  {% if exercise.is_completed %}
+                    <div class="ex-status done">Done ✓</div>
+                  {% else %}
+                    <div class="ex-status pending">Pending</div>
+                  {% endif %}
+
+                </div>
+              {% endfor %}
+
+            {% else %}
+              <div style="font-size:13px; color:var(--muted); padding:8px 0;">
+                No exercises scheduled for today.
+              </div>
+            {% endif %}
+
           </div>
         </div>
 
         <!-- BMI Card -->
         <div class="card">
+
           <div class="card-header">
             <div class="card-title">📏 BMI Monitor</div>
-            <span class="card-badge badge-green">Normal</span>
+            <span class="card-badge {{ bmi_badge_class }}">
+              {{ bmi_category }}
+            </span>
           </div>
+
           <div class="bmi-display">
-            <div class="bmi-number">23.4</div>
-            <div class="bmi-category">Normal Weight ✅</div>
+
+            <div class="bmi-number">
+              {% if bmi_value is not None %}
+                {{ bmi_value|floatformat:1 }}
+              {% else %}
+                --
+              {% endif %}
+            </div>
+
+            <div class="bmi-category">
+              {{ bmi_category }}
+            </div>
+
             <div class="bmi-scale">
               <div class="bmi-s1"></div>
               <div class="bmi-s2"></div>
               <div class="bmi-s3"></div>
               <div class="bmi-s4"></div>
             </div>
+
             <div class="bmi-labels">
               <span>Under</span>
               <span>Normal</span>
               <span>Over</span>
               <span>Obese</span>
             </div>
-            <div class="bmi-pointer">Your BMI: <span>23.4</span> — You're in the healthy range! 🎉</div>
+
+            <div class="bmi-pointer">
+              {% if bmi_value is not None %}
+                Your BMI: <span>{{ bmi_value|floatformat:1 }}</span> — {{ bmi_message }}
+              {% else %}
+                {{ bmi_message }}
+              {% endif %}
+            </div>
+
           </div>
         </div>
+
       </div>
 
       <!-- Bottom Row -->
@@ -724,85 +835,116 @@
 
         <!-- Cycle Progress -->
         <div class="card">
+
           <div class="card-header">
             <div class="card-title">🔄 15-Day Cycle Progress</div>
-            <span class="card-badge badge-red">Day 8 of 15</span>
+            <span class="card-badge badge-red">
+              Day {{ current_day }} of 15
+            </span>
           </div>
+
           <div class="cycle-timeline">
-            <div class="cycle-day"><div class="day-dot done">1</div><div class="day-label">Day 1</div></div>
-            <div class="cycle-line done"></div>
-            <div class="cycle-day"><div class="day-dot done">3</div><div class="day-label">Day 3</div></div>
-            <div class="cycle-line done"></div>
-            <div class="cycle-day"><div class="day-dot done">5</div><div class="day-label">Day 5</div></div>
-            <div class="cycle-line done"></div>
-            <div class="cycle-day"><div class="day-dot done">7</div><div class="day-label">Report</div></div>
-            <div class="cycle-line done"></div>
-            <div class="cycle-day"><div class="day-dot today">8</div><div class="day-label">Today</div></div>
-            <div class="cycle-line"></div>
-            <div class="cycle-day"><div class="day-dot mid">10</div><div class="day-label">Day 10</div></div>
-            <div class="cycle-line"></div>
-            <div class="cycle-day"><div class="day-dot mid">13</div><div class="day-label">Day 13</div></div>
-            <div class="cycle-line"></div>
-            <div class="cycle-day"><div class="day-dot end">15</div><div class="day-label">Report</div></div>
+
+            {% for marker in cycle_markers %}
+
+              <div class="cycle-day">
+                <div class="day-dot {{ marker.status }}">
+                  {{ marker.day }}
+                </div>
+                <div class="day-label">
+                  {{ marker.label }}
+                </div>
+              </div>
+
+              {% if marker.show_line %}
+                <div class="cycle-line {% if marker.line_done %}done{% endif %}"></div>
+              {% endif %}
+
+            {% endfor %}
+
           </div>
+
           <div class="cycle-info">
+
             <div class="cycle-info-item">
-              <div class="cycle-info-val red">8</div>
+              <div class="cycle-info-val red">{{ days_done }}</div>
               <div class="cycle-info-lbl">Days Done</div>
             </div>
+
             <div class="cycle-info-item">
-              <div class="cycle-info-val orange">7</div>
+              <div class="cycle-info-val orange">{{ days_left }}</div>
               <div class="cycle-info-lbl">Days Left</div>
             </div>
+
             <div class="cycle-info-item">
-              <div class="cycle-info-val green">↓0.8kg</div>
-              <div class="cycle-info-lbl">Lost So Far</div>
+              <div class="cycle-info-val green" style="font-size:14px;">
+                {{ weight_change_text }}
+              </div>
+              <div class="cycle-info-lbl">Weight Change</div>
             </div>
+
           </div>
+
         </div>
 
         <!-- Weekly Progress -->
         <div class="card">
+
           <div class="card-header">
             <div class="card-title">📈 This Week's Progress</div>
-            <span class="card-badge badge-orange">Week 2</span>
+            <span class="card-badge badge-orange">
+              Week {{ cycle_week }}
+            </span>
           </div>
+
+          <!-- Meal Plan -->
           <div class="progress-item">
             <div class="progress-label">
               <span>🍱 Meal Plan Followed</span>
-              <span>6/7 days (86%)</span>
+              <span>{{ meal_days }}/7 days ({{ meal_percentage }}%)</span>
             </div>
+
             <div class="progress-bar">
-              <div class="progress-fill fill-red" style="width: 86%"></div>
+              <div class="progress-fill fill-red" style="width: {{ meal_percentage }}%"></div>
             </div>
           </div>
+
+          <!-- Exercise -->
           <div class="progress-item">
             <div class="progress-label">
               <span>🏃 Exercise Completed</span>
-              <span>5/7 days (71%)</span>
+              <span>{{ exercise_days }}/7 days ({{ exercise_percentage }}%)</span>
             </div>
+
             <div class="progress-bar">
-              <div class="progress-fill fill-orange" style="width: 71%"></div>
+              <div class="progress-fill fill-orange" style="width: {{ exercise_percentage }}%"></div>
             </div>
           </div>
+
+          <!-- Water -->
           <div class="progress-item">
             <div class="progress-label">
               <span>💧 Water Goal Reached</span>
-              <span>4/7 days (57%)</span>
+              <span>{{ water_goal_days }}/7 days ({{ water_week_percentage }}%)</span>
             </div>
+
             <div class="progress-bar">
-              <div class="progress-fill fill-yellow" style="width: 57%"></div>
+              <div class="progress-fill fill-yellow" style="width: {{ water_week_percentage }}%"></div>
             </div>
           </div>
+
+          <!-- Daily Logs -->
           <div class="progress-item">
             <div class="progress-label">
-              <span>💰 Budget Maintained</span>
-              <span>7/7 days (100%)</span>
+              <span>📝 Daily Logs Added</span>
+              <span>{{ logged_days }}/7 days ({{ log_percentage }}%)</span>
             </div>
+
             <div class="progress-bar">
-              <div class="progress-fill fill-green" style="width: 100%"></div>
+              <div class="progress-fill fill-green" style="width: {{ log_percentage }}%"></div>
             </div>
           </div>
+
         </div>
 
       </div>
