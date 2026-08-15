@@ -2,7 +2,7 @@ import os
 import requests 
 import json
 import re
-from dotenv import load_dotenv
+from dotenv import load_dotenv 
 from .nutrition_calculator import (
     calculate_bmr,
     calculate_tdee,
@@ -49,11 +49,10 @@ def call_gemini(prompt):
             return f"Error: {response.status_code} - {response.text}"
     except Exception as e:
         return f"Error: {str(e)}"
-
 def call_gemini_with_search(prompt):
     """
     Calls Gemini with Google Search grounding enabled.
-    Used only for the Medical Specialist Agent.
+    Used for the Medical Specialist Agent.
     """
 
     payload = {
@@ -67,7 +66,7 @@ def call_gemini_with_search(prompt):
             }
         ],
 
-        # Enable live Google Search grounding
+        # Enable Google Search
         "tools": [
             {
                 "google_search": {}
@@ -76,132 +75,9 @@ def call_gemini_with_search(prompt):
 
         "generationConfig": {
             "maxOutputTokens": 8192,
-            "temperature": 0.2,
 
-            # Force JSON response
-            "responseMimeType": "application/json",
-
-            "responseSchema": {
-                "type": "OBJECT",
-
-                "properties": {
-
-                    "summary": {
-                        "type": "STRING"
-                    },
-
-                    "recommended_specialists": {
-                        "type": "ARRAY",
-
-                        "items": {
-                            "type": "OBJECT",
-
-                            "properties": {
-
-                                "full_name": {
-                                    "type": "STRING"
-                                },
-
-                                "title": {
-                                    "type": [
-                                        "STRING",
-                                        "NULL"
-                                    ]
-                                },
-
-                                "specialist_type": {
-                                    "type": "STRING"
-                                },
-
-                                "specialty": {
-                                    "type": [
-                                        "STRING",
-                                        "NULL"
-                                    ]
-                                },
-
-                                "hospital_clinic": {
-                                    "type": [
-                                        "STRING",
-                                        "NULL"
-                                    ]
-                                },
-
-                                "location": {
-                                    "type": [
-                                        "STRING",
-                                        "NULL"
-                                    ]
-                                },
-
-                                "consultation_fee_bdt": {
-                                    "type": [
-                                        "NUMBER",
-                                        "NULL"
-                                    ]
-                                },
-
-                                "website": {
-                                    "type": [
-                                        "STRING",
-                                        "NULL"
-                                    ]
-                                },
-
-                                "contact_number": {
-                                    "type": [
-                                        "STRING",
-                                        "NULL"
-                                    ]
-                                },
-
-                                "email": {
-                                    "type": [
-                                        "STRING",
-                                        "NULL"
-                                    ]
-                                },
-
-                                "available_days": {
-                                    "type": [
-                                        "STRING",
-                                        "NULL"
-                                    ]
-                                },
-
-                                "rating": {
-                                    "type": [
-                                        "NUMBER",
-                                        "NULL"
-                                    ]
-                                },
-
-                                "notes": {
-                                    "type": "STRING"
-                                },
-
-                                "source": {
-                                    "type": [
-                                        "STRING",
-                                        "NULL"
-                                    ]
-                                }
-                            },
-
-                            "required": [
-                                "full_name",
-                                "specialist_type",
-                                "notes"
-                            ]
-                        }
-                    }
-                },
-
-                "required": [
-                    "summary",
-                    "recommended_specialists"
-                ]
-            }
+            # Tell Gemini to return JSON
+            "responseMimeType": "application/json"
         }
     }
 
@@ -222,12 +98,18 @@ def call_gemini_with_search(prompt):
 
             data = response.json()
 
-            return (
+            text = (
                 data["candidates"][0]
                 ["content"]
                 ["parts"][0]
                 ["text"]
             )
+
+            print("\n========== SEARCH-GROUNDED RESPONSE ==========")
+            print(text)
+            print("==============================================\n")
+
+            return text
 
         else:
 
@@ -250,7 +132,6 @@ def call_gemini_with_search(prompt):
         )
 
         return f"Error: {str(e)}"
-
 # ════════════════════════════════════════
 # 🧠 AGENT 1 — NUTRITION & DIET AGENT
 # ════════════════════════════════════════
@@ -540,7 +421,6 @@ Generate the progress report now.
 """
     return call_gemini(prompt)
 
-
 #Interface For Chatbot Gemini Adapter
 from abc import ABC, abstractmethod
 
@@ -592,11 +472,11 @@ Respond to the user's message now.
 """
     gemini_adapter = GeminiAdapter()
     return gemini_adapter.get_response(prompt)
-    
+
+
 # ════════════════════════════════════════
 # 🏥 AGENT 5 — DIETITIAN/Medical Specialist RECOMMENDER AGENT
 # ════════════════════════════════════════
-
 def medical_specialist_agent(user_profile):
     """
     AI Agent:
@@ -818,7 +698,7 @@ def parse_gemini_json(ai_response):
     except Exception as e:
         print("Gemini JSON Error:", e)
         return None
-
+    
 def quote_agent():
     prompt = """
     Generate a short, inspiring health, diet, or fitness Quote of the Day
