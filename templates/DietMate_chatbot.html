@@ -179,10 +179,18 @@
       <a class="nav-item" href="#"><span class="nav-icon">🚪</span> Logout</a>
     </nav>
     <div class="sidebar-user">
-      <div class="user-avatar">👩</div>
+      <div class="user-avatar">
+        {% if profile.gender == "Female" %}
+            👩
+        {% elif profile.gender == "Male" %}
+            👨
+        {% else %}
+            🧑
+        {% endif %}
+      </div>
       <div>
-        <div class="user-name">Adila Afsara</div>
-        <div class="user-goal">Goal: Lose Weight</div>
+        <div class="user-name">{{ user.full_name }}</div>
+        <div class="user-goal">Goal: {{ profile.health_goal }}</div>
       </div>
     </div>
   </aside>
@@ -210,137 +218,39 @@
       <!-- Chat Main -->
       <div class="chat-main">
         <div class="chat-window">
-
-          <div class="date-sep">Today — July 8, 2025</div>
-
-          <!-- Bot greeting -->
-          <div class="msg-bot">
-            <div class="msg-bot-avatar">🤖</div>
-            <div>
-              <div class="msg-bot-bubble">
-                <div class="msg-bot-text">Good morning, Adila! 🌸 Welcome to Day 8 of your journey! You've already come so far — 7 days completed and 0.8kg lost. That's amazing progress! How are you feeling today? 😊</div>
-                <div class="msg-time">8:00 AM</div>
+          {% for chat in chat_history %}
+            {% if chat.sender == "Bot" %}
+              <div class="msg-bot">
+                <div class="msg-bot-avatar">🤖</div>
+                <div>
+                  <div class="msg-bot-bubble">
+                    <div class="msg-bot-text">
+                      {{ chat.message|linebreaksbr }}
+                    </div>
+                    <div class="msg-time">
+                      {{ chat.sent_at|date:"g:i A" }}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <!-- User reply -->
-          <div class="msg-user">
-            <div class="msg-user-avatar">👩</div>
-            <div>
-              <div class="msg-user-bubble">
-                <div class="msg-user-text">I'm feeling a bit tired today. I didn't sleep well last night 😔</div>
+            {% else %}
+              <div class="msg-user">
+                <div class="msg-user-avatar">👩</div>
+                <div>
+                  <div class="msg-user-bubble">
+                    <div class="msg-user-text">
+                      {{ chat.message|linebreaksbr }}
+                    </div>
+                  </div>
+                  <div class="msg-time" style="text-align:right">
+                    {{ chat.sent_at|date:"g:i A" }}
+                  </div>
+                </div>
               </div>
-              <div class="msg-time" style="text-align:right">8:02 AM</div>
-            </div>
-          </div>
-
-          <!-- Bot empathy -->
-          <div class="msg-bot">
-            <div class="msg-bot-avatar">🤖</div>
-            <div>
-              <div class="msg-bot-bubble">
-                <div class="msg-bot-text">I understand, rest is super important for your health journey! 💙 Poor sleep can affect your energy and even weight loss. Here's what I suggest for today:<br/><br/>
-                🌿 Take it easy on the workout — a light 10-minute walk is enough<br/>
-                💧 Drink an extra glass of water to help with fatigue<br/>
-                🍌 Have your banana snack early for a natural energy boost<br/>
-                😴 Try to sleep 30 minutes earlier tonight<br/><br/>
-                You're doing amazing — one tired day won't stop your progress! 💪</div>
-                <div class="msg-time">8:03 AM</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- User -->
-          <div class="msg-user">
-            <div class="msg-user-avatar">👩</div>
-            <div>
-              <div class="msg-user-bubble">
-                <div class="msg-user-text">Thank you! That's really helpful. I also missed my workout yesterday 😞</div>
-              </div>
-              <div class="msg-time" style="text-align:right">8:05 AM</div>
-            </div>
-          </div>
-
-          <!-- Bot encouraging -->
-          <div class="msg-bot">
-            <div class="msg-bot-avatar">🤖</div>
-            <div>
-              <div class="msg-bot-bubble">
-                <div class="msg-bot-text">Hey, that's completely okay! 🌻 Missing one day doesn't erase all your hard work. You've completed 5 out of 7 workouts — that's still a 71% rate which is great for a beginner!<br/><br/>
-                Remember: <strong>Progress, not perfection!</strong> ✨<br/><br/>
-                Just get back to it today and you'll be right on track. I believe in you, Adila! 🎉</div>
-                <div class="msg-time">8:06 AM</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Milestone card -->
-          <div class="msg-milestone">
-            <div class="milestone-icon">🏆</div>
-            <div class="milestone-title">Milestone Unlocked! — 7 Days Completed!</div>
-            <div class="milestone-text">You've successfully completed your first 7 days! Your mid-cycle report shows 0.8kg lost. Keep going — you're halfway there! 🌟</div>
-          </div>
-
-          <!-- Bot daily tip -->
-          <div class="msg-bot">
-            <div class="msg-bot-avatar">🤖</div>
-            <div>
-              <div class="msg-bot-bubble">
-                <div class="msg-bot-text">🌟 <strong>Today's Affirmation for you:</strong><br/><br/>
-                <em>"Every healthy choice I make is an investment in my future self. I am strong, I am capable, and I am worth it!"</em> 💫<br/><br/>
-                Say this to yourself today, Adila. You've got this! 🌸</div>
-                <div class="msg-time">8:08 AM</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- User -->
-          <div class="msg-user">
-            <div class="msg-user-avatar">👩</div>
-            <div>
-              <div class="msg-user-bubble">
-                <div class="msg-user-text">That made me feel so much better! 😊 What should I eat for breakfast today?</div>
-              </div>
-              <div class="msg-time" style="text-align:right">8:10 AM</div>
-            </div>
-          </div>
-
-          <!-- Bot meal suggestion -->
-          <div class="msg-bot">
-            <div class="msg-bot-avatar">🤖</div>
-            <div>
-              <div class="msg-bot-bubble">
-                <div class="msg-bot-text">Great question! 🍳 For Day 8, your plan says:<br/><br/>
-                🍳 <strong>Boiled Eggs (2 pcs)</strong> — 155 kcal · ৳20<br/>
-                🫓 <strong>Brown Bread Roti (2 pcs)</strong> — 120 kcal · ৳15<br/>
-                🍵 <strong>Ginger Lemon Tea (no sugar)</strong> — 45 kcal · ৳10<br/><br/>
-                Total: <strong>320 kcal · ৳45</strong> — perfectly within your budget! 💰<br/><br/>
-                Since you're tired, the protein from eggs will give you steady energy all morning. Enjoy! 😊</div>
-                <div class="msg-time">8:11 AM</div>
-              </div>
-              <!-- Quick replies -->
-              <div class="quick-replies" style="margin-top:8px;">
-                <div class="quick-chip">✅ Logged breakfast</div>
-                <div class="quick-chip">🔄 Suggest alternative</div>
-                <div class="quick-chip">📊 My progress today</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Typing indicator -->
-          <div class="msg-bot">
-            <div class="msg-bot-avatar">🤖</div>
-            <div class="typing-indicator">
-              <div class="typing-dots">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-              </div>
-            </div>
-          </div>
-
+            {% endif %}
+          {% endfor %}
         </div>
+
 
         <!-- Input Area -->
         <div class="chat-input-area">
@@ -356,7 +266,7 @@
             {% csrf_token %}
             <textarea name="message" class="chat-input" rows="1" placeholder="Type a message to NutriBot..."></textarea>
             <button type="submit" class="send-btn">➤</button>
-           </form>
+          </form>
         </div>
       </div>
 
