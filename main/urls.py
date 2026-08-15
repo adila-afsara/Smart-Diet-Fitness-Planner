@@ -32,4 +32,9 @@ urlpatterns = [
     name='download_fitness_plan'
     ),
     path('weekly-report/<int:report_id>/', views.weekly_report, name='weekly_report'),
+    path(
+    'download-weekly-report/<int:report_id>/',
+    views.download_weekly_report,
+    name='download_weekly_report'
+    ),
     ] 
