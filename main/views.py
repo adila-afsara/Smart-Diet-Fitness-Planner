@@ -1372,26 +1372,36 @@ def chatbot(request):
             print("MESSAGE:", user_message)
             print("PROGRESS:", user_progress)
             ChatbotConversation.objects.create(
-                  user=user,
-                  message=user_message,
-                  sender='User'
-             )
+                user=user,
+                message=user_message,
+                sender='User'
+            )
 
             bot_response = chatbot_agent(
                 user.full_name,
                 user_message,
                 user_progress
             )
-             ChatbotConversation.objects.create(
-                   user=user,
-                   message=bot_response,
-                   sender='Bot'
-                )
+            ChatbotConversation.objects.create(
+                user=user,
+                message=bot_response,
+                sender='Bot'
+            )
 
             print("BOT RESPONSE:", bot_response)
 
-    return render(request, 'DietMate_chatbot.html')
+    chat_history = ChatbotConversation.objects.filter(
+        user=user
+    ).order_by('sent_at')
 
+    return render(
+        request,
+        'DietMate_chatbot.html',
+        {
+            'chat_history': chat_history,
+            'user_progress': user_progress,
+        }
+    )
     
 def medical_specialist(request):
     if 'user_id' not in request.session:
