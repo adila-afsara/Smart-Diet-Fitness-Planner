@@ -1322,7 +1322,6 @@ def weekly_report(request, report_id):
             'ai_feedback_html': ai_feedback_html,
         }
     )
-    
 def chatbot(request):
 
     # --------------------------------------------------
@@ -1964,11 +1963,9 @@ def chatbot(request):
         'DietMate_chatbot.html',
         context
     )
-
 def medical_specialist(request):
     if 'user_id' not in request.session:
         return redirect('login')
-
     user_id = request.session['user_id']
     user = User.objects.get(id=user_id)
 
@@ -2027,7 +2024,6 @@ def medical_specialist(request):
                 summary = data.get("summary") or "AI-recommended specialists tailored to your health profile."
                 print("SUMMARY FROM GEMINI:", summary)
                 recommended_specialists = data.get("recommended_specialists", [])
-
 
                 print("Number of specialists received:", len(recommended_specialists))
 
