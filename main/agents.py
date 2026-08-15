@@ -390,9 +390,9 @@ IMPORTANT RULES:
 
 Respond to the user's message now.
 """
-    return call_gemini(prompt)
-
-
+    gemini_adapter = GeminiAdapter()
+    return gemini_adapter.get_response(prompt)
+    
 # ════════════════════════════════════════
 # 🏥 AGENT 5 — DIETITIAN/Medical Specialist RECOMMENDER AGENT
 # ════════════════════════════════════════
