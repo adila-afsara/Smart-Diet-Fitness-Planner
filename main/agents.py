@@ -341,6 +341,22 @@ Generate the progress report now.
     return call_gemini(prompt)
 
 
+#Interface For Chatbot Gemini Adapter
+from abc import ABC, abstractmethod
+
+
+class ChatbotInterface(ABC):
+
+    @abstractmethod
+    def get_response(self, prompt):
+        pass
+
+
+class GeminiAdapter(ChatbotInterface):
+
+    def get_response(self, prompt):
+        return call_gemini(prompt)
+    
 # ════════════════════════════════════════
 # 💬 AGENT 4 — MOTIVATIONAL CHATBOT AGENT
 # ════════════════════════════════════════
