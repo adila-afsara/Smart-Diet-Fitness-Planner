@@ -208,7 +208,7 @@
         </div>
       </div>
       <div class="topbar-right">
-        <div class="cycle-badge">🔄 Day 8 of 15</div>
+        <div class="cycle-badge">🔄 Day {{ current_day }} of 15</div>
         <button class="clear-btn">🗑️ Clear Chat</button>
       </div>
     </div>
@@ -218,7 +218,7 @@
       <!-- Chat Main -->
       <div class="chat-main">
         <div class="chat-window">
-          {% for chat in chat_history %}
+          {% for chat in conversations %} 
             {% if chat.sender == "Bot" %}
               <div class="msg-bot">
                 <div class="msg-bot-avatar">🤖</div>
@@ -278,8 +278,8 @@
           <div class="side-section-title">✨ Quote of the Day</div>
           <div class="daily-quote">
             <div class="quote-icon">💬</div>
-            <div class="quote-text">"Take care of your body. It's the only place you have to live."</div>
-            <div class="quote-author">— Jim Rohn</div>
+            <div class="quote-text">"{{ quote.quote }}"</div>
+            <div class="quote-author">  — {{ quote.author }}</div>
           </div>
         </div>
 
@@ -301,7 +301,7 @@
           <div class="side-section-title">🔥 Your Streak</div>
           <div class="streak-display">
             <div class="streak-fire">🔥</div>
-            <div class="streak-number">3</div>
+            <div class="streak-number">{{ streak }}</div>
             <div class="streak-text">Day Streak — Keep it up!</div>
             <div class="streak-days">
               <div class="streak-day s-miss">M</div>
