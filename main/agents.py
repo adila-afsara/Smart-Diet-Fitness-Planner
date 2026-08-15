@@ -618,3 +618,24 @@ def parse_gemini_json(ai_response):
     except Exception as e:
         print("Gemini JSON Error:", e)
         return None
+
+def quote_agent():
+    prompt = """
+    Generate a short, inspiring health, diet, or fitness Quote of the Day
+    tailored for a user in Bangladesh.
+
+    The quote may be written in either Bangla or English.
+    Vary the language naturally between different generated quotes.
+    Keep it warm, practical, culturally relatable, and concise.
+
+    Return ONLY valid JSON in this format:
+
+    {
+        "quote": "quote here",
+        "author": "DietMate Health Tip"
+    }
+
+    Do not include markdown or any explanation.
+    """
+
+    return call_gemini(prompt)
