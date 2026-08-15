@@ -1328,11 +1328,40 @@ def chatbot(request):
     user_id = request.session['user_id']
     user = get_object_or_404(User, id=user_id)
 
+    logs = DailyLog.objects.filter(user=user).order_by('log_date')
+
+    if logs.exists():
+        # Current day
+        current_day = logs.values('log_date').distinct().count()
+
+        # Weight change
+        first_weight = logs.first().current_weight
+        latest_weight = logs.last().current_weight
+
+        if first_weight is not None and latest_weight is not None:
+            weight_change = float(first_weight - latest_weight)
+        else:
+            weight_change = 0
+
+        # Meal follow rate
+        total_logs = logs.count()
+        meals_followed = logs.filter(meal_followed=True).count()
+        meal_rate = round((meals_followed / total_logs) * 100)
+
+        # Exercise completion rate
+        exercises_completed = logs.filter(exercise_completed=True).count()
+        exercise_rate = round((exercises_completed / total_logs) * 100)
+    else:
+        current_day = 0
+        weight_change = 0
+        meal_rate = 0
+        exercise_rate = 0
+
     user_progress = {
-        'current_day': 1,
-        'weight_change': 0,
-        'meal_rate': 0,
-        'exercise_rate': 0,
+        'current_day': current_day,
+        'weight_change': weight_change,
+        'meal_rate': meal_rate,
+        'exercise_rate': exercise_rate,
     }
 
     if request.method == 'POST':
