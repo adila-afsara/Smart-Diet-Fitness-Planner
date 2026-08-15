@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import DailyLog, BMIRecord, WeeklyReport, DietPlan
+from .models import DailyLog, BMIRecord, WeeklyReport, DietPlan, ChatbotConversation
 from .agents import chatbot_agent
 import traceback
 from django.db.models import Q
@@ -1321,7 +1321,6 @@ def weekly_report(request, report_id):
         }
     )
 
-
 def chatbot(request):
     if 'user_id' not in request.session:
         return redirect('login')
@@ -1372,6 +1371,11 @@ def chatbot(request):
             print("USER:", user.full_name)
             print("MESSAGE:", user_message)
             print("PROGRESS:", user_progress)
+            ChatbotConversation.objects.create(
+                  user=user,
+                  message=user_message,
+                  sender='User'
+             )
 
             bot_response = chatbot_agent(
                 user.full_name,
@@ -1382,6 +1386,7 @@ def chatbot(request):
             print("BOT RESPONSE:", bot_response)
 
     return render(request, 'DietMate_chatbot.html')
+
     
 def medical_specialist(request):
     if 'user_id' not in request.session:
