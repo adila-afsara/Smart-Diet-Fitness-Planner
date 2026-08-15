@@ -168,6 +168,39 @@
     transition: background 0.2s;
     }
 
+    /* ── EXPORT BUTTON ── */
+    .export-btn {
+    text-decoration: none;
+    display: inline-block;
+    border: none;
+    background: var(--yellow);
+    color: white;
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    }
+    
+    
+    /* ── VIEW FULL REPORT BUTTON ── */
+    .view-report-btn {
+    display: inline-block;
+    text-decoration: none;
+    background: var(--red);
+    color: white;
+    padding: 11px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 15px;
+    transition: 0.2s ease;
+    }
+
+    .view-report-btn:hover {
+    background: #6f1515;
+    transform: translateY(-1px);
+    }
+
     /* ── LOG FORM ── */
     .log-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 5px; }
@@ -230,7 +263,14 @@
       </div>
       <div class="topbar-right">
         <div class="cycle-badge">📅 {{ today }}</div>
-        <button class="btn-secondary">📥 Export Report</button>
+        {% if latest_weekly_report %}
+      <a
+        href="{% url 'download_weekly_report' latest_weekly_report.id %}"
+        class="export-btn"
+      >
+         📥 Export Report
+      </a>
+       {% endif %}
         <a href="#log-today" class="btn-primary">+ Log Today</a>
       </div>
     </div>
@@ -247,6 +287,15 @@
             {% if weight_change is not None %}You've {% if weight_change < 0 %}lost {{ weight_change_abs }}{% else %}gained {{ weight_change_abs }}{% endif %}kg{% else %}Keep logging daily to track your weight change{% endif %}{% if bmi_change is not None %}, your BMI changed from {{ first_bmi.bmi_value }} to {{ latest_bmi.bmi_value }}{% endif %}, and you completed {{ exercise_rate }}% of your logged workouts. Keep it up!
           </p>
         </div>
+       
+        {% if latest_weekly_report %}
+        <a
+           href="{% url 'weekly_report' latest_weekly_report.id %}"
+           class="view-report-btn"
+        >
+            📄 View Full Report →
+        </a>
+        {% endif %}
       </div>
       {% endif %}
 
@@ -332,7 +381,7 @@
         <div class="card">
           <div class="card-header">
             <div class="card-title">⚖️ Weight Trend</div>
-            <span class="card-badge badge-red">Last 8 Days</span>
+            <span class="card-badge badge-red">Last {{ weight_chart_points|length }} Days</span>
           </div>
           <div class="weight-chart">
             <svg class="chart-svg" viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
@@ -503,7 +552,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">🗓️ Daily Log History</div>
-          <span class="card-badge badge-red">Last 8 Days</span>
+          <span class="card-badge badge-red">Last {{ recent_logs|length }} Days</span>
         </div>
         <table class="log-table">
           <thead>
