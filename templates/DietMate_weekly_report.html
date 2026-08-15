@@ -405,10 +405,13 @@
 
 
                 <div class="change">
-
-                    Weight Change:
-                    {{ report.weight_change }} kg
-
+                  {% if report.weight_change < 0 %}
+                    Weight Lost: {{ report.weight_change|floatformat:2|cut:"-" }} kg
+                  {% elif report.weight_change > 0 %}
+                    Weight Gained: {{ report.weight_change|floatformat:2 }} kg
+                  {% else %}
+                    No Weight Change
+                  {% endif %}
                 </div>
 
             </div>
@@ -556,14 +559,12 @@
         <!-- ───────── ACTIONS ───────── -->
 
         <div class="footer-actions">
-
-            <button
-                class="export-btn"
-                type="button">
-
-                📥 Export Report
-
-            </button>
+           <a
+           href="{% url 'download_weekly_report' report.id %}"
+           class="export-btn"
+           >
+             📥 Export Report
+           </a>
 
         </div>
 
