@@ -867,91 +867,6 @@ def progress(request):
     if cycle_day == 3:
         print("DAY 7 REACHED — WEEKLY REPORT SHOULD BE GENERATED")
         
-    
-    #if cycle_day == 2:
-        #  Get the first 7 days of this cycle
-        ##=week_logs = DailyLog.objects.filter(
-        #    user=user,
-         #   log_date__gte=active_plan.plan_start_date,
-         #   log_date__lte=active_plan.plan_start_date + timedelta(days=6)
-       # ).order_by('log_date')
-
-       # print("WEEKLY LOG COUNT =", week_logs.count())
-        #starting_weight = week_logs.first().current_weight if week_logs.exists() else None
-        #ending_weight = week_logs.last().current_weight if week_logs.exists() else None
-
-       # weight_change = None
-        #if starting_weight is not None and ending_weight is not None:
-          #  weight_change = ending_weight - starting_weight
-
-       # print("STARTING WEIGHT =", starting_weight)
-       # print("ENDING WEIGHT =", ending_weight)
-       # print("WEIGHT CHANGE =", weight_change)
-
-    # Generate weekly report on Day 7
-    #if cycle_day == 7:
-        #print("DAY 7 REACHED — GENERATING WEEKLY REPORT")
-
-        # Prevent duplicate report generation
-       # existing_report = WeeklyReport.objects.filter(
-       #     user=user,
-       #     week_start_date=cycle_start_date,
-       #     week_end_date=cycle_start_date + timedelta(days=6)
-       # ).first()
-
-       # if not existing_report:
-       #     print("No existing report found — calling health tracking agent")
-
-        #    user_data = {
-        #        'starting_weight': starting_weight,
-        #        'current_weight': ending_weight,
-        #        'height': profile.height,
-         #       'health_goal': profile.health_goal,
-         #       'health_condition': profile.health_condition,
-           # }
-
-           # logs_data = {
-             #   'meal_follow_days': week_logs.filter(
-            #        meal_followed=True
-            #    ).count(),
-
-           #     'exercise_days': week_logs.filter(
-           #         exercise_completed=True
-           #     ).count(),
-
-           #     'avg_water': round(
-           #         sum(
-           #             float(log.water_intake_liters or 0)
-           #             for log in week_logs
-           #         ) / weekly_log_count,
-            #        2
-           #     ) if weekly_log_count else 0,
-
-           #     'weight_change': weight_change,
-           # }
-
-           # ai_feedback = health_tracking_agent(
-           #     user_data,
-           #     logs_data
-           # )
-
-          #  WeeklyReport.objects.create(
-           #     user=user,
-           #     week_start_date=cycle_start_date,
-           #     week_end_date=cycle_start_date + timedelta(days=6),
-          #      starting_weight=starting_weight,
-           #     ending_weight=ending_weight,
-           #     weight_change=weight_change,
-          #      meal_follow_rate=round(
-           #         (logs_data['meal_follow_days'] / 7) * 100
-           #     ),
-           #     #exercise_completion_rate=round(
-           #         (logs_data['exercise_days'] / 7) * 100
-               # ),
-                #ai_feedback=ai_feedback
-            #)
-
-           # print("WEEKLY REPORT SAVED")
 
     if request.method == 'POST':
         current_weight = request.POST.get('current_weight')
@@ -1239,6 +1154,10 @@ def progress(request):
         chart_current_weight = weights[-1]
         chart_weight_change = round(chart_current_weight - chart_start_weight, 1)
         chart_weight_change_abs = abs(chart_weight_change)
+    # Get the user's latest weekly report
+    latest_weekly_report = WeeklyReport.objects.filter(
+         user=user
+     ).order_by('-week_end_date').first()    
 
     return render(request, 'DietMate_progress.html', {
         'user': user,
@@ -1270,6 +1189,7 @@ def progress(request):
         'ai_feedback': ai_feedback,
         'week_log_count': week_log_count,
         'weekly_reports': weekly_reports,
+        'latest_weekly_report': latest_weekly_report,
     })
 def weekly_report(request, report_id):
     if 'user_id' not in request.session:
@@ -1284,12 +1204,119 @@ def weekly_report(request, report_id):
         user=user
     )
 
+    # ─────────────────────────────────────────────
+    # Format AI feedback from Markdown to HTML
+    # ─────────────────────────────────────────────
+
+    import re
+    from django.utils.html import escape
+    from django.utils.safestring import mark_safe
+
+    ai_text = report.ai_feedback or ""
+
+    formatted_lines = []
+    in_list = False
+
+    for line in ai_text.splitlines():
+
+        line = line.strip()
+
+        # Skip horizontal separators such as ***
+        if line in ["***", "---"]:
+            continue
+
+        # Empty line
+        if not line:
+            if in_list:
+                formatted_lines.append("</ul>")
+                in_list = False
+
+            continue
+
+        # Heading: ### Heading
+        if line.startswith("### "):
+
+            if in_list:
+                formatted_lines.append("</ul>")
+                in_list = False
+
+            heading = escape(line[4:])
+
+            formatted_lines.append(
+                f"<h3>{heading}</h3>"
+            )
+
+            continue
+
+        # Bullet point: * something
+        if line.startswith("* "):
+
+            if not in_list:
+                formatted_lines.append("<ul>")
+                in_list = True
+
+            content = escape(line[2:])
+
+            # Bold text
+            content = re.sub(
+                r"\*\*(.*?)\*\*",
+                r"<strong>\1</strong>",
+                content
+            )
+
+            # Italic text
+            content = re.sub(
+                r"\*(.*?)\*",
+                r"<em>\1</em>",
+                content
+            )
+
+            formatted_lines.append(
+                f"<li>{content}</li>"
+            )
+
+            continue
+
+        # Normal paragraph
+        if in_list:
+            formatted_lines.append("</ul>")
+            in_list = False
+
+        content = escape(line)
+
+        # Bold text: **text**
+        content = re.sub(
+            r"\*\*(.*?)\*\*",
+            r"<strong>\1</strong>",
+            content
+        )
+
+        # Italic text: *text*
+        content = re.sub(
+            r"\*(.*?)\*",
+            r"<em>\1</em>",
+            content
+        )
+
+        formatted_lines.append(
+            f"<p>{content}</p>"
+        )
+
+    # Close list if the AI response ended with a bullet
+    if in_list:
+        formatted_lines.append("</ul>")
+
+    ai_feedback_html = mark_safe(
+        "\n".join(formatted_lines)
+    )
+
     return render(
         request,
         'DietMate_weekly_report.html',
         {
             'user': user,
             'report': report,
+            'ai_feedback_html': ai_feedback_html,
         }
     )
 
@@ -1803,7 +1830,7 @@ def download_fitness_plan(request):
 
     p.save()
 
-    return response
+    return response 
 
 def download_weekly_report(request, report_id):
     if 'user_id' not in request.session:
