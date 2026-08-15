@@ -50,352 +50,206 @@ def call_gemini(prompt):
     except Exception as e:
         return f"Error: {str(e)}"
 
-def medical_specialist_agent(user_profile):
+def call_gemini_with_search(prompt):
     """
-    Medical Specialist Recommendation Agent.
-
-    Uses Google Search grounding to find current,
-    publicly available healthcare professional
-    information in Bangladesh.
+    Calls Gemini with Google Search grounding enabled.
+    Used only for the Medical Specialist Agent.
     """
 
-    prompt = f"""
-You are the Medical Specialist Recommendation Agent for DietMate BD.
-
-Your job has TWO separate stages:
-
-STAGE 1:
-Determine which healthcare professional categories are appropriate
-for this user's health condition and health goal.
-
-STAGE 2:
-Use Google Search to find REAL, CURRENT, PUBLICLY LISTED healthcare
-professionals in Bangladesh matching those categories.
-
-You MUST search the web before returning recommendations.
-
-
-=========================================
-USER PROFILE
-=========================================
-
-Age:
-{user_profile.get("age")}
-
-Gender:
-{user_profile.get("gender")}
-
-Height:
-{user_profile.get("height")} cm
-
-Weight:
-{user_profile.get("weight")} kg
-
-Health Goal:
-{user_profile.get("health_goal")}
-
-Health Condition:
-{user_profile.get("health_condition")}
-
-Activity Level:
-{user_profile.get("activity_level")}
-
-Food Preferences:
-{user_profile.get("food_preferences")}
-
-Foods to Avoid:
-{user_profile.get("avoid_foods")}
-
-Preferred Location:
-{user_profile.get("location") or "Bangladesh"}
-
-User Search:
-{user_profile.get("search_query") or "None"}
-
-Requested Specialty:
-{user_profile.get("specialty_query") or "None"}
-
-
-=========================================
-RECOMMENDATION LOGIC
-=========================================
-
-Use the user's health condition to determine appropriate
-professional categories.
-
-Examples:
-
-Diabetes
-→ Endocrinologist + Dietitian/Nutritionist
-
-High Blood Pressure
-→ Cardiologist or Internal Medicine Specialist
-+ Dietitian/Nutritionist
-
-High Cholesterol
-→ Cardiologist/Internal Medicine Specialist
-+ Dietitian/Nutritionist
-
-Obesity
-→ Dietitian/Nutritionist
-+ appropriate physician where useful
-
-Underweight
-→ Dietitian/Nutritionist
-+ General/Internal Medicine Physician where appropriate
-
-Thyroid Disorder
-→ Endocrinologist
-+ Dietitian/Nutritionist
-
-Kidney Disease
-→ Nephrologist
-+ qualified Dietitian/Nutritionist
-
-Heart Disease
-→ Cardiologist
-+ Dietitian/Nutritionist
-
-Digestive Problems
-→ Gastroenterologist
-+ Dietitian/Nutritionist
-
-Food Allergy
-→ appropriate physician/allergy specialist where available
-+ Dietitian/Nutritionist
-
-PCOS
-→ Gynecologist and/or Endocrinologist
-+ Dietitian/Nutritionist
-
-No medical condition
-→ Dietitian/Nutritionist.
-A fitness professional may also be recommended for general
-fitness goals if appropriate.
-
-
-=========================================
-GOOGLE SEARCH REQUIREMENTS
-=========================================
-
-You MUST use Google Search.
-
-Search specifically for healthcare professionals practicing
-in Bangladesh.
-
-Prioritize the user's requested location.
-
-Try searches using combinations such as:
-
-professional name/category
-+ hospital
-+ location
-+ Bangladesh
-
-Prefer information from:
-
-1. Official hospital websites
-2. Official clinic websites
-3. Official institutional doctor directories
-4. Official professional profile pages
-
-Avoid relying on random blogs or unverified directory pages
-when an official institutional source is available.
-
-
-=========================================
-STRICT VERIFICATION RULES
-=========================================
-
-1. Recommend ONLY professionals you can identify from
-   current web search results.
-
-2. Never invent a doctor's name.
-
-3. Never construct or guess a website URL.
-
-4. The "website" value must be an EXACT page discovered
-   through web search.
-
-5. Prefer the doctor's official hospital/profile page
-   for "website".
-
-6. If no individual profile page exists, an official
-   hospital or clinic page may be used.
-
-7. Never invent a phone number.
-
-8. "contact_number" may contain:
-
-   - the professional's publicly listed appointment number, OR
-   - the official hospital/clinic appointment number.
-
-9. Only return a phone number when it appears in a
-   public web source associated with that professional
-   or institution.
-
-10. Never invent an email address.
-
-11. Never invent consultation fees.
-
-12. Never invent available days or schedules.
-
-13. Never invent ratings.
-
-14. If information cannot be verified, return null.
-
-15. Null is ALWAYS better than guessed information.
-
-
-=========================================
-SOURCE REQUIREMENT
-=========================================
-
-The "source" field is extremely important.
-
-For every professional:
-
-- source must contain the EXACT URL of the webpage
-  used to verify the professional.
-
-- Prefer official hospital/clinic sources.
-
-- Never write "Gemini AI" in the source field.
-
-- Never invent source URLs.
-
-If no trustworthy source URL can be identified,
-return null.
-
-
-=========================================
-SEARCH FILTER RULES
-=========================================
-
-The user's search request is:
-
-{user_profile.get("search_query") or "No specific search"}
-
-The requested specialty is:
-
-{user_profile.get("specialty_query") or "No specific specialty"}
-
-The location is:
-
-{user_profile.get("location") or "Bangladesh"}
-
-If the user provided a specific search term,
-specialty, hospital, doctor name, or location,
-you MUST prioritize it.
-
-Do NOT ignore these search parameters.
-
-
-=========================================
-NUMBER OF RESULTS
-=========================================
-
-Recommend between 3 and 5 professionals when enough
-verified results can be found.
-
-If only 1 or 2 trustworthy professionals can be verified,
-return only those.
-
-DO NOT invent additional professionals just to reach 3 results.
-
-
-=========================================
-SUMMARY
-=========================================
-
-Write a personalized summary of 3-5 sentences.
-
-The summary should:
-
-- mention the user's health condition
-- mention the user's health goal
-- explain which professional categories are relevant
-- mention that nearby professionals were prioritized
-- encourage consultation with a qualified healthcare professional
-
-Do NOT diagnose the user.
-
-Do NOT claim the recommendation replaces professional care.
-
-
-=========================================
-OUTPUT REQUIREMENTS
-=========================================
-
-Return ONLY the JSON requested by the response schema.
-
-For each professional:
-
-full_name:
-Real professional's complete name.
-
-title:
-Qualifications if clearly available.
-
-specialist_type:
-Examples:
-Dietitian
-Nutritionist
-Cardiologist
-Endocrinologist
-Gynecologist
-Nephrologist
-Gastroenterologist
-General Physician
-Physiotherapist
-Fitness Trainer
-
-specialty:
-More specific clinical specialty when available.
-
-hospital_clinic:
-Current hospital or clinic affiliation.
-
-location:
-City or area.
-
-consultation_fee_bdt:
-Only if publicly verified.
-Otherwise null.
-
-website:
-Exact discovered official profile or institutional URL.
-Never construct one.
-
-contact_number:
-Publicly listed professional or institutional
-appointment/contact number.
-Otherwise null.
-
-email:
-Only publicly verified professional/institutional email.
-Otherwise null.
-
-available_days:
-Only when clearly stated by a reliable source.
-Otherwise null.
-
-rating:
-Only when a reliable source explicitly provides one.
-Otherwise null.
-
-notes:
-Briefly explain why this professional is relevant
-to this user's health condition or goal.
-
-source:
-Exact webpage URL used to verify this result.
-
-Search the web carefully now and return only verified results.
-"""
-
-    return call_gemini_with_search(prompt)
-
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": prompt
+                    }
+                ]
+            }
+        ],
+
+        # Enable live Google Search grounding
+        "tools": [
+            {
+                "google_search": {}
+            }
+        ],
+
+        "generationConfig": {
+            "maxOutputTokens": 8192,
+            "temperature": 0.2,
+
+            # Force JSON response
+            "responseMimeType": "application/json",
+
+            "responseSchema": {
+                "type": "OBJECT",
+
+                "properties": {
+
+                    "summary": {
+                        "type": "STRING"
+                    },
+
+                    "recommended_specialists": {
+                        "type": "ARRAY",
+
+                        "items": {
+                            "type": "OBJECT",
+
+                            "properties": {
+
+                                "full_name": {
+                                    "type": "STRING"
+                                },
+
+                                "title": {
+                                    "type": [
+                                        "STRING",
+                                        "NULL"
+                                    ]
+                                },
+
+                                "specialist_type": {
+                                    "type": "STRING"
+                                },
+
+                                "specialty": {
+                                    "type": [
+                                        "STRING",
+                                        "NULL"
+                                    ]
+                                },
+
+                                "hospital_clinic": {
+                                    "type": [
+                                        "STRING",
+                                        "NULL"
+                                    ]
+                                },
+
+                                "location": {
+                                    "type": [
+                                        "STRING",
+                                        "NULL"
+                                    ]
+                                },
+
+                                "consultation_fee_bdt": {
+                                    "type": [
+                                        "NUMBER",
+                                        "NULL"
+                                    ]
+                                },
+
+                                "website": {
+                                    "type": [
+                                        "STRING",
+                                        "NULL"
+                                    ]
+                                },
+
+                                "contact_number": {
+                                    "type": [
+                                        "STRING",
+                                        "NULL"
+                                    ]
+                                },
+
+                                "email": {
+                                    "type": [
+                                        "STRING",
+                                        "NULL"
+                                    ]
+                                },
+
+                                "available_days": {
+                                    "type": [
+                                        "STRING",
+                                        "NULL"
+                                    ]
+                                },
+
+                                "rating": {
+                                    "type": [
+                                        "NUMBER",
+                                        "NULL"
+                                    ]
+                                },
+
+                                "notes": {
+                                    "type": "STRING"
+                                },
+
+                                "source": {
+                                    "type": [
+                                        "STRING",
+                                        "NULL"
+                                    ]
+                                }
+                            },
+
+                            "required": [
+                                "full_name",
+                                "specialist_type",
+                                "notes"
+                            ]
+                        }
+                    }
+                },
+
+                "required": [
+                    "summary",
+                    "recommended_specialists"
+                ]
+            }
+        }
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    try:
+
+        response = requests.post(
+            GEMINI_URL,
+            json=payload,
+            headers=headers,
+            timeout=60
+        )
+
+        if response.status_code == 200:
+
+            data = response.json()
+
+            return (
+                data["candidates"][0]
+                ["content"]
+                ["parts"][0]
+                ["text"]
+            )
+
+        else:
+
+            print(
+                "Gemini Search Error:",
+                response.status_code,
+                response.text
+            )
+
+            return (
+                f"Error: {response.status_code} - "
+                f"{response.text}"
+            )
+
+    except Exception as e:
+
+        print(
+            "Gemini Search Exception:",
+            e
+        )
+
+        return f"Error: {str(e)}"
 
 # ════════════════════════════════════════
 # 🧠 AGENT 1 — NUTRITION & DIET AGENT
