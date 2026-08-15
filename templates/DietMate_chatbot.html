@@ -138,7 +138,7 @@
 
     /* Mood tracker */
     .mood-row { display: flex; gap: 8px; justify-content: center; margin-top: 4px; }
-    .mood-btn { font-size: 24px; cursor: pointer; padding: 6px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s; }
+    .mood-btn { font-size: 24px; cursor: pointer; padding: 6px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s; background: transparent; font-family: inherit; }
     .mood-btn:hover { border-color: var(--orange); background: var(--orange-light); }
     .mood-btn.selected { border-color: var(--orange); background: var(--orange-light); }
     .mood-label { text-align: center; font-size: 11px; color: var(--muted); margin-top: 8px; }
@@ -209,7 +209,19 @@
       </div>
       <div class="topbar-right">
         <div class="cycle-badge">🔄 Day {{ current_day }} of 15</div>
-        <button class="clear-btn">🗑️ Clear Chat</button>
+
+        <form method="POST" action="{% url 'chatbot' %}" style="margin:0;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="clear_chat">
+
+          <button
+            type="submit"
+            class="clear-btn"
+            onclick="return confirm('Are you sure you want to clear all chat messages?');"
+          >
+            🗑️ Clear Chat
+          </button>
+        </form>
       </div>
     </div>
 
@@ -235,7 +247,15 @@
               </div>
             {% else %}
               <div class="msg-user">
-                <div class="msg-user-avatar">👩</div>
+                <div class="msg-user-avatar">
+                  {% if profile.gender == "Female" %}
+                    👩
+                  {% elif profile.gender == "Male" %}
+                    👨
+                  {% else %}
+                   🧑
+                  {% endif %}
+                </div>
                 <div>
                   <div class="msg-user-bubble">
                     <div class="msg-user-text">
@@ -254,19 +274,35 @@
 
         <!-- Input Area -->
         <div class="chat-input-area">
+
           <div class="quick-replies-bar">
-            <div class="quick-chip">😊 I feel great today!</div>
-            <div class="quick-chip">💪 Motivate me!</div>
-            <div class="quick-chip">🍱 What's for lunch?</div>
-            <div class="quick-chip">📊 Show my progress</div>
-            <div class="quick-chip">😔 I missed a workout</div>
-            <div class="quick-chip">💧 Water reminder</div>
+            {% for reply in quick_replies %}
+              <button
+                type="button"
+                class="quick-chip quick-reply-btn"
+                data-message="{{ reply }}"
+              >
+                {{ reply }}
+              </button>
+            {% endfor %}
           </div>
-          <form method="POST" action="{% url 'chatbot' %}" class="chat-input-row">
+
+          <form method="POST" action="{% url 'chatbot' %}" class="chat-input-row" id="chat-form">
             {% csrf_token %}
-            <textarea name="message" class="chat-input" rows="1" placeholder="Type a message to NutriBot..."></textarea>
-            <button type="submit" class="send-btn">➤</button>
+            <input type="hidden" name="action" value="send_message">
+
+            <textarea
+              name="message"
+              id="chat-message"
+              class="chat-input"
+              rows="1"
+              placeholder="Type a message to NutriBot..."
+              required
+            ></textarea>
+
+            <button type="submit" class="send-btn" aria-label="Send message">➤</button>
           </form>
+
         </div>
       </div>
 
@@ -286,14 +322,29 @@
         <!-- Mood Tracker -->
         <div class="side-section">
           <div class="side-section-title">😊 How are you feeling?</div>
-          <div class="mood-row">
-            <div class="mood-btn" title="Amazing">😄</div>
-            <div class="mood-btn selected" title="Good">😊</div>
-            <div class="mood-btn" title="Okay">😐</div>
-            <div class="mood-btn" title="Tired">😔</div>
-            <div class="mood-btn" title="Stressed">😤</div>
+
+          <form method="POST" action="{% url 'chatbot' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="set_mood">
+
+            <div class="mood-row">
+              {% for mood in mood_options %}
+                <button
+                  type="submit"
+                  name="mood"
+                  value="{{ mood.value }}"
+                  class="mood-btn {% if current_mood == mood.value %}selected{% endif %}"
+                  title="{{ mood.label }}"
+                >
+                  {{ mood.emoji }}
+                </button>
+              {% endfor %}
+            </div>
+          </form>
+
+          <div class="mood-label">
+            Today's mood: {{ current_mood_label }} {{ current_mood_emoji }}
           </div>
-          <div class="mood-label">Today's mood: Good 😊</div>
         </div>
 
         <!-- Streak -->
@@ -304,53 +355,100 @@
             <div class="streak-number">{{ streak }}</div>
             <div class="streak-text">Day Streak — Keep it up!</div>
             <div class="streak-days">
-              <div class="streak-day s-miss">M</div>
-              <div class="streak-day s-miss">T</div>
-              <div class="streak-day s-miss">W</div>
-              <div class="streak-day s-miss">T</div>
-              <div class="streak-day s-done">F</div>
-              <div class="streak-day s-done">S</div>
-              <div class="streak-day s-today">S</div>
+              {% for day in streak_days %}
+                <div
+                  class="streak-day {{ day.css_class }}"
+                  title="{{ day.date|date:'M d, Y' }}"
+                >
+                  {{ day.label }}
+                </div>
+              {% endfor %}
             </div>
           </div>
         </div>
 
         <!-- Milestones -->
-        <div class="side-section">
-          <div class="side-section-title">🏆 Milestones</div>
-          <div class="milestone-item">
-            <div class="milestone-badge m-done">✅</div>
-            <div>
-              <div class="milestone-name">First 7 Days Done!</div>
-              <div class="milestone-status m-done-text">Unlocked on Day 7 🎉</div>
-            </div>
-          </div>
-          <div class="milestone-item">
-            <div class="milestone-badge m-done">✅</div>
-            <div>
-              <div class="milestone-name">Lost 0.5kg</div>
-              <div class="milestone-status m-done-text">Unlocked on Day 5 🎉</div>
-            </div>
-          </div>
-          <div class="milestone-item">
-            <div class="milestone-badge m-pending">🔒</div>
-            <div>
-              <div class="milestone-name">Lost 1kg Total</div>
-              <div class="milestone-status m-pending-text">0.2kg more to go!</div>
-            </div>
-          </div>
-          <div class="milestone-item">
-            <div class="milestone-badge m-pending">🔒</div>
-            <div>
-              <div class="milestone-name">Complete Full Cycle</div>
-              <div class="milestone-status m-pending-text">7 days remaining</div>
-            </div>
-          </div>
+<div class="side-section">
+    <div class="side-section-title">🏆 Milestones</div>
+
+    {% for milestone in milestones %}
+
+        <div class="milestone-item">
+
+            {% if milestone.completed %}
+
+                <div class="milestone-badge m-done">
+                    ✅
+                </div>
+
+                <div>
+                    <div class="milestone-name">
+                        {{ milestone.name }}
+                    </div>
+
+                    <div class="milestone-status m-done-text">
+                        {{ milestone.status }}
+                    </div>
+                </div>
+
+            {% else %}
+
+                <div class="milestone-badge m-pending">
+                    🔒
+                </div>
+
+                <div>
+                    <div class="milestone-name">
+                        {{ milestone.name }}
+                    </div>
+
+                    <div class="milestone-status m-pending-text">
+                        {{ milestone.status }}
+                    </div>
+                </div>
+
+            {% endif %}
+
         </div>
 
+    {% endfor %}
+
+</div>
+       
       </div>
     </div>
   </main>
+
+
+<script>
+  const chatForm = document.getElementById('chat-form');
+  const chatMessage = document.getElementById('chat-message');
+  const chatWindow = document.querySelector('.chat-window');
+
+  // Quick-reply buttons place the selected text in the input.
+  document.querySelectorAll('.quick-reply-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      chatMessage.value = button.dataset.message;
+      chatMessage.focus();
+    });
+  });
+
+  // Press Enter to send. Shift+Enter creates a new line.
+  chatMessage.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+
+      if (chatMessage.value.trim()) {
+        chatForm.requestSubmit();
+      }
+    }
+  });
+
+  // Keep the newest messages visible when the page loads.
+  if (chatWindow) {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+</script>
 
 </body>
 </html>
