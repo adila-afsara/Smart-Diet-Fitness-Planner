@@ -1382,6 +1382,11 @@ def chatbot(request):
                 user_message,
                 user_progress
             )
+             ChatbotConversation.objects.create(
+                   user=user,
+                   message=bot_response,
+                   sender='Bot'
+                )
 
             print("BOT RESPONSE:", bot_response)
 
