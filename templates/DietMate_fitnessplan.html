@@ -922,7 +922,7 @@
 
     <div class="sidebar-user">
 
-      <div class="sidebar-user"> <div class="user-avatar"> {% if profile.gender == "Female" %} 👩 {% elif profile.gender == "Male" %} 👨 {% else %} why here my page not recieving name and goal ? 🧑 {% endif %} </div>
+      <div class="user-avatar"> {% if profile.gender == "Female" %} 👩 {% elif profile.gender == "Male" %} 👨 {% else %} why here my page not recieving name and goal ? 🧑 {% endif %} </div>
 
       <div>
         <div class="user-name">
@@ -1341,7 +1341,7 @@
               </div>
 
               <span class="card-badge badge-orange">
-                {{ weekly_completion|default:"0" }}%
+                {{ week1_percentage|default:"0" }}%
               </span>
 
             </div>
@@ -1385,7 +1385,7 @@
                   font-weight="700"
                   fill="#F77F00"
                 >
-                  {{ weekly_completion|default:"0" }}%
+                  {{ week1_percentage|default:"0" }}%
                 </text>
 
               </svg>
@@ -1418,7 +1418,7 @@
 
                 <div
                   class="comp-fill fill-red"
-                  style="width:{{ cardio_completion|default:0 }}%""
+                  style="width:{{ cardio_completion|default:0 }}%"
                 ></div>
 
               </div>
