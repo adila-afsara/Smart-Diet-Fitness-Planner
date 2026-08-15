@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import DailyLog, BMIRecord, WeeklyReport, DietPlan, ChatbotConversation
 from .agents import chatbot_agent
+from datetime import date, timedelta
 import traceback
 from django.db.models import Q
 from django.contrib import messages
