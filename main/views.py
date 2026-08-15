@@ -1325,11 +1325,15 @@ def chatbot(request):
     if 'user_id' not in request.session:
         return redirect('login')
 
+    user_id = request.session['user_id']
+    user = get_object_or_404(User, id=user_id)
+
     if request.method == 'POST':
         user_message = request.POST.get('message', '').strip()
 
         if user_message:
-            print("USER MESSAGE:", user_message)
+            print("USER:", user.full_name)
+            print("MESSAGE:", user_message)
 
     return render(request, 'DietMate_chatbot.html')
     
