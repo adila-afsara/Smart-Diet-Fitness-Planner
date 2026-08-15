@@ -1328,12 +1328,20 @@ def chatbot(request):
     user_id = request.session['user_id']
     user = get_object_or_404(User, id=user_id)
 
+    user_progress = {
+        'current_day': 1,
+        'weight_change': 0,
+        'meal_rate': 0,
+        'exercise_rate': 0,
+    }
+
     if request.method == 'POST':
         user_message = request.POST.get('message', '').strip()
 
         if user_message:
             print("USER:", user.full_name)
             print("MESSAGE:", user_message)
+            print("PROGRESS:", user_progress)
 
     return render(request, 'DietMate_chatbot.html')
     
