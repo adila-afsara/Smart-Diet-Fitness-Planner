@@ -100,7 +100,6 @@ def logout_view(request):
     request.session.flush()
     return redirect('landing')
 
-    )
 def dashboard(request):
 
     # ==========================================================
@@ -1716,88 +1715,186 @@ from django.shortcuts import redirect, render
 
 from .models import BMIRecord, DailyLog, DietPlan
 
-
 def progress(request):
+    from decimal import Decimal
+    from datetime import date, timedelta
+    from .agents import health_tracking_agent
+    from .models import WeeklyReport
+
+    # =========================================================
+    # LOGIN CHECK
+    # =========================================================
     if 'user_id' not in request.session:
         return redirect('login')
 
     user_id = request.session['user_id']
     user = User.objects.get(id=user_id)
-    
 
     try:
         profile = UserProfile.objects.get(user=user)
     except UserProfile.DoesNotExist:
         return redirect('dashboard')
-    from .models import WeeklyReport
+
+    # =========================================================
+    # REPORT / CYCLE SETUP
+    # =========================================================
     weekly_reports = WeeklyReport.objects.filter(
-    user=user
+        user=user
     ).order_by('-week_start_date')
 
     today = date.today()
 
-    # Find the user's active 15-day diet plan
     active_plan = DietPlan.objects.filter(
-        user=user, 
+        user=user,
         plan_status='Active'
     ).first()
 
     cycle_day = None
 
     if active_plan:
-        cycle_day = (today - active_plan.plan_start_date).days + 1
+        cycle_day = (
+            today - active_plan.plan_start_date
+        ).days + 1
+
         print("CYCLE DAY =", cycle_day)
 
-    if cycle_day == 3:
-        print("DAY 7 REACHED — WEEKLY REPORT SHOULD BE GENERATED")
-        
+        if cycle_day == 7:
+            print(
+                "DAY 7 REACHED — DAY 7 REPORT CAN BE GENERATED"
+            )
 
+        if cycle_day == 15:
+            print(
+                "DAY 15 REACHED — FINAL REPORT CAN BE GENERATED"
+            )
+
+    # =========================================================
+    # SAVE / UPDATE TODAY'S DAILY LOG
+    # =========================================================
     if request.method == 'POST':
-        current_weight = request.POST.get('current_weight')
-        water_glasses = request.POST.get('water_glasses')
-        calories_consumed = request.POST.get('calories_consumed')
-        meal_followed = request.POST.get('meal_followed') == 'on'
-        exercise_completed = request.POST.get('exercise_completed') == 'on'
-        feeling = request.POST.get('feeling')
+
+        current_weight = request.POST.get(
+            'current_weight'
+        )
+
+        water_glasses = request.POST.get(
+            'water_glasses'
+        )
+
+        calories_consumed = request.POST.get(
+            'calories_consumed'
+        )
+
+        meal_followed = (
+            request.POST.get('meal_followed')
+            == 'on'
+        )
+
+        exercise_completed = (
+            request.POST.get('exercise_completed')
+            == 'on'
+        )
+
+        feeling = request.POST.get(
+            'feeling'
+        )
 
         if current_weight:
-            current_weight = Decimal(current_weight)
 
-            # Convert glasses to liters (1 glass ≈ 0.25L) for the DailyLog model
+            current_weight = Decimal(
+                current_weight
+            )
+
+            # ---------------------------------------------
+            # CONVERT WATER GLASSES TO LITERS
+            # 1 glass ≈ 0.25L
+            # ---------------------------------------------
             water_liters = None
-            if water_glasses:
-                water_liters = Decimal(water_glasses) * Decimal('0.25')
 
-            # update_or_create: if today's entry already exists, update it instead of
-            # making a duplicate row for the same date
+            if water_glasses:
+
+                water_liters = (
+                    Decimal(water_glasses)
+                    * Decimal('0.25')
+                )
+
+            # ---------------------------------------------
+            # SAVE OR UPDATE TODAY'S LOG
+            # ---------------------------------------------
             DailyLog.objects.update_or_create(
                 user=user,
-                log_date=date.today(),
+                log_date=today,
                 defaults={
-                    'current_weight': current_weight,
-                    'water_intake_liters': water_liters,
-                    'calories_consumed': int(calories_consumed) if calories_consumed else None,
-                    'meal_followed': meal_followed,
-                    'exercise_completed': exercise_completed,
-                    'notes': feeling,
+                    'current_weight':
+                        current_weight,
+
+                    'water_intake_liters':
+                        water_liters,
+
+                    'calories_consumed': (
+                        int(calories_consumed)
+                        if calories_consumed
+                        else None
+                    ),
+
+                    'meal_followed':
+                        meal_followed,
+
+                    'exercise_completed':
+                        exercise_completed,
+
+                    'notes':
+                        feeling,
                 }
             )
-            # Calculate and save BMI using the profile's height
+
+            # =============================================
+            # CALCULATE AND SAVE BMI
+            # =============================================
             if profile.height:
-                height_m = float(profile.height) / 100
-                bmi_value = round(float(current_weight) / (height_m ** 2), 2)
+
+                height_m = (
+                    float(profile.height)
+                    / 100
+                )
+
+                bmi_value = round(
+                    float(current_weight)
+                    / (height_m ** 2),
+                    2
+                )
 
                 if bmi_value < 18.5:
-                    bmi_category = 'Underweight'
+
+                    bmi_category = (
+                        'Underweight'
+                    )
+
                 elif bmi_value < 25:
-                    bmi_category = 'Normal Weight'
+
+                    bmi_category = (
+                        'Normal Weight'
+                    )
+
                 elif bmi_value < 30:
-                    bmi_category = 'Overweight'
+
+                    bmi_category = (
+                        'Overweight'
+                    )
+
                 else:
-                    bmi_category = 'Obese'
-                # Remove any earlier BMI record from today before adding the new one,
-                # so re-saving today's log doesn't pile up duplicate BMI entries
-                BMIRecord.objects.filter(user=user, recorded_at__date=date.today()).delete()
+
+                    bmi_category = (
+                        'Obese'
+                    )
+
+                # Keep only one BMI record
+                # for the same day.
+                BMIRecord.objects.filter(
+                    user=user,
+                    recorded_at__date=today
+                ).delete()
+
                 BMIRecord.objects.create(
                     user=user,
                     weight=current_weight,
@@ -1806,325 +1903,1440 @@ def progress(request):
                     bmi_category=bmi_category
                 )
 
+        # Redirect to GET request.
+        # Then Day 7 / Day 15 report generation
+        # can use the newly saved log.
         return redirect('progress')
 
-    # Get all logs and BMI records for this user, most recent first
-    all_logs = DailyLog.objects.filter(user=user).order_by('-log_date')
-    all_bmi_records = BMIRecord.objects.filter(user=user).order_by('-recorded_at')
+    # =========================================================
+    # GENERAL PROGRESS DATA
+    # =========================================================
+
+    all_logs = DailyLog.objects.filter(
+        user=user
+    ).order_by(
+        '-log_date'
+    )
+
+    all_bmi_records = BMIRecord.objects.filter(
+        user=user
+    ).order_by(
+        '-recorded_at'
+    )
 
     latest_log = all_logs.first()
-    latest_bmi = all_bmi_records.first()
-    first_log = all_logs.order_by('log_date').first()
 
-    # Weight change since the very first logged entry
-    weight_change = None
-    if latest_log and first_log and latest_log != first_log:
-        weight_change = float(latest_log.current_weight) - float(first_log.current_weight)
+    latest_bmi = (
+        all_bmi_records.first()
+    )
 
-    # BMI change since the first recorded BMI
-    bmi_change = None
-    first_bmi = all_bmi_records.order_by('recorded_at').first()
-    if latest_bmi and first_bmi and latest_bmi != first_bmi:
-        bmi_change = float(latest_bmi.bmi_value) - float(first_bmi.bmi_value)
-
-    # Exercise completion rate over logged days
-    # Look only at the last 7 days for the Weekly Progress percentages
-    week_start = date.today() - timedelta(days=6)  # today + 6 previous days = 7 total
-    week_logs = all_logs.filter(log_date__gte=week_start)
-
-    total_logs = all_logs.count()          # all-time count, still used for the stats row
-    week_log_count = week_logs.count()     # this week's count, used for the % bars
-
-    exercise_done_count = week_logs.filter(exercise_completed=True).count()
-    meal_done_count = week_logs.filter(meal_followed=True).count()
-    exercise_rate = round((exercise_done_count / week_log_count) * 100) if week_log_count else 0
-    meal_rate = round((meal_done_count / week_log_count) * 100) if week_log_count else 0
-
-    # Water intake today, in glasses (stored in liters, so convert back)
-    water_today_glasses = None
-    if latest_log and latest_log.water_intake_liters:
-        water_today_glasses = round(float(latest_log.water_intake_liters) / 0.25)
-
-    # Water goal rate — days this week where at least 2L (8 glasses) was logged
-    water_goal_days = week_logs.filter(water_intake_liters__gte=2.0).count()
-    water_goal_rate = round((water_goal_days / week_log_count) * 100) if week_log_count else 0
-
-    # ── DAY 7 PROGRESS REPORT ──
-    # Check whether the user is currently on Day 7 of their 15-day plan
-    active_plan = DietPlan.objects.filter(
-        user=user,
-        plan_status='Active'
+    first_log = all_logs.order_by(
+        'log_date'
     ).first()
 
-    if active_plan:
-        current_day = (date.today() - active_plan.plan_start_date).days + 1
+    # =========================================================
+    # WEIGHT CHANGE SINCE FIRST LOG
+    # =========================================================
 
-        if current_day == 7:
+    weight_change = None
 
-            # Get Day 1–7 logs
-            cycle_logs = DailyLog.objects.filter(
+    if (
+        latest_log
+        and first_log
+        and latest_log != first_log
+        and latest_log.current_weight
+        is not None
+        and first_log.current_weight
+        is not None
+    ):
+
+        weight_change = (
+            float(
+                latest_log.current_weight
+            )
+            - float(
+                first_log.current_weight
+            )
+        )
+
+    # =========================================================
+    # BMI CHANGE SINCE FIRST BMI RECORD
+    # =========================================================
+
+    bmi_change = None
+
+    first_bmi = (
+        all_bmi_records.order_by(
+            'recorded_at'
+        ).first()
+    )
+
+    if (
+        latest_bmi
+        and first_bmi
+        and latest_bmi != first_bmi
+        and latest_bmi.bmi_value
+        is not None
+        and first_bmi.bmi_value
+        is not None
+    ):
+
+        bmi_change = (
+            float(
+                latest_bmi.bmi_value
+            )
+            - float(
+                first_bmi.bmi_value
+            )
+        )
+
+    # =========================================================
+    # LAST 7 DAYS / WEEKLY PROGRESS
+    # =========================================================
+
+    week_start = (
+        today
+        - timedelta(days=6)
+    )
+
+    week_logs = all_logs.filter(
+        log_date__gte=week_start
+    )
+
+    total_logs = (
+        all_logs.count()
+    )
+
+    week_log_count = (
+        week_logs.count()
+    )
+
+    exercise_done_count = (
+        week_logs.filter(
+            exercise_completed=True
+        ).count()
+    )
+
+    meal_done_count = (
+        week_logs.filter(
+            meal_followed=True
+        ).count()
+    )
+
+    exercise_rate = (
+        round(
+            (
+                exercise_done_count
+                / week_log_count
+            ) * 100
+        )
+        if week_log_count
+        else 0
+    )
+
+    meal_rate = (
+        round(
+            (
+                meal_done_count
+                / week_log_count
+            ) * 100
+        )
+        if week_log_count
+        else 0
+    )
+
+    # =========================================================
+    # WATER TODAY
+    # =========================================================
+
+    water_today_glasses = None
+
+    today_log = DailyLog.objects.filter(
+        user=user,
+        log_date=today
+    ).first()
+
+    if (
+        today_log
+        and today_log.water_intake_liters
+    ):
+
+        water_today_glasses = round(
+            float(
+                today_log.water_intake_liters
+            )
+            / 0.25
+        )
+
+    # =========================================================
+    # WATER GOAL RATE
+    # =========================================================
+
+    water_goal_days = (
+        week_logs.filter(
+            water_intake_liters__gte=2.0
+        ).count()
+    )
+
+    water_goal_rate = (
+        round(
+            (
+                water_goal_days
+                / week_log_count
+            ) * 100
+        )
+        if week_log_count
+        else 0
+    )
+
+    # =========================================================
+    # DAY 7 REPORT
+    # DAY 1 → DAY 7
+    # =========================================================
+
+    if (
+        active_plan
+        and cycle_day is not None
+        and cycle_day >= 7
+    ):
+
+        day7_start = (
+            active_plan.plan_start_date
+        )
+
+        day7_end = (
+            day7_start
+            + timedelta(days=6)
+        )
+
+        # ---------------------------------------------
+        # CHECK IF DAY 7 REPORT ALREADY EXISTS
+        # ---------------------------------------------
+
+        existing_day7_report = (
+            WeeklyReport.objects.filter(
                 user=user,
-                log_date__gte=active_plan.plan_start_date,
-                log_date__lte=active_plan.plan_start_date + timedelta(days=6)
-            ).order_by('log_date')
+                week_start_date=day7_start,
+                week_end_date=day7_end
+            ).first()
+        )
 
-            # Get BMI records from Day 1–7
-            cycle_bmis = BMIRecord.objects.filter(
-                user=user,
-                recorded_at__date__gte=active_plan.plan_start_date,
-                recorded_at__date__lte=active_plan.plan_start_date + timedelta(days=6)
-            ).order_by('recorded_at')
+        # Only generate automatically once.
+        if not existing_day7_report:
 
-            if cycle_logs.exists():
+            # -----------------------------------------
+            # DAY 1 - DAY 7 LOGS
+            # -----------------------------------------
 
-                first_cycle_log = cycle_logs.first()
-                last_cycle_log = cycle_logs.last()
+            day7_logs = (
+                DailyLog.objects.filter(
+                    user=user,
+                    log_date__gte=day7_start,
+                    log_date__lte=day7_end
+                ).order_by(
+                    'log_date'
+                )
+            )
 
-                starting_weight = first_cycle_log.current_weight
-                ending_weight = last_cycle_log.current_weight
+            # -----------------------------------------
+            # DAY 1 - DAY 7 BMI
+            # -----------------------------------------
 
-                weight_change = (
-                    ending_weight - starting_weight
-                    if starting_weight is not None and ending_weight is not None
+            day7_bmis = (
+                BMIRecord.objects.filter(
+                    user=user,
+
+                    recorded_at__date__gte=
+                        day7_start,
+
+                    recorded_at__date__lte=
+                        day7_end
+
+                ).order_by(
+                    'recorded_at'
+                )
+            )
+
+            # -----------------------------------------
+            # MAKE SURE DAY 7 WAS LOGGED
+            # -----------------------------------------
+
+            day7_log_exists = (
+                day7_logs.filter(
+                    log_date=day7_end
+                ).exists()
+            )
+
+            if (
+                day7_logs.exists()
+                and day7_log_exists
+            ):
+
+                first_cycle_log = (
+                    day7_logs.first()
+                )
+
+                last_cycle_log = (
+                    day7_logs.last()
+                )
+
+                # =====================================
+                # WEIGHT
+                # =====================================
+
+                starting_weight = (
+                    first_cycle_log.current_weight
+                )
+
+                ending_weight = (
+                    last_cycle_log.current_weight
+                )
+
+                day7_weight_change = (
+                    ending_weight
+                    - starting_weight
+
+                    if (
+                        starting_weight
+                        is not None
+
+                        and ending_weight
+                        is not None
+                    )
+
                     else None
                 )
 
-                starting_bmi = cycle_bmis.first().bmi_value if cycle_bmis.exists() else None
-                ending_bmi = cycle_bmis.last().bmi_value if cycle_bmis.exists() else None
+                # =====================================
+                # BMI
+                # =====================================
 
-                # Prepare data for Health Tracking Agent
+                starting_bmi = (
+                    day7_bmis.first().bmi_value
+
+                    if day7_bmis.exists()
+
+                    else None
+                )
+
+                ending_bmi = (
+                    day7_bmis.last().bmi_value
+
+                    if day7_bmis.exists()
+
+                    else None
+                )
+
+                # =====================================
+                # USER DATA FOR AI
+                # =====================================
+
                 user_data = {
-                    'starting_weight': starting_weight,
-                    'current_weight': ending_weight,
-                    'height': profile.height,
-                    'health_goal': profile.health_goal,
-                    'health_condition': profile.health_condition,
+
+                    'starting_weight':
+                        starting_weight,
+
+                    'current_weight':
+                        ending_weight,
+
+                    'height':
+                        profile.height,
+
+                    'health_goal':
+                        profile.health_goal,
+
+                    'health_condition':
+                        profile.health_condition,
                 }
+
+                # =====================================
+                # DAY 7 STATISTICS
+                # =====================================
+
+                meal_follow_days = (
+                    day7_logs.filter(
+                        meal_followed=True
+                    ).count()
+                )
+
+                exercise_days = (
+                    day7_logs.filter(
+                        exercise_completed=True
+                    ).count()
+                )
+
+                avg_water = round(
+                    sum(
+                        float(
+                            log.water_intake_liters
+                            or 0
+                        )
+
+                        for log
+                        in day7_logs
+
+                    ) / 7,
+
+                    2
+                )
 
                 agent_logs = {
-                    'meal_follow_days': cycle_logs.filter(
-                        meal_followed=True
-                    ).count(),
 
-                    'exercise_days': cycle_logs.filter(
-                        exercise_completed=True
-                    ).count(),
+                    'meal_follow_days':
+                        meal_follow_days,
 
-                    'avg_water': round(
-                        sum(
-                            float(log.water_intake_liters or 0)
-                            for log in cycle_logs
-                        ) / 7,
-                        2
+                    'exercise_days':
+                        exercise_days,
+
+                    'avg_water':
+                        avg_water,
+
+                    'weight_change': (
+                        round(
+                            float(
+                                day7_weight_change
+                            ),
+                            2
+                        )
+
+                        if day7_weight_change
+                        is not None
+
+                        else 0
                     ),
-
-                    'weight_change': round(
-                        float(weight_change),
-                        2
-                    ) if weight_change is not None else 0,
                 }
 
-                # Generate AI progress report
-                ai_report = health_tracking_agent(
-                    user_data,
-                    agent_logs
-                )
-                print("HEALTH AGENT RESPONSE =")
-                print(ai_report)
+                # =====================================
+                # CALL HEALTH TRACKING AGENT
+                # =====================================
 
-                # Save report in database
+                ai_report = (
+                    health_tracking_agent(
+                        user_data,
+                        agent_logs,
+                        report_days=7
+                    )
+                )
+
+                print(
+                    "DAY 7 HEALTH AGENT RESPONSE ="
+                )
+
+                print(
+                    ai_report
+                )
+
+                # =====================================
+                # SAVE DAY 7 REPORT
+                # =====================================
+
                 WeeklyReport.objects.update_or_create(
+
                     user=user,
-                    week_start_date=active_plan.plan_start_date,
-                    week_end_date=active_plan.plan_start_date + timedelta(days=6),
+
+                    week_start_date=
+                        day7_start,
+
+                    week_end_date=
+                        day7_end,
+
                     defaults={
-                        'starting_weight': starting_weight,
-                        'ending_weight': ending_weight,
-                        'weight_change': weight_change,
-                        'starting_bmi': starting_bmi,
-                        'ending_bmi': ending_bmi,
-                        'meal_follow_rate': round(
-                            (cycle_logs.filter(
-                                meal_followed=True
-                            ).count() / 7) * 100
-                        ),
-                        'exercise_completion_rate': round(
-                            (cycle_logs.filter(
-                                exercise_completed=True
-                            ).count() / 7) * 100
-                        ),
-                        'ai_feedback': ai_report,
+
+                        'starting_weight':
+                            starting_weight,
+
+                        'ending_weight':
+                            ending_weight,
+
+                        'weight_change':
+                            day7_weight_change,
+
+                        'starting_bmi':
+                            starting_bmi,
+
+                        'ending_bmi':
+                            ending_bmi,
+
+                        'meal_follow_rate':
+                            round(
+                                (
+                                    meal_follow_days
+                                    / 7
+                                ) * 100
+                            ),
+
+                        'exercise_completion_rate':
+                            round(
+                                (
+                                    exercise_days
+                                    / 7
+                                ) * 100
+                            ),
+
+                        'ai_feedback':
+                            ai_report,
                     }
                 )
 
-                print("Day 7 progress report generated successfully.")
+                print(
+                    "Day 7 progress report "
+                    "generated successfully."
+                )
 
-    # Calories logged rate — days this week where calories_consumed was actually filled in
-    calories_logged_days = week_logs.exclude(calories_consumed__isnull=True).count()
-    calories_logged_rate = round((calories_logged_days / week_log_count) * 100) if week_log_count else 0
+    # =========================================================
+    # DAY 15 FINAL REPORT
+    # DAY 1 → DAY 15
+    # =========================================================
 
-    # Simple rule-based feedback message based on the weakest area
-    rates = {'meal plan': meal_rate, 'exercise': exercise_rate, 'water intake': water_goal_rate}
-    weakest_area = min(rates, key=rates.get)
+    if (
+        active_plan
+        and cycle_day is not None
+        and cycle_day >= 15
+    ):
+
+        final_start = (
+            active_plan.plan_start_date
+        )
+
+        final_end = (
+            final_start
+            + timedelta(days=14)
+        )
+
+        # ---------------------------------------------
+        # CHECK IF FINAL REPORT ALREADY EXISTS
+        # ---------------------------------------------
+
+        existing_final_report = (
+            WeeklyReport.objects.filter(
+                user=user,
+                week_start_date=final_start,
+                week_end_date=final_end
+            ).first()
+        )
+
+        # Only generate automatically once.
+        if not existing_final_report:
+
+            # -----------------------------------------
+            # DAY 1 - DAY 15 LOGS
+            # -----------------------------------------
+
+            final_logs = (
+                DailyLog.objects.filter(
+                    user=user,
+                    log_date__gte=final_start,
+                    log_date__lte=final_end
+                ).order_by(
+                    'log_date'
+                )
+            )
+
+            # -----------------------------------------
+            # DAY 1 - DAY 15 BMI RECORDS
+            # -----------------------------------------
+
+            final_bmis = (
+                BMIRecord.objects.filter(
+                    user=user,
+
+                    recorded_at__date__gte=
+                        final_start,
+
+                    recorded_at__date__lte=
+                        final_end
+
+                ).order_by(
+                    'recorded_at'
+                )
+            )
+
+            # -----------------------------------------
+            # MAKE SURE DAY 15 WAS LOGGED
+            # -----------------------------------------
+
+            final_day_log_exists = (
+                final_logs.filter(
+                    log_date=final_end
+                ).exists()
+            )
+
+            if (
+                final_logs.exists()
+                and final_day_log_exists
+            ):
+
+                first_final_log = (
+                    final_logs.first()
+                )
+
+                last_final_log = (
+                    final_logs.last()
+                )
+
+                # =====================================
+                # WEIGHT
+                # =====================================
+
+                starting_weight = (
+                    first_final_log.current_weight
+                )
+
+                ending_weight = (
+                    last_final_log.current_weight
+                )
+
+                final_weight_change = (
+                    ending_weight
+                    - starting_weight
+
+                    if (
+                        starting_weight
+                        is not None
+
+                        and ending_weight
+                        is not None
+                    )
+
+                    else None
+                )
+
+                # =====================================
+                # BMI
+                # =====================================
+
+                starting_bmi = (
+                    final_bmis.first().bmi_value
+
+                    if final_bmis.exists()
+
+                    else None
+                )
+
+                ending_bmi = (
+                    final_bmis.last().bmi_value
+
+                    if final_bmis.exists()
+
+                    else None
+                )
+
+                # =====================================
+                # USER DATA FOR AI
+                # =====================================
+
+                user_data = {
+
+                    'starting_weight':
+                        starting_weight,
+
+                    'current_weight':
+                        ending_weight,
+
+                    'height':
+                        profile.height,
+
+                    'health_goal':
+                        profile.health_goal,
+
+                    'health_condition':
+                        profile.health_condition,
+                }
+
+                # =====================================
+                # FULL 15-DAY STATISTICS
+                # =====================================
+
+                meal_follow_days = (
+                    final_logs.filter(
+                        meal_followed=True
+                    ).count()
+                )
+
+                exercise_days = (
+                    final_logs.filter(
+                        exercise_completed=True
+                    ).count()
+                )
+
+                avg_water = round(
+                    sum(
+                        float(
+                            log.water_intake_liters
+                            or 0
+                        )
+
+                        for log
+                        in final_logs
+
+                    ) / 15,
+
+                    2
+                )
+
+                agent_logs = {
+
+                    'meal_follow_days':
+                        meal_follow_days,
+
+                    'exercise_days':
+                        exercise_days,
+
+                    'avg_water':
+                        avg_water,
+
+                    'weight_change': (
+                        round(
+                            float(
+                                final_weight_change
+                            ),
+                            2
+                        )
+
+                        if final_weight_change
+                        is not None
+
+                        else 0
+                    ),
+                }
+
+                # =====================================
+                # CALL HEALTH TRACKING AGENT
+                # =====================================
+
+                ai_report = (
+                    health_tracking_agent(
+                        user_data,
+                        agent_logs,
+                        report_days=15
+                    )
+                )
+
+                print(
+                    "FINAL 15-DAY HEALTH "
+                    "AGENT RESPONSE ="
+                )
+
+                print(
+                    ai_report
+                )
+
+                # =====================================
+                # SAVE FINAL REPORT
+                # =====================================
+
+                WeeklyReport.objects.update_or_create(
+
+                    user=user,
+
+                    week_start_date=
+                        final_start,
+
+                    week_end_date=
+                        final_end,
+
+                    defaults={
+
+                        'starting_weight':
+                            starting_weight,
+
+                        'ending_weight':
+                            ending_weight,
+
+                        'weight_change':
+                            final_weight_change,
+
+                        'starting_bmi':
+                            starting_bmi,
+
+                        'ending_bmi':
+                            ending_bmi,
+
+                        'meal_follow_rate':
+                            round(
+                                (
+                                    meal_follow_days
+                                    / 15
+                                ) * 100
+                            ),
+
+                        'exercise_completion_rate':
+                            round(
+                                (
+                                    exercise_days
+                                    / 15
+                                ) * 100
+                            ),
+
+                        'ai_feedback':
+                            ai_report,
+                    }
+                )
+
+                print(
+                    "Final Day 1-Day 15 "
+                    "progress report generated "
+                    "successfully."
+                )
+
+    # =========================================================
+    # CALORIES LOGGED RATE
+    # =========================================================
+
+    calories_logged_days = (
+        week_logs.exclude(
+            calories_consumed__isnull=True
+        ).count()
+    )
+
+    calories_logged_rate = (
+        round(
+            (
+                calories_logged_days
+                / week_log_count
+            ) * 100
+        )
+
+        if week_log_count
+
+        else 0
+    )
+
+    # =========================================================
+    # SIMPLE RULE-BASED FEEDBACK
+    # =========================================================
+
+    rates = {
+
+        'meal plan':
+            meal_rate,
+
+        'exercise':
+            exercise_rate,
+
+        'water intake':
+            water_goal_rate,
+    }
+
+    weakest_area = min(
+        rates,
+        key=rates.get
+    )
+
     if total_logs == 0:
-        ai_feedback = "Log your first day to start getting personalized feedback here!"
+
+        ai_feedback = (
+            "Log your first day to start "
+            "getting personalized feedback here!"
+        )
+
     elif rates[weakest_area] >= 80:
-        ai_feedback = f"Excellent consistency across the board! Keep up the great work, especially with your {weakest_area}."
+
+        ai_feedback = (
+            "Excellent consistency across the board! "
+            "Keep up the great work, especially with "
+            f"your {weakest_area}."
+        )
+
     else:
-        ai_feedback = f"You're doing well overall — try focusing a bit more on your {weakest_area}, it's at {rates[weakest_area]}% right now. Small improvements add up!"
 
-    # Recent logs for the history table (most recent 8)
-    recent_logs = list(all_logs[:8])
-    recent_logs.reverse()  # show oldest to newest, left to right feel
+        ai_feedback = (
+            "You're doing well overall — "
+            "try focusing a bit more on your "
+            f"{weakest_area}, it's at "
+            f"{rates[weakest_area]}% right now. "
+            "Small improvements add up!"
+        )
 
-    # Attach each log's matching same-day BMI value, since BMI lives in a separate table
+    # =========================================================
+    # RECENT LOG HISTORY
+    # =========================================================
+
+    recent_logs = list(
+        all_logs[:8]
+    )
+
+    recent_logs.reverse()
+
     for log in recent_logs:
-        matching_bmi = BMIRecord.objects.filter(user=user, recorded_at__date=log.log_date).first()
-        log.bmi_display = matching_bmi.bmi_value if matching_bmi else None
 
-    # Build Weight Trend chart data — last up to 8 logs, oldest to newest
-    chart_logs = list(all_logs.order_by('log_date'))
+        matching_bmi = (
+            BMIRecord.objects.filter(
+                user=user,
+                recorded_at__date=
+                    log.log_date
+            ).first()
+        )
+
+        log.bmi_display = (
+            matching_bmi.bmi_value
+
+            if matching_bmi
+
+            else None
+        )
+
+    # =========================================================
+    # WEIGHT TREND CHART
+    # =========================================================
+
+    chart_logs = list(
+        all_logs.order_by(
+            'log_date'
+        )
+    )
+
     if len(chart_logs) > 8:
-        chart_logs = chart_logs[-8:]
+
+        chart_logs = (
+            chart_logs[-8:]
+        )
 
     weight_chart_points = []
+
     weight_polyline = ""
+
     weight_area_path = ""
+
     weight_y_labels = []
+
     chart_start_weight = None
+
     chart_current_weight = None
+
     chart_weight_change = None
+
     chart_weight_change_abs = None
 
-    if chart_logs:
-        weights = [float(l.current_weight) for l in chart_logs]
-        min_w = min(weights)
-        max_w = max(weights)
-        if max_w == min_w:
-            max_w = min_w + 1  # avoid a divide-by-zero on a perfectly flat line
+    # Only use logs that actually
+    # contain a weight value.
+    valid_chart_logs = [
 
-        chart_left, chart_right = 60, 380
-        chart_top, chart_bottom = 30, 155
-        n = len(chart_logs)
+        log
 
-        for i, log in enumerate(chart_logs):
-            w = float(log.current_weight)
-            x = chart_left if n == 1 else chart_left + (chart_right - chart_left) * (i / (n - 1))
-            y = chart_bottom - ((w - min_w) / (max_w - min_w)) * (chart_bottom - chart_top)
-            weight_chart_points.append({
-                'x': round(x, 1),
-                'y': round(y, 1),
-                'weight': w,
-                'date': log.log_date,
-                'is_last': (i == n - 1),
-            })
+        for log in chart_logs
 
-        weight_polyline = " ".join(f"{p['x']},{p['y']}" for p in weight_chart_points)
+        if log.current_weight
+        is not None
+    ]
 
-        first_p, last_p = weight_chart_points[0], weight_chart_points[-1]
-        path_parts = [f"M{first_p['x']},{chart_bottom}"]
-        path_parts += [f"L{p['x']},{p['y']}" for p in weight_chart_points]
-        path_parts += [f"L{last_p['x']},{chart_bottom}", "Z"]
-        weight_area_path = " ".join(path_parts)
+    if valid_chart_logs:
 
-        weight_y_labels = [
-            round(max_w, 1),
-            round(max_w - (max_w - min_w) / 3, 1),
-            round(max_w - 2 * (max_w - min_w) / 3, 1),
-            round(min_w, 1),
+        weights = [
+
+            float(
+                log.current_weight
+            )
+
+            for log
+            in valid_chart_logs
         ]
 
-        chart_start_weight = weights[0]
-        chart_current_weight = weights[-1]
-        chart_weight_change = round(chart_current_weight - chart_start_weight, 1)
-        chart_weight_change_abs = abs(chart_weight_change)
-    # Get the user's latest weekly report
-    latest_weekly_report = WeeklyReport.objects.filter(
-         user=user
-     ).order_by('-week_end_date').first()    
+        min_w = min(
+            weights
+        )
 
-    return render(request, 'DietMate_progress.html', {
-        'user': user,
-        'profile': profile,
-        'latest_log': latest_log,
-        'latest_bmi': latest_bmi,
-        'first_bmi': first_bmi,
-        'all_bmi_records': all_bmi_records,
-        'weight_change': round(weight_change, 1) if weight_change is not None else None,
-        'weight_change_abs': round(abs(weight_change), 1) if weight_change is not None else None,
-        'bmi_change': round(bmi_change, 1) if bmi_change is not None else None,
-        'bmi_change_abs': round(abs(bmi_change), 1) if bmi_change is not None else None,
-        'exercise_rate': exercise_rate,
-        'meal_rate': meal_rate,
-        'water_today_glasses': water_today_glasses,
-        'recent_logs': recent_logs,
-        'weight_chart_points': weight_chart_points,
-        'weight_polyline': weight_polyline,
-        'weight_area_path': weight_area_path,
-        'weight_y_labels': weight_y_labels,
-        'chart_start_weight': chart_start_weight,
-        'chart_current_weight': chart_current_weight,
-        'chart_weight_change': chart_weight_change,
-        'chart_weight_change_abs': chart_weight_change_abs,
-        'total_logs': total_logs,
-        'today': date.today(),
-        'water_goal_rate': water_goal_rate,
-        'calories_logged_rate': calories_logged_rate,
-        'ai_feedback': ai_feedback,
-        'week_log_count': week_log_count,
-        'weekly_reports': weekly_reports,
-        'latest_weekly_report': latest_weekly_report,
-    })
+        max_w = max(
+            weights
+        )
+
+        if max_w == min_w:
+
+            max_w = (
+                min_w + 1
+            )
+
+        chart_left = 60
+
+        chart_right = 380
+
+        chart_top = 30
+
+        chart_bottom = 155
+
+        n = len(
+            valid_chart_logs
+        )
+
+        for i, log in enumerate(
+            valid_chart_logs
+        ):
+
+            w = float(
+                log.current_weight
+            )
+
+            x = (
+
+                chart_left
+
+                if n == 1
+
+                else chart_left
+                + (
+                    chart_right
+                    - chart_left
+                ) * (
+                    i / (n - 1)
+                )
+            )
+
+            y = (
+
+                chart_bottom
+
+                - (
+                    (w - min_w)
+                    / (
+                        max_w - min_w
+                    )
+                ) * (
+                    chart_bottom
+                    - chart_top
+                )
+            )
+
+            weight_chart_points.append(
+                {
+                    'x':
+                        round(x, 1),
+
+                    'y':
+                        round(y, 1),
+
+                    'weight':
+                        w,
+
+                    'date':
+                        log.log_date,
+
+                    'is_last':
+                        (
+                            i == n - 1
+                        ),
+                }
+            )
+
+        weight_polyline = " ".join(
+
+            f"{point['x']},{point['y']}"
+
+            for point
+            in weight_chart_points
+        )
+
+        first_point = (
+            weight_chart_points[0]
+        )
+
+        last_point = (
+            weight_chart_points[-1]
+        )
+
+        path_parts = [
+
+            f"M{first_point['x']},"
+            f"{chart_bottom}"
+        ]
+
+        path_parts += [
+
+            f"L{point['x']},"
+            f"{point['y']}"
+
+            for point
+            in weight_chart_points
+        ]
+
+        path_parts += [
+
+            f"L{last_point['x']},"
+            f"{chart_bottom}",
+
+            "Z",
+        ]
+
+        weight_area_path = (
+            " ".join(
+                path_parts
+            )
+        )
+
+        weight_y_labels = [
+
+            round(
+                max_w,
+                1
+            ),
+
+            round(
+                max_w
+                - (
+                    max_w
+                    - min_w
+                ) / 3,
+                1
+            ),
+
+            round(
+                max_w
+                - 2 * (
+                    max_w
+                    - min_w
+                ) / 3,
+                1
+            ),
+
+            round(
+                min_w,
+                1
+            ),
+        ]
+
+        chart_start_weight = (
+            weights[0]
+        )
+
+        chart_current_weight = (
+            weights[-1]
+        )
+
+        chart_weight_change = round(
+
+            chart_current_weight
+            - chart_start_weight,
+
+            1
+        )
+
+        chart_weight_change_abs = abs(
+            chart_weight_change
+        )
+
+    # =========================================================
+    # LATEST GENERATED REPORT
+    # =========================================================
+
+    latest_weekly_report = (
+        WeeklyReport.objects.filter(
+            user=user
+        ).order_by(
+            '-week_end_date'
+        ).first()
+    )
+
+    latest_report_days = None
+
+    latest_report_is_final = False
+
+    if (
+        latest_weekly_report
+
+        and
+        latest_weekly_report.week_start_date
+
+        and
+        latest_weekly_report.week_end_date
+    ):
+
+        latest_report_days = (
+            latest_weekly_report.week_end_date
+            - latest_weekly_report.week_start_date
+        ).days + 1
+
+        latest_report_is_final = (
+            latest_report_days == 15
+        )
+
+    # =========================================================
+    # SEND EVERYTHING TO TEMPLATE
+    # =========================================================
+
+    return render(
+        request,
+        'DietMate_progress.html',
+        {
+            'user':
+                user,
+
+            'profile':
+                profile,
+
+            'latest_log':
+                latest_log,
+
+            'latest_bmi':
+                latest_bmi,
+
+            'first_bmi':
+                first_bmi,
+
+            'all_bmi_records':
+                all_bmi_records,
+
+            'weight_change': (
+                round(
+                    weight_change,
+                    1
+                )
+
+                if weight_change
+                is not None
+
+                else None
+            ),
+
+            'weight_change_abs': (
+                round(
+                    abs(
+                        weight_change
+                    ),
+                    1
+                )
+
+                if weight_change
+                is not None
+
+                else None
+            ),
+
+            'bmi_change': (
+                round(
+                    bmi_change,
+                    1
+                )
+
+                if bmi_change
+                is not None
+
+                else None
+            ),
+
+            'bmi_change_abs': (
+                round(
+                    abs(
+                        bmi_change
+                    ),
+                    1
+                )
+
+                if bmi_change
+                is not None
+
+                else None
+            ),
+
+            'exercise_rate':
+                exercise_rate,
+
+            'meal_rate':
+                meal_rate,
+
+            'water_today_glasses':
+                water_today_glasses,
+
+            'recent_logs':
+                recent_logs,
+
+            'weight_chart_points':
+                weight_chart_points,
+
+            'weight_polyline':
+                weight_polyline,
+
+            'weight_area_path':
+                weight_area_path,
+
+            'weight_y_labels':
+                weight_y_labels,
+
+            'chart_start_weight':
+                chart_start_weight,
+
+            'chart_current_weight':
+                chart_current_weight,
+
+            'chart_weight_change':
+                chart_weight_change,
+
+            'chart_weight_change_abs':
+                chart_weight_change_abs,
+
+            'total_logs':
+                total_logs,
+
+            'today':
+                today,
+
+            'water_goal_rate':
+                water_goal_rate,
+
+            'calories_logged_rate':
+                calories_logged_rate,
+
+            'ai_feedback':
+                ai_feedback,
+
+            'week_log_count':
+                week_log_count,
+
+            'weekly_reports':
+                weekly_reports,
+
+            'latest_weekly_report':
+                latest_weekly_report,
+
+            'latest_report_days':
+                latest_report_days,
+
+            'latest_report_is_final':
+                latest_report_is_final,
+
+            'cycle_day':
+                cycle_day,
+        }
+    )
 def weekly_report(request, report_id):
+
+    # =========================================================
+    # LOGIN CHECK
+    # =========================================================
     if 'user_id' not in request.session:
         return redirect('login')
 
     user_id = request.session['user_id']
-    user = User.objects.get(id=user_id)
 
+    user = User.objects.get(
+        id=user_id
+    )
+
+    # =========================================================
+    # GET REPORT
+    # =========================================================
     report = get_object_or_404(
         WeeklyReport,
         id=report_id,
         user=user
     )
 
-    # ─────────────────────────────────────────────
-    # Format AI feedback from Markdown to HTML
-    # ─────────────────────────────────────────────
+    # =========================================================
+    # DETERMINE REPORT TYPE
+    # =========================================================
+    report_days = (
+        report.week_end_date
+        - report.week_start_date
+    ).days + 1
+
+    # Day 1-Day 15 report
+    if report_days == 15:
+
+        is_final_report = True
+
+        report_title = (
+            "Final 15-Day Progress Report"
+        )
+
+        report_subtitle = (
+            "Complete progress from "
+            "Day 1 to Day 15"
+        )
+
+    # Day 1-Day 7 report
+    else:
+
+        is_final_report = False
+
+        report_title = (
+            "Day 7 Progress Report"
+        )
+
+        report_subtitle = (
+            "Progress from "
+            "Day 1 to Day 7"
+        )
+
+    # =========================================================
+    # FORMAT AI FEEDBACK FROM MARKDOWN TO HTML
+    # =========================================================
 
     import re
-    from django.utils.html import escape
-    from django.utils.safestring import mark_safe
 
-    ai_text = report.ai_feedback or ""
+    from django.utils.html import escape
+
+    from django.utils.safestring import (
+        mark_safe
+    )
+
+    ai_text = (
+        report.ai_feedback
+        or ""
+    )
 
     formatted_lines = []
+
     in_list = False
+
+    # =========================================================
+    # PROCESS AI RESPONSE LINE BY LINE
+    # =========================================================
 
     for line in ai_text.splitlines():
 
         line = line.strip()
 
-        # Skip horizontal separators such as ***
-        if line in ["***", "---"]:
+        # -----------------------------------------------------
+        # SKIP HORIZONTAL SEPARATORS
+        # -----------------------------------------------------
+
+        if line in [
+            "***",
+            "---"
+        ]:
+
             continue
 
-        # Empty line
+        # -----------------------------------------------------
+        # EMPTY LINE
+        # -----------------------------------------------------
+
         if not line:
+
             if in_list:
-                formatted_lines.append("</ul>")
+
+                formatted_lines.append(
+                    "</ul>"
+                )
+
                 in_list = False
 
             continue
 
-        # Heading: ### Heading
-        if line.startswith("### "):
+        # -----------------------------------------------------
+        # HEADING: ### Heading
+        # -----------------------------------------------------
+
+        if line.startswith(
+            "### "
+        ):
 
             if in_list:
-                formatted_lines.append("</ul>")
+
+                formatted_lines.append(
+                    "</ul>"
+                )
+
                 in_list = False
 
-            heading = escape(line[4:])
+            heading = escape(
+                line[4:]
+            )
+
+            # Bold inside heading
+            heading = re.sub(
+                r"\*\*(.*?)\*\*",
+                r"<strong>\1</strong>",
+                heading
+            )
 
             formatted_lines.append(
                 f"<h3>{heading}</h3>"
@@ -2132,14 +3344,25 @@ def weekly_report(request, report_id):
 
             continue
 
-        # Bullet point: * something
-        if line.startswith("* "):
+        # -----------------------------------------------------
+        # BULLET: * something
+        # -----------------------------------------------------
+
+        if line.startswith(
+            "* "
+        ):
 
             if not in_list:
-                formatted_lines.append("<ul>")
+
+                formatted_lines.append(
+                    "<ul>"
+                )
+
                 in_list = True
 
-            content = escape(line[2:])
+            content = escape(
+                line[2:]
+            )
 
             # Bold text
             content = re.sub(
@@ -2161,12 +3384,59 @@ def weekly_report(request, report_id):
 
             continue
 
-        # Normal paragraph
+        # -----------------------------------------------------
+        # BULLET: - something
+        # -----------------------------------------------------
+
+        if line.startswith(
+            "- "
+        ):
+
+            if not in_list:
+
+                formatted_lines.append(
+                    "<ul>"
+                )
+
+                in_list = True
+
+            content = escape(
+                line[2:]
+            )
+
+            content = re.sub(
+                r"\*\*(.*?)\*\*",
+                r"<strong>\1</strong>",
+                content
+            )
+
+            content = re.sub(
+                r"\*(.*?)\*",
+                r"<em>\1</em>",
+                content
+            )
+
+            formatted_lines.append(
+                f"<li>{content}</li>"
+            )
+
+            continue
+
+        # -----------------------------------------------------
+        # NORMAL PARAGRAPH
+        # -----------------------------------------------------
+
         if in_list:
-            formatted_lines.append("</ul>")
+
+            formatted_lines.append(
+                "</ul>"
+            )
+
             in_list = False
 
-        content = escape(line)
+        content = escape(
+            line
+        )
 
         # Bold text: **text**
         content = re.sub(
@@ -2186,21 +3456,55 @@ def weekly_report(request, report_id):
             f"<p>{content}</p>"
         )
 
-    # Close list if the AI response ended with a bullet
+    # =========================================================
+    # CLOSE LIST IF AI RESPONSE ENDS WITH BULLET
+    # =========================================================
+
     if in_list:
-        formatted_lines.append("</ul>")
+
+        formatted_lines.append(
+            "</ul>"
+        )
+
+    # =========================================================
+    # SAFE HTML FOR TEMPLATE
+    # =========================================================
 
     ai_feedback_html = mark_safe(
-        "\n".join(formatted_lines)
+        "\n".join(
+            formatted_lines
+        )
     )
+
+    # =========================================================
+    # SEND REPORT TO TEMPLATE
+    # =========================================================
 
     return render(
         request,
         'DietMate_weekly_report.html',
         {
-            'user': user,
-            'report': report,
-            'ai_feedback_html': ai_feedback_html,
+            'user':
+                user,
+
+            'report':
+                report,
+
+            'ai_feedback_html':
+                ai_feedback_html,
+
+            # Report information
+            'report_days':
+                report_days,
+
+            'is_final_report':
+                is_final_report,
+
+            'report_title':
+                report_title,
+
+            'report_subtitle':
+                report_subtitle,
         }
     )
 def chatbot(request):
@@ -3350,10 +4654,21 @@ def download_fitness_plan(request):
     return response 
 
 def download_weekly_report(request, report_id):
+
+    # =========================================================
+    # LOGIN CHECK
+    # =========================================================
+
     if 'user_id' not in request.session:
         return redirect('login')
 
-    user = User.objects.get(id=request.session['user_id'])
+    user = User.objects.get(
+        id=request.session['user_id']
+    )
+
+    # =========================================================
+    # GET REPORT
+    # =========================================================
 
     report = get_object_or_404(
         WeeklyReport,
@@ -3361,44 +4676,105 @@ def download_weekly_report(request, report_id):
         user=user
     )
 
-    # =============================
-    # Create PDF
-    # =============================
+    # =========================================================
+    # DETERMINE REPORT TYPE
+    # =========================================================
+
+    report_days = (
+        report.week_end_date
+        - report.week_start_date
+    ).days + 1
+
+    if report_days == 15:
+
+        is_final_report = True
+
+        pdf_title = (
+            "Final 15-Day Progress Report"
+        )
+
+        pdf_filename = (
+            "DietMate_Final_15_Day_Report.pdf"
+        )
+
+    else:
+
+        is_final_report = False
+
+        pdf_title = (
+            "Day 7 Progress Report"
+        )
+
+        pdf_filename = (
+            "DietMate_Day_7_Report.pdf"
+        )
+
+    # =========================================================
+    # CREATE PDF RESPONSE
+    # =========================================================
 
     response = HttpResponse(
         content_type='application/pdf'
     )
 
     response['Content-Disposition'] = (
-        'attachment; filename="DietMate_WeeklyReport.pdf"'
+        f'attachment; filename="{pdf_filename}"'
     )
 
     p = canvas.Canvas(response)
 
-    # =============================
-    # Title
-    # =============================
+    # =========================================================
+    # TITLE
+    # =========================================================
 
-    p.setFont("Helvetica-Bold", 18)
-    p.drawString(170, 810, "DietMate")
+    p.setFont(
+        "Helvetica-Bold",
+        18
+    )
 
-    p.setFont("Helvetica", 13)
-    p.drawString(145, 790, "Weekly Progress Report")
+    p.drawCentredString(
+        300,
+        810,
+        "DietMate BD"
+    )
 
-    # =============================
-    # User Information
-    # =============================
+    p.setFont(
+        "Helvetica-Bold",
+        14
+    )
 
-    y = 755
+    p.drawCentredString(
+        300,
+        788,
+        pdf_title
+    )
 
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(40, y, "User Information")
+    # =========================================================
+    # REPORT TYPE / PERIOD
+    # =========================================================
 
-    y -= 20
+    y = 750
 
-    p.setFont("Helvetica", 11)
+    p.setFont(
+        "Helvetica-Bold",
+        12
+    )
+
     p.drawString(
         40,
+        y,
+        "Report Information"
+    )
+
+    y -= 22
+
+    p.setFont(
+        "Helvetica",
+        11
+    )
+
+    p.drawString(
+        50,
         y,
         f"Name: {user.full_name}"
     )
@@ -3406,151 +4782,396 @@ def download_weekly_report(request, report_id):
     y -= 18
 
     p.drawString(
-        40,
-        y,
-        f"Report Period: {report.week_start_date} to {report.week_end_date}"
-    )
-
-    y -= 30
-
-    # =============================
-    # Weight Progress
-    # =============================
-
-    p.setFont("Helvetica-Bold", 13)
-    p.drawString(40, y, "Weight Progress")
-
-    y -= 22
-
-    p.setFont("Helvetica", 11)
-
-    p.drawString(
         50,
         y,
-        f"Starting Weight: {report.starting_weight} kg"
+        (
+            f"Report Period: "
+            f"{report.week_start_date} "
+            f"to {report.week_end_date}"
+        )
     )
 
     y -= 18
 
-    p.drawString(
-        50,
-        y,
-        f"Ending Weight: {report.ending_weight} kg"
-    )
-
-    y -= 18
-
-    p.drawString(
-        50,
-        y,
-        f"Weight Change: {report.weight_change} kg"
-    )
-
-    y -= 30
-
-    # =============================
-    # BMI Progress
-    # =============================
-
-    p.setFont("Helvetica-Bold", 13)
-    p.drawString(40, y, "BMI Progress")
-
-    y -= 22
-
-    p.setFont("Helvetica", 11)
-
-    p.drawString(
-        50,
-        y,
-        f"Starting BMI: {report.starting_bmi}"
-    )
-
-    y -= 18
-
-    p.drawString(
-        50,
-        y,
-        f"Ending BMI: {report.ending_bmi}"
-    )
-
-    y -= 30
-
-    # =============================
-    # Plan Consistency
-    # =============================
-
-    p.setFont("Helvetica-Bold", 13)
-    p.drawString(40, y, "Plan Consistency")
-
-    y -= 22
-
-    p.setFont("Helvetica", 11)
-
-    p.drawString(
-        50,
-        y,
-        f"Meal Plan Followed: {report.meal_follow_rate}%"
-    )
-
-    y -= 18
-
-    p.drawString(
-        50,
-        y,
-        f"Exercise Completed: {report.exercise_completion_rate}%"
-    )
-
-    y -= 35
-
-    # =============================
-    # AI Feedback
-    # =============================
-
-    p.setFont("Helvetica-Bold", 13)
-    p.drawString(40, y, "AI Progress Feedback")
-
-    y -= 22
-
-    p.setFont("Helvetica", 10)
-
-    # Split AI feedback into lines
-    feedback_lines = report.ai_feedback.splitlines()
-
-    for line in feedback_lines:
-
-        # Start a new page if needed
-        if y < 60:
-            p.showPage()
-            y = 800
-
-            p.setFont("Helvetica-Bold", 13)
-            p.drawString(40, y, "AI Progress Feedback (continued)")
-
-            y -= 25
-            p.setFont("Helvetica", 10)
-
-        # Remove Markdown symbols
-        clean_line = line.replace("### ", "")
-        clean_line = clean_line.replace("**", "")
-        clean_line = clean_line.replace("* ", "• ")
+    if is_final_report:
 
         p.drawString(
             50,
             y,
-            clean_line[:110]
+            "Cycle: Day 1 to Day 15"
         )
 
-        y -= 15
+    else:
 
-    # =============================
-    # Footer
-    # =============================
+        p.drawString(
+            50,
+            y,
+            "Cycle: Day 1 to Day 7"
+        )
+
+    y -= 30
+
+    # =========================================================
+    # WEIGHT PROGRESS
+    # =========================================================
+
+    p.setFont(
+        "Helvetica-Bold",
+        13
+    )
+
+    p.drawString(
+        40,
+        y,
+        "Weight Progress"
+    )
+
+    y -= 22
+
+    p.setFont(
+        "Helvetica",
+        11
+    )
+
+    p.drawString(
+        50,
+        y,
+        (
+            f"Starting Weight: "
+            f"{report.starting_weight} kg"
+        )
+    )
+
+    y -= 18
+
+    p.drawString(
+        50,
+        y,
+        (
+            f"Ending Weight: "
+            f"{report.ending_weight} kg"
+        )
+    )
+
+    y -= 18
+
+    # ---------------------------------------------------------
+    # WEIGHT CHANGE DISPLAY
+    # ---------------------------------------------------------
+
+    if report.weight_change is not None:
+
+        if report.weight_change < 0:
+
+            weight_change_text = (
+                f"Weight Lost: "
+                f"{abs(float(report.weight_change)):.2f} kg"
+            )
+
+        elif report.weight_change > 0:
+
+            weight_change_text = (
+                f"Weight Gained: "
+                f"{float(report.weight_change):.2f} kg"
+            )
+
+        else:
+
+            weight_change_text = (
+                "Weight Change: 0.00 kg"
+            )
+
+    else:
+
+        weight_change_text = (
+            "Weight Change: Not Available"
+        )
+
+    p.drawString(
+        50,
+        y,
+        weight_change_text
+    )
+
+    y -= 30
+
+    # =========================================================
+    # BMI PROGRESS
+    # =========================================================
+
+    p.setFont(
+        "Helvetica-Bold",
+        13
+    )
+
+    p.drawString(
+        40,
+        y,
+        "BMI Progress"
+    )
+
+    y -= 22
+
+    p.setFont(
+        "Helvetica",
+        11
+    )
+
+    p.drawString(
+        50,
+        y,
+        (
+            f"Starting BMI: "
+            f"{report.starting_bmi}"
+        )
+    )
+
+    y -= 18
+
+    p.drawString(
+        50,
+        y,
+        (
+            f"Ending BMI: "
+            f"{report.ending_bmi}"
+        )
+    )
+
+    y -= 30
+
+    # =========================================================
+    # PLAN CONSISTENCY
+    # =========================================================
+
+    p.setFont(
+        "Helvetica-Bold",
+        13
+    )
+
+    p.drawString(
+        40,
+        y,
+        "Plan Consistency"
+    )
+
+    y -= 22
+
+    p.setFont(
+        "Helvetica",
+        11
+    )
+
+    p.drawString(
+        50,
+        y,
+        (
+            f"Meal Plan Followed: "
+            f"{report.meal_follow_rate}%"
+        )
+    )
+
+    y -= 18
+
+    p.drawString(
+        50,
+        y,
+        (
+            f"Exercise Completed: "
+            f"{report.exercise_completion_rate}%"
+        )
+    )
+
+    y -= 18
+
+    p.drawString(
+        50,
+        y,
+        (
+            f"Report Duration: "
+            f"{report_days} days"
+        )
+    )
+
+    y -= 35
+
+    # =========================================================
+    # AI FEEDBACK
+    # =========================================================
+
+    p.setFont(
+        "Helvetica-Bold",
+        13
+    )
+
+    p.drawString(
+        40,
+        y,
+        "AI Progress Feedback"
+    )
+
+    y -= 22
+
+    p.setFont(
+        "Helvetica",
+        10
+    )
+
+    # Protect against empty AI feedback
+    ai_feedback = (
+        report.ai_feedback
+        or "No AI feedback available."
+    )
+
+    feedback_lines = (
+        ai_feedback.splitlines()
+    )
+
+    # =========================================================
+    # HELPER FUNCTION FOR PAGE BREAK
+    # =========================================================
+
+    def check_new_page(
+        current_y
+    ):
+
+        if current_y < 70:
+
+            p.showPage()
+
+            p.setFont(
+                "Helvetica-Bold",
+                13
+            )
+
+            p.drawString(
+                40,
+                800,
+                "AI Progress Feedback (continued)"
+            )
+
+            p.setFont(
+                "Helvetica",
+                10
+            )
+
+            return 775
+
+        return current_y
+
+    # =========================================================
+    # PRINT AI FEEDBACK
+    # =========================================================
+
+    import textwrap
+
+    for line in feedback_lines:
+
+        clean_line = (
+            line.strip()
+        )
+
+        # Skip Markdown separators
+        if clean_line in [
+            "***",
+            "---"
+        ]:
+            continue
+
+        # Remove Markdown heading symbols
+        clean_line = clean_line.replace(
+            "### ",
+            ""
+        )
+
+        clean_line = clean_line.replace(
+            "## ",
+            ""
+        )
+
+        clean_line = clean_line.replace(
+            "# ",
+            ""
+        )
+
+        # Remove bold Markdown
+        clean_line = clean_line.replace(
+            "**",
+            ""
+        )
+
+        # Convert Markdown bullet
+        if clean_line.startswith(
+            "* "
+        ):
+
+            clean_line = (
+                "- "
+                + clean_line[2:]
+            )
+
+        elif clean_line.startswith(
+            "- "
+        ):
+
+            clean_line = (
+                "- "
+                + clean_line[2:]
+            )
+
+        # Empty line creates some spacing
+        if not clean_line:
+
+            y -= 8
+
+            y = check_new_page(
+                y
+            )
+
+            continue
+
+        # -----------------------------------------------------
+        # WRAP LONG AI TEXT
+        # -----------------------------------------------------
+
+        wrapped_lines = textwrap.wrap(
+            clean_line,
+            width=90
+        )
+
+        if not wrapped_lines:
+
+            wrapped_lines = [
+                ""
+            ]
+
+        for wrapped_line in wrapped_lines:
+
+            y = check_new_page(
+                y
+            )
+
+            p.drawString(
+                50,
+                y,
+                wrapped_line
+            )
+
+            y -= 15
+
+    # =========================================================
+    # FOOTER
+    # =========================================================
 
     if y < 60:
+
         p.showPage()
+
         y = 800
 
-    p.setFont("Helvetica-Oblique", 9)
+    p.setFont(
+        "Helvetica-Oblique",
+        9
+    )
 
     p.drawString(
         40,
@@ -3558,9 +5179,9 @@ def download_weekly_report(request, report_id):
         "Generated by DietMate BD"
     )
 
-    # =============================
-    # Save PDF
-    # =============================
+    # =========================================================
+    # SAVE PDF
+    # =========================================================
 
     p.save()
 
