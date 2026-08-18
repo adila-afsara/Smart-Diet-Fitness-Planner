@@ -155,6 +155,25 @@
       transition: background 0.2s;
     }
     .log-btn:hover { background: var(--hover); }
+    .log-btn {
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    /* Add these */
+    text-decoration: none;
+    display: inline-block;
+}
+
+  .log-btn:hover {
+    background: var(--hover);
+  }
 
     /* ── CONTENT AREA ── */
     .content { padding: 28px 32px; flex: 1; }
@@ -447,6 +466,26 @@
       transition: background 0.2s;
     }
     .motivation-btn:hover { background: var(--hover); }
+    .motivation-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    background: var(--orange);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .motivation-btn:hover {
+    background: var(--hover);
+  }
   </style>
 </head>
 <body>
@@ -460,40 +499,92 @@
     <div class="folk-strip"></div>
 
     <nav class="sidebar-nav">
-      <div class="nav-section-label">Main</div>
-      <a class="nav-item active" href="#">
-        <span class="nav-icon">🏠</span> Dashboard
-      </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">🍱</span> My Diet Plan
-      </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">🏃</span> Fitness Plan
-      </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">📊</span> Progress & BMI
-      </a>
 
-      <div class="nav-section-label">Tools</div>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">💬</span> Chatbot
-      </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">🏥</span> Find Dietitian
-      </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">📅</span> Daily Log
-      </a>
+    <a
+        class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+        href="{% url 'dashboard' %}"
+    >
+        <span class="nav-icon">🏠</span>
+        Dashboard
+    </a>
 
-      <div class="nav-section-label">Account</div>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">⚙️</span> Settings
-      </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">🚪</span> Logout
-      </a>
-    </nav>
+    <a
+        class="nav-item {% if request.resolver_match.url_name == 'diet_plan' %}active{% endif %}"
+        href="{% url 'diet_plan' %}"
+    >
+        <span class="nav-icon">🍱</span>
+        My Diet Plan
+    </a>
 
+    <a
+        class="nav-item {% if request.resolver_match.url_name == 'fitness_plan' %}active{% endif %}"
+        href="{% url 'fitness_plan' %}"
+    >
+        <span class="nav-icon">🏃</span>
+        Fitness Plan
+    </a>
+
+    <a
+        class="nav-item {% if request.resolver_match.url_name == 'progress' %}active{% endif %}"
+        href="{% url 'progress' %}"
+    >
+        <span class="nav-icon">📊</span>
+        Progress & BMI
+    </a>
+
+
+    <div class="nav-section-label">
+        Tools
+    </div>
+
+
+    <a
+        class="nav-item {% if request.resolver_match.url_name == 'chatbot' %}active{% endif %}"
+        href="{% url 'chatbot' %}"
+    >
+        <span class="nav-icon">💬</span>
+        Chatbot
+    </a>
+
+    <a
+        class="nav-item {% if request.resolver_match.url_name == 'medical_specialist' or request.resolver_match.url_name == 'medical_specialist_detail' %}active{% endif %}"
+        href="{% url 'medical_specialist' %}"
+    >
+        <span class="nav-icon">🏥</span>
+        Find Dietitian
+    </a>
+
+    <a
+        class="nav-item"
+        href="{% url 'progress' %}#daily-log"
+    >
+        <span class="nav-icon">📅</span>
+        Daily Log
+    </a>
+
+
+    <div class="nav-section-label">
+        Account
+    </div>
+
+
+    <a
+        class="nav-item"
+        href="{% url 'settings' %}"
+    >
+        <span class="nav-icon">⚙️</span>
+        Settings
+    </a>
+
+    <a
+        class="nav-item"
+        href="{% url 'logout' %}"
+    >
+        <span class="nav-icon">🚪</span>
+        Logout
+    </a>
+
+   </nav>
     <div class="sidebar-user">
       <div class="user-avatar">
         {% if profile.gender == "Female" %}
@@ -529,7 +620,9 @@
       </div>
       <div class="topbar-right">
         <div class="cycle-badge">🔄 Day {{ current_day }} of 15</div>
-        <button class="log-btn">+ Log Today</button>
+        <a class="log-btn" href="{% url 'progress' %}#daily-log">
+          + Log Today
+        </a>
       </div>
     </div>
 
@@ -571,7 +664,9 @@
           <p>{{ motivation_text }}</p>
         </div>
 
-        <button class="motivation-btn">View Progress →</button>
+        <a class="motivation-btn" href="{% url 'progress' %}">
+             View Progress →
+        </a>
       </div>
 
       <!-- Stats Row -->
@@ -641,13 +736,13 @@
               <div class="meal-item">
 
                 {% if meal.meal_type == "Breakfast" %}
-                  <div class="meal-icon breakfast">🍳</div>
+                  <div class="meal-icon breakfast">🌅</div>
                 {% elif meal.meal_type == "Lunch" %}
-                  <div class="meal-icon lunch">🍚</div>
+                  <div class="meal-icon lunch">☀️</div>
                 {% elif meal.meal_type == "Dinner" %}
-                  <div class="meal-icon dinner">🐟</div>
+                  <div class="meal-icon dinner">🌙</div>
                 {% else %}
-                  <div class="meal-icon snack">🍌</div>
+                  <div class="meal-icon snack">🌮</div>
                 {% endif %}
 
                 <div class="meal-info">
