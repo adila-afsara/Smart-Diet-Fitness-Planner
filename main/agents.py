@@ -386,40 +386,308 @@ Do not stop before day 15. Generate the complete JSON array now.
 # ════════════════════════════════════════
 # 📊 AGENT 3 — HEALTH TRACKING AGENT
 # ════════════════════════════════════════
-def health_tracking_agent(user_data, logs):
+def health_tracking_agent(user_data, logs, report_days=7):
     """
-    
-    This agent analyzes the user's daily logs and generates
-    progress reports with AI feedback!
+    Health Tracking Agent
+
+    Generates AI-powered progress feedback for:
+    - Day 7 report  -> Day 1 to Day 7
+    - Day 15 report -> Day 1 to Day 15
+
+    Parameters:
+        user_data (dict):
+            starting_weight
+            current_weight
+            height
+            health_goal
+            health_condition
+
+        logs (dict):
+            meal_follow_days
+            exercise_days
+            avg_water
+            weight_change
+
+        report_days (int):
+            7  = Day 7 Progress Report
+            15 = Final 15-Day Progress Report
     """
+
+    # =========================================================
+    # DETERMINE REPORT TYPE
+    # =========================================================
+
+    if report_days == 15:
+
+        report_title = (
+            "Final 15-Day Progress Report"
+        )
+
+        report_period = (
+            "Day 1 to Day 15"
+        )
+
+        report_description = (
+            "This is the user's final report for the "
+            "complete 15-day health and fitness cycle."
+        )
+
+        recommendation_instruction = (
+            "Provide practical recommendations for the "
+            "user's next health and fitness cycle."
+        )
+
+        motivation_instruction = (
+            "End with a short encouraging message that "
+            "recognizes the user's effort throughout the "
+            "complete 15-day cycle."
+        )
+
+    else:
+
+        # Default to Day 7 report
+        report_days = 7
+
+        report_title = (
+            "Day 7 Progress Report"
+        )
+
+        report_period = (
+            "Day 1 to Day 7"
+        )
+
+        report_description = (
+            "This is the user's first progress report "
+            "during their 15-day health and fitness cycle."
+        )
+
+        recommendation_instruction = (
+            "Provide practical recommendations for improving "
+            "progress during Day 8 to Day 15."
+        )
+
+        motivation_instruction = (
+            "End with a short encouraging message motivating "
+            "the user to continue through Day 15."
+        )
+
+    # =========================================================
+    # GET USER INFORMATION
+    # =========================================================
+
+    starting_weight = user_data.get(
+        'starting_weight'
+    )
+
+    current_weight = user_data.get(
+        'current_weight'
+    )
+
+    height = user_data.get(
+        'height'
+    )
+
+    health_goal = user_data.get(
+        'health_goal'
+    )
+
+    health_condition = user_data.get(
+        'health_condition'
+    )
+
+    # =========================================================
+    # GET PROGRESS INFORMATION
+    # =========================================================
+
+    meal_follow_days = logs.get(
+        'meal_follow_days',
+        0
+    )
+
+    exercise_days = logs.get(
+        'exercise_days',
+        0
+    )
+
+    avg_water = logs.get(
+        'avg_water',
+        0
+    )
+
+    weight_change = logs.get(
+        'weight_change',
+        0
+    )
+
+    # =========================================================
+    # AI PROMPT
+    # =========================================================
+
     prompt = f"""
-You are a health tracking expert analyzing a Bangladeshi user's progress.
+You are a health tracking expert for DietMate BD.
 
-User Details:
-- Starting Weight: {user_data.get('starting_weight')} kg
-- Current Weight: {user_data.get('current_weight')} kg
-- Height: {user_data.get('height')} cm
-- Health Goal: {user_data.get('health_goal')}
-- Health Condition: {user_data.get('health_condition')}
+Your task is to analyze a Bangladeshi user's health,
+diet, fitness, and lifestyle progress and generate a
+clear and supportive progress report.
 
-Progress Logs (last 7 days):
-- Days meal plan followed: {logs.get('meal_follow_days')} out of 7
-- Days exercise completed: {logs.get('exercise_days')} out of 7
-- Average water intake: {logs.get('avg_water')} glasses per day
-- Weight change: {logs.get('weight_change')} kg
+REPORT INFORMATION
+-------------------
+Report Title: {report_title}
+Report Period: {report_period}
+Total Planned Days: {report_days}
 
-Please provide:
-1. BMI calculation and category
-2. Analysis of their progress
-3. What they did well
-4. What needs improvement
-5. Specific recommendations for next cycle
-6. Motivational message
-7. Keep it friendly, encouraging and specific to Bangladeshi context
+{report_description}
 
-Generate the progress report now.
+
+USER DETAILS
+------------
+Starting Weight: {starting_weight} kg
+Current Weight: {current_weight} kg
+Height: {height} cm
+Health Goal: {health_goal}
+Health Condition: {health_condition}
+
+
+PROGRESS DATA
+-------------
+Meal plan followed:
+{meal_follow_days} out of {report_days} days
+
+Exercise completed:
+{exercise_days} out of {report_days} days
+
+Average water intake:
+{avg_water} liters per day
+
+Weight change:
+{weight_change} kg
+
+
+IMPORTANT INTERPRETATION RULES
+------------------------------
+
+1. Analyze only the information provided above.
+
+2. Do not invent missing measurements, symptoms,
+   activities, foods, or medical information.
+
+3. Missing logged days should be considered days where
+   the corresponding meal or exercise goal was not completed.
+
+4. Weight change is calculated as:
+
+   Current Weight - Starting Weight
+
+   Therefore:
+
+   - A negative value means the user's weight decreased.
+   - A positive value means the user's weight increased.
+   - Zero means there was no recorded weight change.
+
+5. Average water intake is provided in LITERS PER DAY,
+   not glasses.
+
+6. Consider the user's stated health goal when discussing
+   their progress.
+
+7. If a health condition is provided, keep recommendations
+   cautious and general. Do not diagnose or recommend changes
+   to medication or medical treatment.
+
+8. Do not recommend extreme dieting, fasting, rapid weight
+   loss, excessive exercise, or unsafe restrictions.
+
+9. Focus on sustainable habits such as balanced meals,
+   appropriate physical activity, hydration, sleep,
+   consistency, and following professional medical advice
+   where appropriate.
+
+10. Use practical examples that can reasonably fit a
+    Bangladeshi lifestyle and food context.
+
+
+REPORT STRUCTURE
+----------------
+
+Use the following headings exactly:
+
+### 1. BMI and Current Status
+
+Calculate the user's current BMI using:
+
+BMI = weight in kg / (height in meters × height in meters)
+
+State the calculated BMI and its general category.
+
+Briefly explain the result without making a medical diagnosis.
+
+
+### 2. Overall Progress Analysis
+
+Analyze the user's progress during {report_period}.
+
+Discuss:
+
+- Weight trend
+- Meal-plan consistency
+- Exercise consistency
+- Hydration
+- Overall adherence
+
+
+### 3. What Went Well
+
+Clearly identify positive areas of progress.
+
+Use the actual data provided.
+
+
+### 4. Areas for Improvement
+
+Identify areas where consistency could improve.
+
+Be constructive and encouraging rather than critical.
+
+
+### 5. Recommendations
+
+{recommendation_instruction}
+
+Give realistic and practical recommendations.
+
+Keep recommendations concise and suitable for the
+user's health goal and stated health condition.
+
+
+### 6. Motivational Message
+
+{motivation_instruction}
+
+
+WRITING STYLE
+-------------
+
+- Friendly
+- Clear
+- Encouraging
+- Practical
+- Specific to the supplied data
+- Appropriate for a Bangladeshi context
+- Avoid exaggerated claims
+- Avoid medical diagnosis
+- Keep the report organized and easy to read
+
+
+Generate the {report_title} now.
 """
-    return call_gemini(prompt)
+
+    # =========================================================
+    # CALL GEMINI
+    # =========================================================
+
+    return call_gemini(
+        prompt
+    )
 
 #Interface For Chatbot Gemini Adapter
 from abc import ABC, abstractmethod
