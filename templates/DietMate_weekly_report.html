@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Weekly Progress Report | DietMate BD</title>
+    <title>{{ report_title }} | DietMate BD</title>
 
     <style>
 
@@ -313,11 +313,15 @@
         <div>
 
             <div class="header-title">
-                📊 Weekly Progress Report
+                {% if is_final_report %}
+                    🏆 {{ report_title }}
+                {% else %}
+                    📊 {{ report_title }}
+                {% endif %}
             </div>
 
             <div class="header-subtitle">
-                {{ user.full_name }}'s health and fitness progress
+                {{ user.full_name }} · {{ report_subtitle }}
             </div>
 
         </div>
@@ -341,11 +345,19 @@
         <div class="report-intro">
 
             <h1>
-                🌟 Your Progress Report
+                {% if is_final_report %}
+                    🏆 Your Complete 15-Day Progress
+                {% else %}
+                    🌟 Your Day 7 Progress
+                {% endif %}
             </h1>
 
             <p>
-                Here's a summary of your progress during this cycle.
+                {% if is_final_report %}
+                    Here's your complete health and fitness progress from Day 1 through Day 15.
+                {% else %}
+                    Here's a summary of your progress during the first 7 days of your 15-day cycle.
+                {% endif %}
             </p>
 
             <p class="report-period">
