@@ -987,6 +987,230 @@ def dashboard(request):
         context
     )
 
+
+def settings_view(request):
+
+    # --------------------------------------------------
+    # LOGIN CHECK
+    # --------------------------------------------------
+
+    if 'user_id' not in request.session:
+        return redirect('login')
+
+    user_id = request.session['user_id']
+
+    user = get_object_or_404(
+        User,
+        id=user_id
+    )
+
+    try:
+        profile = UserProfile.objects.get(
+            user=user
+        )
+
+    except UserProfile.DoesNotExist:
+        return redirect('dashboard')
+
+
+    # --------------------------------------------------
+    # UPDATE SETTINGS
+    # --------------------------------------------------
+
+    if request.method == 'POST':
+
+        # ----------------------------------------------
+        # ACCOUNT INFORMATION
+        # ----------------------------------------------
+
+        full_name = request.POST.get(
+            'full_name',
+            ''
+        ).strip()
+
+        email = request.POST.get(
+            'email',
+            ''
+        ).strip().lower()
+
+
+        # Name cannot be empty
+        if not full_name:
+
+            messages.error(
+                request,
+                'Full name cannot be empty.'
+            )
+
+            return redirect('settings')
+
+
+        # Email cannot be empty
+        if not email:
+
+            messages.error(
+                request,
+                'Email cannot be empty.'
+            )
+
+            return redirect('settings')
+
+
+        # Check whether another account already uses email
+        if User.objects.filter(
+            email=email
+        ).exclude(
+            id=user.id
+        ).exists():
+
+            messages.error(
+                request,
+                'This email address is already being used by another account.'
+            )
+
+            return redirect('settings')
+
+
+        # Update user account
+        user.full_name = full_name
+        user.email = email
+
+        user.save()
+
+
+        # Keep session name synchronized
+        request.session['user_name'] = user.full_name
+
+
+        # ----------------------------------------------
+        # PROFILE INFORMATION
+        # ----------------------------------------------
+
+        age = request.POST.get(
+            'age',
+            ''
+        ).strip()
+
+        gender = request.POST.get(
+            'gender',
+            ''
+        ).strip()
+
+        height = request.POST.get(
+            'height',
+            ''
+        ).strip()
+
+        weight = request.POST.get(
+            'weight',
+            ''
+        ).strip()
+
+        health_goal = request.POST.get(
+            'health_goal',
+            ''
+        ).strip()
+
+        health_condition = request.POST.get(
+            'health_condition',
+            ''
+        ).strip()
+
+        activity_level = request.POST.get(
+            'activity_level',
+            ''
+        ).strip()
+
+        workout_location = request.POST.get(
+            'workout_location',
+            ''
+        ).strip()
+
+        weekly_budget = request.POST.get(
+            'weekly_budget',
+            ''
+        ).strip()
+
+        location = request.POST.get(
+            'location',
+            ''
+        ).strip()
+
+        food_preferences = request.POST.get(
+            'food_preferences',
+            ''
+        ).strip()
+
+        avoid_foods = request.POST.get(
+            'avoid_foods',
+            ''
+        ).strip()
+
+
+        # ----------------------------------------------
+        # UPDATE PROFILE
+        # ----------------------------------------------
+
+        # Only replace numerical values when the user
+        # actually entered something.
+
+        if age:
+            profile.age = age
+
+        if height:
+            profile.height = height
+
+        if weight:
+            profile.weight = weight
+
+        if weekly_budget:
+            profile.weekly_budget = weekly_budget
+
+
+        # Text/select values
+        profile.gender = gender
+        profile.health_goal = health_goal
+        profile.health_condition = health_condition
+        profile.activity_level = activity_level
+        profile.workout_location = workout_location
+        profile.location = location
+        profile.food_preferences = food_preferences
+        profile.avoid_foods = avoid_foods
+
+
+        profile.save()
+
+
+        # ----------------------------------------------
+        # SUCCESS MESSAGE
+        # ----------------------------------------------
+
+        messages.success(
+            request,
+            'Your settings have been updated successfully.'
+        )
+
+        return redirect('settings')
+
+
+    # --------------------------------------------------
+    # SHOW SETTINGS PAGE
+    # --------------------------------------------------
+
+    context = {
+
+        'user': user,
+
+        'profile': profile,
+
+    }
+
+    return render(
+        request,
+        'DietMate_settings.html',
+        context
+    )   
+
 def diet_plan(request):
     
     if 'user_id' not in request.session:
