@@ -157,7 +157,7 @@
     .btn-primary {
     display: inline-block;
     text-decoration: none;
-    background: var(--red);
+    background: var(--green);
     color: white;
     border: none;
     border-radius: 6px;
@@ -225,17 +225,17 @@
     <div class="folk-strip"></div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Main</div>
-      <a class="nav-item" href="#"><span class="nav-icon">🏠</span> Dashboard</a>
-      <a class="nav-item" href="#"><span class="nav-icon">🍱</span> My Diet Plan</a>
-      <a class="nav-item" href="#"><span class="nav-icon">🏃</span> Fitness Plan</a>
-      <a class="nav-item active" href="#"><span class="nav-icon">📊</span> Progress & BMI</a>
+      <a class="nav-item" href="{% url 'dashboard' %}"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a class="nav-item" href="{% url 'diet_plan' %}"><span class="nav-icon">🍱</span> My Diet Plan</a>
+      <a class="nav-item" href="{% url 'fitness_plan' %}"><span class="nav-icon">🏃</span> Fitness Plan</a>
+      <a class="nav-item active" href="{% url 'progress' %}"><span class="nav-icon">📊</span> Progress & BMI</a>
       <div class="nav-section-label">Tools</div>
-      <a class="nav-item" href="#"><span class="nav-icon">💬</span> Chatbot</a>
-      <a class="nav-item" href="#"><span class="nav-icon">🏥</span> Find Dietitian</a>
-      <a class="nav-item" href="#"><span class="nav-icon">📅</span> Daily Log</a>
+      <a class="nav-item" href="{% url 'chatbot' %}"><span class="nav-icon">💬</span> Chatbot</a>
+      <a class="nav-item" href="{% url 'medical_specialist' %}"><span class="nav-icon">🏥</span> Find Dietitian</a>
+      <a class="nav-item" href="{% url 'progress' %}#daily-log"><span class="nav-icon">📅</span> Daily Log</a>
       <div class="nav-section-label">Account</div>
-      <a class="nav-item" href="#"><span class="nav-icon">⚙️</span> Settings</a>
-      <a class="nav-item" href="#"><span class="nav-icon">🚪</span> Logout</a>
+      <a class="nav-item" href="{% url 'settings' %}"><span class="nav-icon">⚙️</span> Settings</a>
+      <a class="nav-item" href="{% url 'logout' %}"><span class="nav-icon">🚪</span> Logout</a>
     </nav>
     <div class="sidebar-user">
       <div class="user-avatar">
