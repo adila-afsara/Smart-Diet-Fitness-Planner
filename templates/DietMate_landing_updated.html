@@ -28,6 +28,7 @@
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--text); }
 
     /* ── SUBTLE FOLK DIVIDER STRIPES ── */
@@ -66,7 +67,7 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
     }
 
-    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
 
     .logo-icon {
       width: 42px; height: 42px;
@@ -97,6 +98,7 @@
       color: var(--orange); background: transparent;
       border-radius: 6px; font-weight: 600; font-size: 14px;
       cursor: pointer; transition: all 0.2s;
+      text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
     }
     .btn-outline:hover { background: var(--hover); color: white; border-color: var(--hover); }
 
@@ -105,6 +107,7 @@
       color: white; border: 2px solid var(--red);
       border-radius: 6px; font-weight: 600; font-size: 14px;
       cursor: pointer; transition: all 0.2s;
+      text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
     }
     .btn-solid:hover { background: var(--hover); border-color: var(--hover); }
 
@@ -147,6 +150,7 @@
       color: white; border: none; border-radius: 8px;
       font-size: 16px; font-weight: 600; cursor: pointer;
       transition: background 0.2s;
+      text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
     }
     .btn-hero-main:hover { background: var(--hover); }
 
@@ -155,6 +159,7 @@
       color: var(--orange); border: 2px solid var(--orange);
       border-radius: 8px; font-size: 16px; font-weight: 600;
       cursor: pointer; transition: all 0.2s;
+      text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
     }
     .btn-hero-sec:hover { background: var(--hover); color: white; border-color: var(--hover); }
 
@@ -351,6 +356,7 @@
       color: var(--red); border: none; border-radius: 8px;
       font-size: 17px; font-weight: 700; cursor: pointer;
       transition: background 0.2s; font-family: 'Inter', sans-serif;
+      text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
     }
     .btn-cta:hover { background: var(--yellow); color: var(--hover); }
 
@@ -366,20 +372,22 @@
 
   <!-- Navbar -->
   <nav>
-    <div class="logo">
+    <a class="logo" href="{% url 'landing' %}">
       <div class="logo-icon">🥗</div>
       <div class="logo-text">Diet<span>Mate</span> BD</div>
-    </div>
+    </a>
+
     <ul>
-      <li><a href="#">Home</a></li>
-      <li><a href="#">Features</a></li>
-      <li><a href="#">How It Works</a></li>
-      <li><a href="#">Dietitians</a></li>
-      <li><a href="#">About</a></li>
+      <li><a href="{% url 'landing' %}">Home</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#dietitians">Dietitians</a></li>
+      <li><a href="#about">About</a></li>
     </ul>
+
     <div class="nav-buttons">
-      <button class="btn-outline">Log In</button>
-      <button class="btn-solid">Get Started</button>
+      <a class="btn-outline" href="{% url 'login' %}">Log In</a>
+      <a class="btn-solid" href="{% url 'signup' %}">Get Started</a>
     </div>
   </nav>
 
@@ -398,8 +406,8 @@
         Affordable diet and fitness plans using local Bangladeshi foods — designed for your budget, your taste, and your health.
       </p>
       <div class="hero-buttons">
-        <button class="btn-hero-main">Start Your Free Plan →</button>
-        <button class="btn-hero-sec">See How It Works</button>
+        <a class="btn-hero-main" href="{% url 'signup' %}">Start Your Free Plan →</a>
+        <a class="btn-hero-sec" href="#how-it-works">See How It Works</a>
       </div>
     </div>
     <div class="hero-right">
@@ -437,7 +445,7 @@
   </div>
 
   <!-- Features -->
-  <section class="features">
+  <section class="features" id="features">
     <div class="section-header">
       <div class="section-eyebrow">What We Offer</div>
       <h2 class="section-title">7 Features Built <span class="t-red">For You</span></h2>
@@ -480,7 +488,7 @@
         <p class="feature-desc">Your AI companion cheers you on daily — with affirmations, milestones, and encouragement.</p>
         <span class="feature-tag">AI Powered</span>
       </div>
-      <div class="feature-card c7">
+      <div class="feature-card c7" id="dietitians">
         <span class="feature-icon">🏥</span>
         <div class="feature-title">Dietitian Suggester</div>
         <p class="feature-desc">Find the right dietitian or nutritionist near you based on your health condition and budget.</p>
@@ -492,7 +500,7 @@
   <div class="folk-divider"></div>
 
   <!-- How It Works -->
-  <section class="how">
+  <section class="how" id="how-it-works">
     <div class="section-header">
       <div class="section-eyebrow">The Process</div>
       <h2 class="section-title">How It <span class="t-orange">Works</span></h2>
@@ -568,12 +576,12 @@
   <section class="cta">
     <h2>Start Your Health Journey Today 🌿</h2>
     <p>Join thousands of Bangladeshi users eating healthier, staying fit, and saving money — all with one smart app.</p>
-    <button class="btn-cta">Create Your Free Plan →</button>
+    <a class="btn-cta" href="{% url 'signup' %}">Create Your Free Plan →</a>
   </section>
 
   <!-- Footer -->
-  <footer>
-    <p>© 2026 <span>DietMate BD</span> — Smart Diet & Fitness Planner | Built for Bangladeshi Users 🇧🇩</p>
+  <footer id="about">
+    <p>© 2026 <span>DietMate BD</span> — Smart Diet & Fitness Planner | Built for 🇧🇩 Bangladeshi Users</p>
   </footer>
 
   <div class="folk-pattern-bar">✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾ ❋ ✾</div>
