@@ -37,4 +37,5 @@ urlpatterns = [
     views.download_weekly_report,
     name='download_weekly_report'
     ),
+    path('settings/', views.settings_view, name='settings'),
     ] 
