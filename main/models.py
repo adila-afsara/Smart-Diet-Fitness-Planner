@@ -1,4 +1,6 @@
 from django.db import models 
+from django.utils import timezone
+from datetime import timedelta
 #database tables
 # ── TABLE 1: Users ──
 class User(models.Model):
@@ -290,9 +292,9 @@ class MedicalSpecialist(models.Model):
     )
 
     source = models.URLField(
-       max_length=500,
-       null=True,
-       blank=True
+        max_length=500,
+        null=True,
+        blank=True
     )
 
     created_at = models.DateTimeField(
@@ -304,3 +306,25 @@ class MedicalSpecialist(models.Model):
 
     class Meta:
         db_table = "medical_specialists"
+
+#PasswordReserdToken Table
+class PasswordResetToken(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+
+    token = models.CharField(
+        max_length=255,
+        unique=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+
+    def is_expired(self):
+
+        return timezone.now() > self.created_at + timedelta(minutes=30)      
