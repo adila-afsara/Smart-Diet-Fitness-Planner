@@ -10,6 +10,12 @@ from .models import User, UserProfile, DietPlan, MedicalSpecialist
 from .agents import nutrition_agent, medical_specialist_agent, parse_gemini_json
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
+import uuid
+from django.core.mail import send_mail
+from django.conf import settings
+import uuid
+
+from .models import PasswordResetToken
 from .nutrition_calculator import (
     calculate_bmr,
     calculate_tdee,
@@ -20,6 +26,149 @@ import hashlib
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
+def forgot_password(request):
+
+    if request.method == "POST":
+
+        email = request.POST.get('email')
+
+        try:
+
+            user = User.objects.get(
+                email=email
+            )
+
+            token = str(uuid.uuid4())
+
+
+            PasswordResetToken.objects.create(
+                user=user,
+                token=token
+            )
+
+
+            reset_link = (
+                f"http://127.0.0.1:8000/reset-password/{token}/"
+            )
+
+
+            send_mail(
+                "DietMate BD Password Reset",
+                f"""
+Hello {user.full_name},
+
+Click the link below to reset your password:
+
+{reset_link}
+
+This link will expire in 30 minutes.
+
+DietMate BD Team
+""",
+                settings.EMAIL_HOST_USER,
+                [email]
+            )
+
+
+            messages.success(
+                request,
+                "Password reset link has been sent to your email."
+            )
+
+
+        except User.DoesNotExist:
+
+            messages.error(
+                request,
+                "Email address not found."
+            )
+
+
+    return render(
+        request,
+        "DietMate_forgot_password.html"
+    )
+from django.shortcuts import render, redirect
+from django.contrib import messages
+def reset_password(request, token):
+
+    try:
+        reset_token = PasswordResetToken.objects.get(
+            token=token
+        )
+
+    except PasswordResetToken.DoesNotExist:
+
+        messages.error(
+            request,
+            "Invalid password reset link."
+        )
+
+        return redirect('forgot_password')
+
+
+    # Check token expiry
+    if reset_token.is_expired():
+
+        messages.error(
+            request,
+            "This password reset link has expired."
+        )
+
+        reset_token.delete()
+
+        return redirect('forgot_password')
+
+
+    user = reset_token.user
+
+
+
+    if request.method == "POST":
+
+        password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+
+        if password != confirm_password:
+
+            messages.error(
+                request,
+                "Passwords do not match."
+            )
+
+            return render(
+                request,
+                "DietMate_reset_password.html"
+            )
+
+
+        # Save new hashed password
+        user.password = hash_password(password)
+
+        user.save()
+
+
+        # Remove token after successful reset
+        reset_token.delete()
+
+
+        messages.success(
+            request,
+            "Password changed successfully. Please login."
+        )
+
+
+        return redirect("login")
+
+
+
+    # Display reset password page
+    return render(
+        request,
+        "DietMate_reset_password.html"
+    )
 
 def landing(request):
     return render(request, 'DietMate_landing_updated.html')
@@ -525,24 +674,41 @@ def dashboard(request):
     # ==========================================================
 
     calorie_target = 0
-
-
-    if (
-        active_diet_plan
-        and active_diet_plan.total_daily_calories
-    ):
-
-        calorie_target = (
-            active_diet_plan.total_daily_calories
-        )
-
-
     calories_consumed = 0
 
 
+    # Calculate calorie target from the user's profile
+    if (
+        profile.weight
+        and profile.height
+        and profile.age
+        and profile.gender
+        and profile.activity_level
+        and profile.health_goal
+    ):
+
+        bmr = calculate_bmr(
+            float(profile.weight),
+            float(profile.height),
+            int(profile.age),
+            profile.gender
+        )
+
+        tdee = calculate_tdee(
+            bmr,
+            profile.activity_level
+        )
+
+        calorie_target = calculate_daily_calories(
+            tdee,
+            profile.health_goal
+        )
+
+
+    # Today's consumed calories from Daily Log
     if (
         today_log
-        and today_log.calories_consumed
+        and today_log.calories_consumed is not None
     ):
 
         calories_consumed = (
@@ -550,6 +716,7 @@ def dashboard(request):
         )
 
 
+    # Calorie status message
     if calorie_target:
 
         if calories_consumed == 0:
@@ -575,7 +742,6 @@ def dashboard(request):
         calorie_status = (
             "No active calorie target"
         )
-
 
     # ==========================================================
     # WATER INTAKE
@@ -986,8 +1152,6 @@ def dashboard(request):
         'DietMate_dashboard_v2.html',
         context
     )
-
-
 def settings_view(request):
 
     # --------------------------------------------------
