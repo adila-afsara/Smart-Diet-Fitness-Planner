@@ -1,8 +1,10 @@
 
-from django.urls import path
+from django.urls import path, include
+from django.contrib import admin
 from . import views
 
 urlpatterns = [
+    path('accounts/', include('allauth.urls')),
     path('', views.landing, name='landing'),
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup, name='signup'),
