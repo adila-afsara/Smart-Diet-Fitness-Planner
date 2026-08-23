@@ -114,6 +114,20 @@
     .feature-item { display: flex; align-items: center; gap: 12px; background: var(--white); border-radius: 10px; padding: 12px 16px; border: 2px solid rgba(46,139,87,0.15); }
     .feature-item-icon { font-size: 22px; flex-shrink: 0; }
     .feature-item-text { font-size: 13px; font-weight: 500; color: var(--text); }
+    .feature-item-text { 
+    font-size: 13px; 
+    font-weight: 500; 
+    color: var(--text); 
+     }
+     
+    /* Forgot Password Button */
+    .forgot {
+    font-size: 13px;
+    color: var(--orange);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -153,7 +167,6 @@
           <label class="form-label">🔒 Password</label>
           <div class="input-icon-wrap">
             <input class="form-input" type="password" name="password" placeholder="Enter your password" required/>
-            <span class="input-icon">👁️</span>
           </div>
         </div>
 
@@ -161,11 +174,19 @@
           <label class="remember">
             <input type="checkbox" checked/> Remember me
           </label>
-          <a class="forgot" href="#">Forgot Password?</a>
+          <a class="forgot" href="{% url 'forgot_password' %}">
+              Forgot Password?
+          </a>
         </div>
 
         <button class="login-btn" type="submit">🚀 Login to My Account</button>
       </form>
+      <a href="{% url 'google_login' %}">Sign in with Google</a>
+      <div class="divider">
+         <div class="divider-line"></div>
+         <div class="divider-text">OR</div>
+         <div class="divider-line"></div>
+      </div>
 
       <div class="divider">
         <div class="divider-line"></div>
@@ -188,7 +209,7 @@
         <div class="feature-item"><span class="feature-item-icon">🍱</span><span class="feature-item-text">Personalized 15-day meal plans</span></div>
         <div class="feature-item"><span class="feature-item-icon">💰</span><span class="feature-item-text">Budget-aware meal optimizer in BDT</span></div>
         <div class="feature-item"><span class="feature-item-icon">🏃</span><span class="feature-item-text">Beginner-friendly fitness plans</span></div>
-        <div class="feature-item"><span class="feature-item-icon">🤖</span><span class="feature-item-text">4 AI agents working for your health</span></div>
+        <div class="feature-item"><span class="feature-item-icon">🤖</span><span class="feature-item-text">AI agents working for your health</span></div>
       </div>
     </div>
   </div>
